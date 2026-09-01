@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Medical Supplies | MedTrack</title>
+
+    <link rel="stylesheet" href="medical-supplies.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p id="portalName">Inventory Portal</p>
+            </div>
+
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <!-- JavaScript changes this link based on the role -->
+            <a href="#" class="nav-item" id="dashboardLink">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a
+                href="medical-supplies.html"
+                class="nav-item active"
+            >
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <!-- Only visible to Admin -->
+            <div id="adminNavigation" class="admin-navigation">
+
+                <p class="menu-label">ADMINISTRATION</p>
+
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>Manage Users</span>
+                </a>
+
+                <a href="reports.html" class="nav-item">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Reports</span>
+                </a>
+
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Audit Logs</span>
+                </a>
+
+                <a href="settings.html" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>System Settings</span>
+                </a>
+
+            </div>
+
+        </nav>
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h2>Medical Supplies</h2>
+                <p>Manage the medical supply inventory.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <button
+                    type="button"
+                    class="notification-button"
+                    id="notificationButton"
+                >
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notificationCount">0</span>
+                </button>
+
+                <div class="user-profile">
+
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">User</strong>
+                        <small id="currentUserRole">Role</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- SUMMARY CARDS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+
+                <div>
+                    <p>Total Supplies</p>
+                    <h3 id="totalSupplies">0</h3>
+                    <small>Registered supply items</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card green">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <div>
+                    <p>Available</p>
+                    <h3 id="availableSupplies">0</h3>
+                    <small>Items currently available</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card yellow">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-arrow-trend-down"></i>
+                </div>
+
+                <div>
+                    <p>Low Stock</p>
+                    <h3 id="lowStockSupplies">0</h3>
+                    <small>Items needing restocking</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card blue">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                </div>
+
+                <div>
+                    <p>Expired</p>
+                    <h3 id="expiredSupplies">0</h3>
+                    <small>Items requiring attention</small>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- SUPPLY INVENTORY -->
+        <section class="inventory-card">
+
+            <div class="inventory-header">
+
+                <div>
+                    <h3>Supply Inventory</h3>
+                    <p>View and manage medical supplies.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="add-button"
+                    id="openAddModal"
+                >
+                    <i class="fa-solid fa-plus"></i>
+                    Add Supply
+                </button>
+
+            </div>
+
+            <!-- SEARCH AND FILTERS -->
+            <div class="inventory-tools">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="search"
+                        id="supplySearch"
+                        placeholder="Search supply..."
+                    >
+
+                </div>
+
+                <select id="categoryFilter">
+                    <option value="all">All Categories</option>
+                    <option value="Medicine">Medicine</option>
+                    <option value="First Aid">First Aid</option>
+                    <option value="Protective Equipment">
+                        Protective Equipment
+                    </option>
+                    <option value="Emergency Supply">
+                        Emergency Supply
+                    </option>
+                </select>
+
+                <select id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="Available">Available</option>
+                    <option value="Low Stock">Low Stock</option>
+                    <option value="Out of Stock">Out of Stock</option>
+                    <option value="Expired">Expired</option>
+                </select>
+
+            </div>
+
+            <!-- TABLE -->
+            <div class="table-wrapper">
+
+                <table class="supply-table">
+
+                    <thead>
+                        <tr>
+                            <th>Supply ID</th>
+                            <th>Supply Name</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Unit</th>
+                            <th>Expiration Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="supplyTableBody">
+                        <!-- JavaScript inserts supplies here -->
+                    </tbody>
+
+                </table>
+
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-solid fa-box-open"></i>
+                    <h3>No medical supplies found</h3>
+                    <p>Add a supply or change the filters.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- ADD/EDIT SUPPLY MODAL -->
+<div class="modal-overlay" id="supplyModal">
+
+    <section class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modalTitle">Add Medical Supply</h2>
+                <p>Enter the supply information.</p>
+            </div>
+
+            <button
+                type="button"
+                class="close-button"
+                id="closeModal"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+        <form id="supplyForm">
+
+            <input type="hidden" id="editingSupplyId">
+
+            <div class="form-grid">
+
+                <div class="input-group full-width">
+
+                    <label for="supplyName">Supply Name</label>
+
+                    <input
+                        type="text"
+                        id="supplyName"
+                        placeholder="Enter supply name"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="supplyCategory">Category</label>
+
+                    <select id="supplyCategory" required>
+                        <option value="" disabled selected>
+                            Select category
+                        </option>
+                        <option value="Medicine">Medicine</option>
+                        <option value="First Aid">First Aid</option>
+                        <option value="Protective Equipment">
+                            Protective Equipment
+                        </option>
+                        <option value="Emergency Supply">
+                            Emergency Supply
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="supplyQuantity">Quantity</label>
+
+                    <input
+                        type="number"
+                        id="supplyQuantity"
+                        min="0"
+                        placeholder="Enter quantity"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="supplyUnit">Unit</label>
+
+                    <select id="supplyUnit" required>
+                        <option value="" disabled selected>
+                            Select unit
+                        </option>
+                        <option value="Pieces">Pieces</option>
+                        <option value="Boxes">Boxes</option>
+                        <option value="Bottles">Bottles</option>
+                        <option value="Packs">Packs</option>
+                        <option value="Sets">Sets</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="expirationDate">
+                        Expiration Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="expirationDate"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group full-width">
+
+                    <label for="lowStockLevel">
+                        Low-Stock Level
+                    </label>
+
+                    <input
+                        type="number"
+                        id="lowStockLevel"
+                        min="1"
+                        value="10"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+            <p class="form-message" id="formMessage"></p>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    id="cancelButton"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="save-button">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save Supply
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal-overlay" id="deleteModal">
+
+    <section class="modal delete-modal">
+
+        <div class="delete-icon">
+            <i class="fa-solid fa-trash-can"></i>
+        </div>
+
+        <h2>Delete Medical Supply?</h2>
+
+        <p>
+            This supply will be permanently removed.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelDelete"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="delete-button"
+                id="confirmDelete"
+            >
+                Delete
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="medical-supplies.js"></script>
+
+</body>
+</html>

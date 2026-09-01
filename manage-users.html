@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Manage Users | MedTrack</title>
+
+    <link rel="stylesheet" href="manage-users.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- ADMIN SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p>Admin Portal</p>
+            </div>
+
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <p class="menu-label">ADMINISTRATION</p>
+
+            <a
+                href="manage-users.html"
+                class="nav-item active"
+            >
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Manage Users</span>
+            </a>
+
+            <a href="reports.html" class="nav-item">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>Reports</span>
+            </a>
+
+            <a href="audit-logs.html" class="nav-item">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Audit Logs</span>
+            </a>
+
+            <a href="settings.html" class="nav-item">
+                <i class="fa-solid fa-gear"></i>
+                <span>System Settings</span>
+            </a>
+
+        </nav>
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h2>Manage Users</h2>
+                <p>Manage Admin and Staff accounts.</p>
+            </div>
+
+            <div class="user-profile">
+
+                <div class="profile-icon">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+
+                <div>
+                    <strong id="currentUserName">Administrator</strong>
+                    <small>Admin</small>
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- STATISTICS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+
+                <div>
+                    <p>Total Users</p>
+                    <h3 id="totalUsers">0</h3>
+                    <small>Registered accounts</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card blue">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+
+                <div>
+                    <p>Administrators</p>
+                    <h3 id="totalAdmins">0</h3>
+                    <small>Admin accounts</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card green">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+
+                <div>
+                    <p>Staff Members</p>
+                    <h3 id="totalStaff">0</h3>
+                    <small>Staff accounts</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card yellow">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+
+                <div>
+                    <p>Active Accounts</p>
+                    <h3 id="activeUsers">0</h3>
+                    <small>Currently enabled</small>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- USER MANAGEMENT -->
+        <section class="users-card">
+
+            <div class="users-header">
+
+                <div>
+                    <h3>User Accounts</h3>
+                    <p>View, add, edit or disable accounts.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="add-button"
+                    id="openAddModal"
+                >
+                    <i class="fa-solid fa-user-plus"></i>
+                    Add User
+                </button>
+
+            </div>
+
+            <!-- SEARCH AND FILTERS -->
+            <div class="users-tools">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="search"
+                        id="userSearch"
+                        placeholder="Search name, username or email..."
+                    >
+
+                </div>
+
+                <select id="roleFilter">
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="staff">Staff</option>
+                </select>
+
+                <select id="accountStatusFilter">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="disabled">Disabled</option>
+                </select>
+
+            </div>
+
+            <!-- USER TABLE -->
+            <div class="table-wrapper">
+
+                <table class="users-table">
+
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Full Name</th>
+                            <th>Username</th>
+                            <th>Email Address</th>
+                            <th>Role</th>
+                            <th>Account Status</th>
+                            <th>Date Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="usersTableBody">
+                        <!-- JavaScript inserts accounts here -->
+                    </tbody>
+
+                </table>
+
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-solid fa-users-slash"></i>
+                    <h3>No user accounts found</h3>
+                    <p>Add an account or change the filters.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- ADD/EDIT USER MODAL -->
+<div class="modal-overlay" id="userModal">
+
+    <section class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modalTitle">Add User</h2>
+                <p>Enter the account information.</p>
+            </div>
+
+            <button
+                type="button"
+                class="close-button"
+                id="closeModal"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+        <form id="userForm">
+
+            <input type="hidden" id="editingUserId">
+
+            <div class="form-grid">
+
+                <div class="input-group full-width">
+
+                    <label for="fullname">Full Name</label>
+
+                    <input
+                        type="text"
+                        id="fullname"
+                        placeholder="Enter full name"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="username">Username</label>
+
+                    <input
+                        type="text"
+                        id="username"
+                        placeholder="Enter username"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="email">Email Address</label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Enter email address"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="role">Account Role</label>
+
+                    <select id="role" required>
+                        <option value="" disabled selected>
+                            Select role
+                        </option>
+                        <option value="admin">Admin</option>
+                        <option value="staff">Staff</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="accountStatus">
+                        Account Status
+                    </label>
+
+                    <select id="accountStatus" required>
+                        <option value="active">Active</option>
+                        <option value="disabled">Disabled</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="password">Password</label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Enter password"
+                    >
+
+                    <small>
+                        Leave blank when editing to keep the current password.
+                    </small>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="confirmPassword">
+                        Confirm Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        placeholder="Confirm password"
+                    >
+
+                </div>
+
+            </div>
+
+            <p class="form-message" id="formMessage"></p>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    id="cancelButton"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="save-button">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save User
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+<!-- DELETE CONFIRMATION -->
+<div class="modal-overlay" id="deleteModal">
+
+    <section class="modal action-modal">
+
+        <div class="delete-icon">
+            <i class="fa-solid fa-user-xmark"></i>
+        </div>
+
+        <h2>Delete User Account?</h2>
+
+        <p>
+            This account will be permanently removed.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelDelete"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="delete-button"
+                id="confirmDelete"
+            >
+                Delete
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="manage-users.js"></script>
+
+</body>
+</html>

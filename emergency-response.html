@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Emergency Response | MedTrack</title>
+
+    <link rel="stylesheet" href="emergency-response.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p id="portalName">Inventory Portal</p>
+            </div>
+
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="#" class="nav-item" id="dashboardLink">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a
+                href="emergency-response.html"
+                class="nav-item active"
+            >
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <!-- ADMIN-ONLY LINKS -->
+            <div id="adminNavigation" class="admin-navigation">
+
+                <p class="menu-label">ADMINISTRATION</p>
+
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>Manage Users</span>
+                </a>
+
+                <a href="reports.html" class="nav-item">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Reports</span>
+                </a>
+
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Audit Logs</span>
+                </a>
+
+                <a href="settings.html" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>System Settings</span>
+                </a>
+
+            </div>
+
+        </nav>
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h2>Emergency Response</h2>
+                <p>Record and monitor emergency response requests.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <button
+                    type="button"
+                    class="notification-button"
+                    id="notificationButton"
+                >
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notificationCount">0</span>
+                </button>
+
+                <div class="user-profile">
+
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">User</strong>
+                        <small id="currentUserRole">Role</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- SUMMARY CARDS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                </div>
+
+                <div>
+                    <p>Total Requests</p>
+                    <h3 id="totalRequests">0</h3>
+                    <small>All response records</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card yellow">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+
+                <div>
+                    <p>Pending</p>
+                    <h3 id="pendingRequests">0</h3>
+                    <small>Waiting for response</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card blue">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-truck-fast"></i>
+                </div>
+
+                <div>
+                    <p>In Progress</p>
+                    <h3 id="activeRequests">0</h3>
+                    <small>Teams currently responding</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card green">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <div>
+                    <p>Completed</p>
+                    <h3 id="completedRequests">0</h3>
+                    <small>Completed responses</small>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- RESPONSE REQUESTS -->
+        <section class="response-card">
+
+            <div class="response-header">
+
+                <div>
+                    <h3>Emergency Response Records</h3>
+                    <p>View and manage emergency requests.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="add-button"
+                    id="openAddModal"
+                >
+                    <i class="fa-solid fa-plus"></i>
+                    New Request
+                </button>
+
+            </div>
+
+            <!-- SEARCH AND FILTERS -->
+            <div class="response-tools">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="search"
+                        id="requestSearch"
+                        placeholder="Search request or location..."
+                    >
+
+                </div>
+
+                <select id="emergencyTypeFilter">
+                    <option value="all">All Emergency Types</option>
+                    <option value="Medical Emergency">
+                        Medical Emergency
+                    </option>
+                    <option value="Fire Incident">
+                        Fire Incident
+                    </option>
+                    <option value="Flood Response">
+                        Flood Response
+                    </option>
+                    <option value="Road Accident">
+                        Road Accident
+                    </option>
+                    <option value="Rescue Operation">
+                        Rescue Operation
+                    </option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <select id="priorityFilter">
+                    <option value="all">All Priority</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+
+                <select id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+
+            </div>
+
+            <!-- RESPONSE TABLE -->
+            <div class="table-wrapper">
+
+                <table class="response-table">
+
+                    <thead>
+                        <tr>
+                            <th>Request ID</th>
+                            <th>Date and Time</th>
+                            <th>Emergency Type</th>
+                            <th>Location</th>
+                            <th>Contact Person</th>
+                            <th>Contact Number</th>
+                            <th>Assigned Team</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="requestTableBody">
+                        <!-- JavaScript inserts requests here -->
+                    </tbody>
+
+                </table>
+
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <h3>No response records found</h3>
+                    <p>Create a request or change the filters.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- ADD/EDIT REQUEST MODAL -->
+<div class="modal-overlay" id="requestModal">
+
+    <section class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modalTitle">New Emergency Request</h2>
+                <p>Enter the emergency response information.</p>
+            </div>
+
+            <button
+                type="button"
+                class="close-button"
+                id="closeModal"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+        <form id="requestForm">
+
+            <input type="hidden" id="editingRequestId">
+
+            <div class="form-grid">
+
+                <div class="input-group">
+
+                    <label for="requestDate">Date</label>
+
+                    <input
+                        type="date"
+                        id="requestDate"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="requestTime">Time</label>
+
+                    <input
+                        type="time"
+                        id="requestTime"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="emergencyType">
+                        Emergency Type
+                    </label>
+
+                    <select id="emergencyType" required>
+                        <option value="" disabled selected>
+                            Select emergency type
+                        </option>
+                        <option value="Medical Emergency">
+                            Medical Emergency
+                        </option>
+                        <option value="Fire Incident">
+                            Fire Incident
+                        </option>
+                        <option value="Flood Response">
+                            Flood Response
+                        </option>
+                        <option value="Road Accident">
+                            Road Accident
+                        </option>
+                        <option value="Rescue Operation">
+                            Rescue Operation
+                        </option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="requestPriority">Priority</label>
+
+                    <select id="requestPriority" required>
+                        <option value="" disabled selected>
+                            Select priority
+                        </option>
+                        <option value="Critical">Critical</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group full-width">
+
+                    <label for="requestLocation">
+                        Incident Location
+                    </label>
+
+                    <input
+                        type="text"
+                        id="requestLocation"
+                        placeholder="Enter the complete location"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="contactPerson">
+                        Contact Person
+                    </label>
+
+                    <input
+                        type="text"
+                        id="contactPerson"
+                        placeholder="Enter contact person"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="contactNumber">
+                        Contact Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="contactNumber"
+                        placeholder="Example: 09123456789"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="assignedTeam">
+                        Assigned Team
+                    </label>
+
+                    <input
+                        type="text"
+                        id="assignedTeam"
+                        placeholder="Enter team or responder"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="requestStatus">Status</label>
+
+                    <select id="requestStatus" required>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">
+                            In Progress
+                        </option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group full-width">
+
+                    <label for="requiredResources">
+                        Required Resources
+                    </label>
+
+                    <input
+                        type="text"
+                        id="requiredResources"
+                        placeholder="Example: Ambulance, first aid kit"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group full-width">
+
+                    <label for="requestDescription">
+                        Incident Description
+                    </label>
+
+                    <textarea
+                        id="requestDescription"
+                        rows="4"
+                        placeholder="Enter the important incident details"
+                        required
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+            <p class="form-message" id="formMessage"></p>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    id="cancelButton"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="save-button">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save Request
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+<!-- COMPLETE REQUEST MODAL -->
+<div class="modal-overlay" id="completeModal">
+
+    <section class="modal action-modal">
+
+        <div class="complete-icon">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <h2>Complete Response Request?</h2>
+
+        <p>
+            This request will be marked as completed.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelComplete"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="complete-button"
+                id="confirmComplete"
+            >
+                Mark Completed
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal-overlay" id="deleteModal">
+
+    <section class="modal action-modal">
+
+        <div class="delete-icon">
+            <i class="fa-solid fa-trash-can"></i>
+        </div>
+
+        <h2>Delete Response Record?</h2>
+
+        <p>
+            This emergency response record will be permanently removed.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelDelete"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="delete-button"
+                id="confirmDelete"
+            >
+                Delete
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="emergency-response.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Medical Equipment | MedTrack</title>
+
+    <link rel="stylesheet" href="medical-equipment.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p id="portalName">Inventory Portal</p>
+            </div>
+
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="#" class="nav-item" id="dashboardLink">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a
+                href="medical-equipment.html"
+                class="nav-item active"
+            >
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <!-- ADMIN-ONLY LINKS -->
+            <div id="adminNavigation" class="admin-navigation">
+
+                <p class="menu-label">ADMINISTRATION</p>
+
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>Manage Users</span>
+                </a>
+
+                <a href="reports.html" class="nav-item">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Reports</span>
+                </a>
+
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Audit Logs</span>
+                </a>
+
+                <a href="settings.html" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>System Settings</span>
+                </a>
+
+            </div>
+
+        </nav>
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h2>Medical Equipment</h2>
+                <p>Manage and monitor medical equipment.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <button
+                    type="button"
+                    class="notification-button"
+                    id="notificationButton"
+                >
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notificationCount">0</span>
+                </button>
+
+                <div class="user-profile">
+
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">User</strong>
+                        <small id="currentUserRole">Role</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- SUMMARY CARDS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-suitcase-medical"></i>
+                </div>
+
+                <div>
+                    <p>Total Equipment</p>
+                    <h3 id="totalEquipment">0</h3>
+                    <small>Registered equipment</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card green">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <div>
+                    <p>Available</p>
+                    <h3 id="availableEquipment">0</h3>
+                    <small>Ready for use</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card yellow">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                </div>
+
+                <div>
+                    <p>Maintenance</p>
+                    <h3 id="maintenanceEquipment">0</h3>
+                    <small>Needs maintenance</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card blue">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-hand-holding-medical"></i>
+                </div>
+
+                <div>
+                    <p>In Use</p>
+                    <h3 id="inUseEquipment">0</h3>
+                    <small>Currently being used</small>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- EQUIPMENT INVENTORY -->
+        <section class="inventory-card">
+
+            <div class="inventory-header">
+
+                <div>
+                    <h3>Equipment Inventory</h3>
+                    <p>View, add and update medical equipment.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="add-button"
+                    id="openAddModal"
+                >
+                    <i class="fa-solid fa-plus"></i>
+                    Add Equipment
+                </button>
+
+            </div>
+
+            <!-- SEARCH AND FILTERS -->
+            <div class="inventory-tools">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="search"
+                        id="equipmentSearch"
+                        placeholder="Search equipment..."
+                    >
+
+                </div>
+
+                <select id="categoryFilter">
+                    <option value="all">All Categories</option>
+                    <option value="Diagnostic">Diagnostic</option>
+                    <option value="Emergency">Emergency</option>
+                    <option value="Life Support">Life Support</option>
+                    <option value="Monitoring">Monitoring</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <select id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="Available">Available</option>
+                    <option value="In Use">In Use</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Unavailable">Unavailable</option>
+                </select>
+
+            </div>
+
+            <!-- EQUIPMENT TABLE -->
+            <div class="table-wrapper">
+
+                <table class="equipment-table">
+
+                    <thead>
+                        <tr>
+                            <th>Equipment ID</th>
+                            <th>Equipment Name</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Condition</th>
+                            <th>Location</th>
+                            <th>Next Maintenance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="equipmentTableBody">
+                        <!-- JavaScript inserts equipment here -->
+                    </tbody>
+
+                </table>
+
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-solid fa-toolbox"></i>
+                    <h3>No medical equipment found</h3>
+                    <p>Add equipment or change the filters.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- ADD/EDIT EQUIPMENT MODAL -->
+<div class="modal-overlay" id="equipmentModal">
+
+    <section class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modalTitle">Add Medical Equipment</h2>
+                <p>Enter the equipment information.</p>
+            </div>
+
+            <button
+                type="button"
+                class="close-button"
+                id="closeModal"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+        <form id="equipmentForm">
+
+            <input type="hidden" id="editingEquipmentId">
+
+            <div class="form-grid">
+
+                <div class="input-group full-width">
+
+                    <label for="equipmentName">
+                        Equipment Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="equipmentName"
+                        placeholder="Enter equipment name"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="equipmentCategory">
+                        Category
+                    </label>
+
+                    <select id="equipmentCategory" required>
+                        <option value="" disabled selected>
+                            Select category
+                        </option>
+                        <option value="Diagnostic">Diagnostic</option>
+                        <option value="Emergency">Emergency</option>
+                        <option value="Life Support">Life Support</option>
+                        <option value="Monitoring">Monitoring</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="equipmentQuantity">
+                        Quantity
+                    </label>
+
+                    <input
+                        type="number"
+                        id="equipmentQuantity"
+                        min="1"
+                        placeholder="Enter quantity"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="equipmentCondition">
+                        Condition
+                    </label>
+
+                    <select id="equipmentCondition" required>
+                        <option value="" disabled selected>
+                            Select condition
+                        </option>
+                        <option value="Excellent">Excellent</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                        <option value="Damaged">Damaged</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="equipmentStatus">
+                        Status
+                    </label>
+
+                    <select id="equipmentStatus" required>
+                        <option value="" disabled selected>
+                            Select status
+                        </option>
+                        <option value="Available">Available</option>
+                        <option value="In Use">In Use</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Unavailable">Unavailable</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group full-width">
+
+                    <label for="equipmentLocation">
+                        Storage Location
+                    </label>
+
+                    <input
+                        type="text"
+                        id="equipmentLocation"
+                        placeholder="Example: Equipment Room A"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group full-width">
+
+                    <label for="maintenanceDate">
+                        Next Maintenance Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="maintenanceDate"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+            <p class="form-message" id="formMessage"></p>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    id="cancelButton"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="save-button">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save Equipment
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal-overlay" id="deleteModal">
+
+    <section class="modal delete-modal">
+
+        <div class="delete-icon">
+            <i class="fa-solid fa-trash-can"></i>
+        </div>
+
+        <h2>Delete Medical Equipment?</h2>
+
+        <p>
+            This equipment will be permanently removed.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelDelete"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="delete-button"
+                id="confirmDelete"
+            >
+                Delete
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="medical-equipment.js"></script>
+
+</body>
+</html>

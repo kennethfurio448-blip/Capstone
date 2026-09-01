@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Reports | MedTrack</title>
+
+    <link rel="stylesheet" href="reports.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- ADMIN SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p>Admin Portal</p>
+            </div>
+
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <p class="menu-label">ADMINISTRATION</p>
+
+            <a href="manage-users.html" class="nav-item">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Manage Users</span>
+            </a>
+
+            <a href="reports.html" class="nav-item active">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>Reports</span>
+            </a>
+
+            <a href="audit-logs.html" class="nav-item">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Audit Logs</span>
+            </a>
+
+            <a href="settings.html" class="nav-item">
+                <i class="fa-solid fa-gear"></i>
+                <span>System Settings</span>
+            </a>
+
+        </nav>
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h2>Reports</h2>
+                <p>Generate and export MedTrack system reports.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <button
+                    type="button"
+                    class="print-button"
+                    id="printReport"
+                >
+                    <i class="fa-solid fa-print"></i>
+                    Print
+                </button>
+
+                <button
+                    type="button"
+                    class="export-button"
+                    id="exportCSV"
+                >
+                    <i class="fa-solid fa-file-export"></i>
+                    Export CSV
+                </button>
+
+                <div class="user-profile">
+
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">Administrator</strong>
+                        <small>Admin</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- SUMMARY CARDS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-pills"></i>
+                </div>
+
+                <div>
+                    <p>Medical Supplies</p>
+                    <h3 id="suppliesCount">0</h3>
+                    <small>Registered supplies</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card orange">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-suitcase-medical"></i>
+                </div>
+
+                <div>
+                    <p>Medical Equipment</p>
+                    <h3 id="equipmentCount">0</h3>
+                    <small>Registered equipment</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card blue">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-truck-medical"></i>
+                </div>
+
+                <div>
+                    <p>Mobility Assets</p>
+                    <h3 id="mobilityCount">0</h3>
+                    <small>Registered vehicles</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card green">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                </div>
+
+                <div>
+                    <p>Borrowing Records</p>
+                    <h3 id="borrowingCount">0</h3>
+                    <small>Total transactions</small>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- REPORT GENERATOR -->
+        <section class="report-card">
+
+            <div class="report-header">
+
+                <div>
+                    <h3>Report Generator</h3>
+                    <p>Select the report and date range.</p>
+                </div>
+
+                <span class="generated-date" id="generatedDate">
+                    Not generated
+                </span>
+
+            </div>
+
+            <div class="report-controls">
+
+                <div class="control-group">
+
+                    <label for="reportType">Report Type</label>
+
+                    <select id="reportType">
+                        <option value="supplies">
+                            Medical Supplies
+                        </option>
+
+                        <option value="equipment">
+                            Medical Equipment
+                        </option>
+
+                        <option value="mobility">
+                            Mobility Assets
+                        </option>
+
+                        <option value="borrowing">
+                            Borrow and Return
+                        </option>
+
+                        <option value="emergency">
+                            Emergency Response
+                        </option>
+
+                        <option value="users">
+                            User Accounts
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="control-group">
+
+                    <label for="startDate">Start Date</label>
+
+                    <input
+                        type="date"
+                        id="startDate"
+                    >
+
+                </div>
+
+                <div class="control-group">
+
+                    <label for="endDate">End Date</label>
+
+                    <input
+                        type="date"
+                        id="endDate"
+                    >
+
+                </div>
+
+                <button
+                    type="button"
+                    class="generate-button"
+                    id="generateReport"
+                >
+                    <i class="fa-solid fa-chart-line"></i>
+                    Generate
+                </button>
+
+            </div>
+
+            <p class="report-message" id="reportMessage"></p>
+
+        </section>
+
+        <!-- GENERATED REPORT -->
+        <section class="report-results" id="reportResults">
+
+            <div class="results-header">
+
+                <div>
+                    <h3 id="reportTitle">
+                        Medical Supplies Report
+                    </h3>
+
+                    <p id="reportDescription">
+                        Complete medical supply inventory.
+                    </p>
+                </div>
+
+                <div class="result-count">
+                    <span id="recordCount">0</span>
+                    <small>Records</small>
+                </div>
+
+            </div>
+
+            <div class="table-wrapper">
+
+                <table class="report-table">
+
+                    <thead id="reportTableHead">
+                        <!-- JavaScript inserts report headings -->
+                    </thead>
+
+                    <tbody id="reportTableBody">
+                        <!-- JavaScript inserts report records -->
+                    </tbody>
+
+                </table>
+
+                <div class="empty-state" id="emptyState">
+
+                    <i class="fa-solid fa-file-circle-xmark"></i>
+
+                    <h3>No report records found</h3>
+
+                    <p>
+                        Select another report or date range.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="reports.js"></script>
+
+</body>
+</html>

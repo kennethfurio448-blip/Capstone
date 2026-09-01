@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>System Settings | MedTrack</title>
+
+    <link rel="stylesheet" href="settings.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- ADMIN SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p>Admin Portal</p>
+            </div>
+
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <p class="menu-label">ADMINISTRATION</p>
+
+            <a href="manage-users.html" class="nav-item">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Manage Users</span>
+            </a>
+
+            <a href="reports.html" class="nav-item">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>Reports</span>
+            </a>
+
+            <a href="audit-logs.html" class="nav-item">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Audit Logs</span>
+            </a>
+
+            <a href="settings.html" class="nav-item active">
+                <i class="fa-solid fa-gear"></i>
+                <span>System Settings</span>
+            </a>
+
+        </nav>
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h2>System Settings</h2>
+                <p>Configure the MedTrack system.</p>
+            </div>
+
+            <div class="user-profile">
+
+                <div class="profile-icon">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+
+                <div>
+                    <strong id="currentUserName">Administrator</strong>
+                    <small>Admin</small>
+                </div>
+
+            </div>
+
+        </header>
+
+        <div class="settings-layout">
+
+            <!-- SETTINGS NAVIGATION -->
+            <aside class="settings-navigation">
+
+                <button
+                    type="button"
+                    class="settings-tab active"
+                    data-section="generalSection"
+                >
+                    <i class="fa-solid fa-sliders"></i>
+                    General
+                </button>
+
+                <button
+                    type="button"
+                    class="settings-tab"
+                    data-section="inventorySection"
+                >
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    Inventory
+                </button>
+
+                <button
+                    type="button"
+                    class="settings-tab"
+                    data-section="notificationSection"
+                >
+                    <i class="fa-solid fa-bell"></i>
+                    Notifications
+                </button>
+
+                <button
+                    type="button"
+                    class="settings-tab"
+                    data-section="securitySection"
+                >
+                    <i class="fa-solid fa-shield-halved"></i>
+                    Security
+                </button>
+
+                <button
+                    type="button"
+                    class="settings-tab"
+                    data-section="backupSection"
+                >
+                    <i class="fa-solid fa-database"></i>
+                    Backup
+                </button>
+
+            </aside>
+
+            <!-- SETTINGS CONTENT -->
+            <section class="settings-content">
+
+                <!-- GENERAL SETTINGS -->
+                <form
+                    id="generalSection"
+                    class="settings-section active"
+                >
+
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fa-solid fa-sliders"></i>
+                        </div>
+
+                        <div>
+                            <h3>General Settings</h3>
+                            <p>Configure the system information.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="input-group full-width">
+
+                            <label for="systemName">
+                                System Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="systemName"
+                                value="MedTrack"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="input-group full-width">
+
+                            <label for="organizationName">
+                                Organization Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="organizationName"
+                                value="PDRRMO"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="input-group">
+
+                            <label for="divisionName">
+                                Division
+                            </label>
+
+                            <input
+                                type="text"
+                                id="divisionName"
+                                value="Operation and Warning Division"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="input-group">
+
+                            <label for="systemEmail">
+                                System Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="systemEmail"
+                                placeholder="Enter system email"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <div class="section-actions">
+                        <button type="submit" class="save-button">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Save General Settings
+                        </button>
+                    </div>
+
+                </form>
+
+                <!-- INVENTORY SETTINGS -->
+                <form
+                    id="inventorySection"
+                    class="settings-section"
+                >
+
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+
+                        <div>
+                            <h3>Inventory Settings</h3>
+                            <p>Configure inventory alert levels.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="input-group">
+
+                            <label for="defaultLowStock">
+                                Default Low-Stock Level
+                            </label>
+
+                            <input
+                                type="number"
+                                id="defaultLowStock"
+                                min="1"
+                                value="10"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="input-group">
+
+                            <label for="expirationWarningDays">
+                                Expiration Warning
+                            </label>
+
+                            <div class="input-with-text">
+                                <input
+                                    type="number"
+                                    id="expirationWarningDays"
+                                    min="1"
+                                    value="30"
+                                    required
+                                >
+                                <span>days</span>
+                            </div>
+
+                        </div>
+
+                        <div class="input-group">
+
+                            <label for="maintenanceWarningDays">
+                                Maintenance Warning
+                            </label>
+
+                            <div class="input-with-text">
+                                <input
+                                    type="number"
+                                    id="maintenanceWarningDays"
+                                    min="1"
+                                    value="14"
+                                    required
+                                >
+                                <span>days</span>
+                            </div>
+
+                        </div>
+
+                        <div class="input-group">
+
+                            <label for="defaultBorrowDays">
+                                Default Borrowing Period
+                            </label>
+
+                            <div class="input-with-text">
+                                <input
+                                    type="number"
+                                    id="defaultBorrowDays"
+                                    min="1"
+                                    value="7"
+                                    required
+                                >
+                                <span>days</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="section-actions">
+                        <button type="submit" class="save-button">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Save Inventory Settings
+                        </button>
+                    </div>
+
+                </form>
+
+                <!-- NOTIFICATION SETTINGS -->
+                <form
+                    id="notificationSection"
+                    class="settings-section"
+                >
+
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+
+                        <div>
+                            <h3>Notification Settings</h3>
+                            <p>Choose which system alerts are enabled.</p>
+                        </div>
+                    </div>
+
+                    <div class="toggle-list">
+
+                        <label class="toggle-item">
+
+                            <div>
+                                <strong>Low-Stock Alerts</strong>
+                                <p>Notify users when stock is low.</p>
+                            </div>
+
+                            <span class="switch">
+                                <input
+                                    type="checkbox"
+                                    id="lowStockAlerts"
+                                    checked
+                                >
+                                <span class="slider"></span>
+                            </span>
+
+                        </label>
+
+                        <label class="toggle-item">
+
+                            <div>
+                                <strong>Expiration Alerts</strong>
+                                <p>Notify users about expiring items.</p>
+                            </div>
+
+                            <span class="switch">
+                                <input
+                                    type="checkbox"
+                                    id="expirationAlerts"
+                                    checked
+                                >
+                                <span class="slider"></span>
+                            </span>
+
+                        </label>
+
+                        <label class="toggle-item">
+
+                            <div>
+                                <strong>Maintenance Alerts</strong>
+                                <p>Notify users about maintenance schedules.</p>
+                            </div>
+
+                            <span class="switch">
+                                <input
+                                    type="checkbox"
+                                    id="maintenanceAlerts"
+                                    checked
+                                >
+                                <span class="slider"></span>
+                            </span>
+
+                        </label>
+
+                        <label class="toggle-item">
+
+                            <div>
+                                <strong>Overdue Return Alerts</strong>
+                                <p>Notify users about overdue items.</p>
+                            </div>
+
+                            <span class="switch">
+                                <input
+                                    type="checkbox"
+                                    id="overdueAlerts"
+                                    checked
+                                >
+                                <span class="slider"></span>
+                            </span>
+
+                        </label>
+
+                        <label class="toggle-item">
+
+                            <div>
+                                <strong>Emergency Alerts</strong>
+                                <p>Notify users about urgent requests.</p>
+                            </div>
+
+                            <span class="switch">
+                                <input
+                                    type="checkbox"
+                                    id="emergencyAlerts"
+                                    checked
+                                >
+                                <span class="slider"></span>
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                    <div class="section-actions">
+                        <button type="submit" class="save-button">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Save Notification Settings
+                        </button>
+                    </div>
+
+                </form>
+
+                <!-- SECURITY SETTINGS -->
+                <form
+                    id="securitySection"
+                    class="settings-section"
+                >
+
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+
+                        <div>
+                            <h3>Security Settings</h3>
+                            <p>Update the current Admin password.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="input-group full-width">
+
+                            <label for="currentPassword">
+                                Current Password
+                            </label>
+
+                            <input
+                                type="password"
+                                id="currentPassword"
+                                placeholder="Enter current password"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="input-group">
+
+                            <label for="newPassword">
+                                New Password
+                            </label>
+
+                            <input
+                                type="password"
+                                id="newPassword"
+                                placeholder="Enter new password"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="input-group">
+
+                            <label for="confirmNewPassword">
+                                Confirm New Password
+                            </label>
+
+                            <input
+                                type="password"
+                                id="confirmNewPassword"
+                                placeholder="Confirm new password"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <div class="section-actions">
+                        <button type="submit" class="save-button">
+                            <i class="fa-solid fa-key"></i>
+                            Change Password
+                        </button>
+                    </div>
+
+                </form>
+
+                <!-- BACKUP SETTINGS -->
+                <section
+                    id="backupSection"
+                    class="settings-section"
+                >
+
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+
+                        <div>
+                            <h3>Backup and Restore</h3>
+                            <p>Download or restore MedTrack data.</p>
+                        </div>
+                    </div>
+
+                    <div class="backup-grid">
+
+                        <article class="backup-card">
+
+                            <div class="backup-icon">
+                                <i class="fa-solid fa-download"></i>
+                            </div>
+
+                            <h4>Download Backup</h4>
+
+                            <p>
+                                Download the current MedTrack data as
+                                a JSON backup file.
+                            </p>
+
+                            <button
+                                type="button"
+                                class="backup-button"
+                                id="downloadBackup"
+                            >
+                                Download Backup
+                            </button>
+
+                        </article>
+
+                        <article class="backup-card">
+
+                            <div class="backup-icon">
+                                <i class="fa-solid fa-upload"></i>
+                            </div>
+
+                            <h4>Restore Backup</h4>
+
+                            <p>
+                                Select a valid MedTrack JSON backup file.
+                            </p>
+
+                            <input
+                                type="file"
+                                id="restoreFile"
+                                accept=".json,application/json"
+                                hidden
+                            >
+
+                            <button
+                                type="button"
+                                class="restore-button"
+                                id="selectRestoreFile"
+                            >
+                                Select Backup File
+                            </button>
+
+                        </article>
+
+                    </div>
+
+                </section>
+
+                <p class="settings-message" id="settingsMessage"></p>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+<!-- RESTORE CONFIRMATION -->
+<div class="modal-overlay" id="restoreModal">
+
+    <section class="modal">
+
+        <div class="warning-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <h2>Restore MedTrack Backup?</h2>
+
+        <p>
+            Existing MedTrack data will be replaced with the selected
+            backup.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelRestore"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="confirm-button"
+                id="confirmRestore"
+            >
+                Restore Backup
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="settings.js"></script>
+
+</body>
+</html>

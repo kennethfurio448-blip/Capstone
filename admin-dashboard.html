@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Dashboard | MedTrack</title>
+
+    <link rel="stylesheet" href="admin-dashboard.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- ADMIN SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p>Admin Portal</p>
+            </div>
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="admin-dashboard.html" class="nav-item active">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <p class="menu-label">ADMINISTRATION</p>
+
+            <a href="manage-users.html" class="nav-item admin-only">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Manage Users</span>
+            </a>
+
+            <a href="reports.html" class="nav-item admin-only">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>Reports</span>
+            </a>
+
+            <a href="audit-logs.html" class="nav-item admin-only">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Audit Logs</span>
+            </a>
+
+            <a href="settings.html" class="nav-item admin-only">
+                <i class="fa-solid fa-gear"></i>
+                <span>System Settings</span>
+            </a>
+
+        </nav>
+
+        <button type="button" class="logout-button" id="logoutButton">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- ADMIN MAIN CONTENT -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <h2>Admin Dashboard</h2>
+                <p>Monitor and manage the entire MedTrack system.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search" placeholder="Search dashboard...">
+                </div>
+
+                <button type="button" class="notification-button">
+                    <i class="fa-solid fa-bell"></i>
+                    <span>4</span>
+                </button>
+
+                <div class="user-profile">
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">Administrator</strong>
+                        <small>Admin</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+        <section class="welcome-banner">
+            <div>
+                <p class="welcome-label">ADMINISTRATOR ACCESS</p>
+                <h2>Welcome back, <span id="welcomeName">Administrator</span>!</h2>
+                <p>You have complete access to inventory, accounts and reports.</p>
+            </div>
+
+            <i class="fa-solid fa-shield-heart banner-icon"></i>
+        </section>
+
+        <!-- ADMIN STATISTICS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-pills"></i>
+                </div>
+
+                <div>
+                    <p>Medical Supplies</p>
+                    <h3>120</h3>
+                    <small>Total supply categories</small>
+                </div>
+            </article>
+
+            <article class="stat-card orange">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-suitcase-medical"></i>
+                </div>
+
+                <div>
+                    <p>Medical Equipment</p>
+                    <h3>19</h3>
+                    <small>Registered equipment</small>
+                </div>
+            </article>
+
+            <article class="stat-card blue">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-truck-medical"></i>
+                </div>
+
+                <div>
+                    <p>Mobility Assets</p>
+                    <h3>4</h3>
+                    <small>Available vehicles</small>
+                </div>
+            </article>
+
+            <article class="stat-card green">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+
+                <div>
+                    <p>System Users</p>
+                    <h3>12</h3>
+                    <small>Admin and staff accounts</small>
+                </div>
+            </article>
+
+        </section>
+
+        <section class="dashboard-grid">
+
+            <!-- Inventory overview -->
+            <article class="dashboard-card inventory-overview">
+
+                <div class="card-heading">
+                    <div>
+                        <h3>Inventory Overview</h3>
+                        <p>Current inventory distribution</p>
+                    </div>
+
+                    <select>
+                        <option>This Week</option>
+                        <option>This Month</option>
+                        <option>This Year</option>
+                    </select>
+                </div>
+
+                <div class="inventory-item">
+                    <div class="inventory-information">
+                        <span>Medical Supplies</span>
+                        <strong>620</strong>
+                    </div>
+
+                    <div class="progress-bar">
+                        <span class="progress red-progress"></span>
+                    </div>
+                </div>
+
+                <div class="inventory-item">
+                    <div class="inventory-information">
+                        <span>Medical Equipment</span>
+                        <strong>55</strong>
+                    </div>
+
+                    <div class="progress-bar">
+                        <span class="progress orange-progress"></span>
+                    </div>
+                </div>
+
+                <div class="inventory-item">
+                    <div class="inventory-information">
+                        <span>Mobility Assets</span>
+                        <strong>32</strong>
+                    </div>
+
+                    <div class="progress-bar">
+                        <span class="progress blue-progress"></span>
+                    </div>
+                </div>
+
+                <div class="inventory-item">
+                    <div class="inventory-information">
+                        <span>Emergency Supplies</span>
+                        <strong>67</strong>
+                    </div>
+
+                    <div class="progress-bar">
+                        <span class="progress green-progress"></span>
+                    </div>
+                </div>
+
+            </article>
+
+            <!-- Admin alerts -->
+            <article class="dashboard-card">
+
+                <div class="card-heading">
+                    <div>
+                        <h3>Inventory Alerts</h3>
+                        <p>Items requiring attention</p>
+                    </div>
+
+                    <a href="reports.html">View all</a>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-icon danger">
+                        <i class="fa-solid fa-arrow-trend-down"></i>
+                    </div>
+
+                    <div>
+                        <strong>Low Stock</strong>
+                        <p>First Aid Kits</p>
+                    </div>
+
+                    <span class="alert-status danger-text">4 left</span>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-icon danger">
+                        <i class="fa-solid fa-calendar-xmark"></i>
+                    </div>
+
+                    <div>
+                        <strong>Expired Item</strong>
+                        <p>Medical Gloves</p>
+                    </div>
+
+                    <span class="alert-status danger-text">Expired</span>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-icon warning">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+
+                    <div>
+                        <strong>Maintenance Due</strong>
+                        <p>Portable Generator</p>
+                    </div>
+
+                    <span class="alert-status warning-text">Overdue</span>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-icon information">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+
+                    <div>
+                        <strong>Return Due</strong>
+                        <p>Handheld Radio</p>
+                    </div>
+
+                    <span class="alert-status information-text">Today</span>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- ADMIN-ONLY CONTROLS -->
+        <section class="dashboard-card admin-actions">
+
+            <div class="card-heading">
+                <div>
+                    <h3>Administrative Controls</h3>
+                    <p>Admin-only system actions</p>
+                </div>
+            </div>
+
+            <div class="action-grid">
+
+                <a href="manage-users.html" class="action-button">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Manage Users</span>
+                </a>
+
+                <a href="reports.html" class="action-button">
+                    <i class="fa-solid fa-file-export"></i>
+                    <span>Generate Reports</span>
+                </a>
+
+                <a href="audit-logs.html" class="action-button">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>View Audit Logs</span>
+                </a>
+
+                <a href="settings.html" class="action-button">
+                    <i class="fa-solid fa-gears"></i>
+                    <span>System Settings</span>
+                </a>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="admin-dashboard.js"></script>
+
+</body>
+</html>

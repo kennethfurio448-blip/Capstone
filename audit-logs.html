@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Audit Logs | MedTrack</title>
+
+    <link rel="stylesheet" href="audit-logs.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- ADMIN SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p>Admin Portal</p>
+            </div>
+
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <p class="menu-label">ADMINISTRATION</p>
+
+            <a href="manage-users.html" class="nav-item">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Manage Users</span>
+            </a>
+
+            <a href="reports.html" class="nav-item">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>Reports</span>
+            </a>
+
+            <a href="audit-logs.html" class="nav-item active">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Audit Logs</span>
+            </a>
+
+            <a href="settings.html" class="nav-item">
+                <i class="fa-solid fa-gear"></i>
+                <span>System Settings</span>
+            </a>
+
+        </nav>
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h2>Audit Logs</h2>
+                <p>Monitor user activities in the MedTrack system.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <button
+                    type="button"
+                    class="export-button"
+                    id="exportLogs"
+                >
+                    <i class="fa-solid fa-file-export"></i>
+                    Export CSV
+                </button>
+
+                <button
+                    type="button"
+                    class="clear-button"
+                    id="openClearModal"
+                >
+                    <i class="fa-solid fa-trash-can"></i>
+                    Clear Logs
+                </button>
+
+                <div class="user-profile">
+
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">Administrator</strong>
+                        <small>Admin</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- SUMMARY CARDS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-list"></i>
+                </div>
+
+                <div>
+                    <p>Total Activities</p>
+                    <h3 id="totalLogs">0</h3>
+                    <small>Recorded activities</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card blue">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                </div>
+
+                <div>
+                    <p>Login Activities</p>
+                    <h3 id="loginLogs">0</h3>
+                    <small>Login and logout records</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card green">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+
+                <div>
+                    <p>Created Records</p>
+                    <h3 id="createdLogs">0</h3>
+                    <small>New records added</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card yellow">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-pen"></i>
+                </div>
+
+                <div>
+                    <p>Updated Records</p>
+                    <h3 id="updatedLogs">0</h3>
+                    <small>Records modified</small>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- AUDIT LOGS -->
+        <section class="logs-card">
+
+            <div class="logs-header">
+
+                <div>
+                    <h3>System Activity</h3>
+                    <p>View Admin and Staff activity records.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="refresh-button"
+                    id="refreshLogs"
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Refresh
+                </button>
+
+            </div>
+
+            <!-- SEARCH AND FILTERS -->
+            <div class="logs-tools">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="search"
+                        id="logSearch"
+                        placeholder="Search user, action or details..."
+                    >
+
+                </div>
+
+                <select id="actionFilter">
+                    <option value="all">All Actions</option>
+                    <option value="Login">Login</option>
+                    <option value="Logout">Logout</option>
+                    <option value="Created">Created</option>
+                    <option value="Updated">Updated</option>
+                    <option value="Deleted">Deleted</option>
+                    <option value="Returned">Returned</option>
+                    <option value="Completed">Completed</option>
+                </select>
+
+                <select id="moduleFilter">
+                    <option value="all">All Modules</option>
+                    <option value="Authentication">
+                        Authentication
+                    </option>
+                    <option value="Medical Supplies">
+                        Medical Supplies
+                    </option>
+                    <option value="Medical Equipment">
+                        Medical Equipment
+                    </option>
+                    <option value="Mobility">Mobility</option>
+                    <option value="Borrow and Return">
+                        Borrow and Return
+                    </option>
+                    <option value="Emergency Response">
+                        Emergency Response
+                    </option>
+                    <option value="User Management">
+                        User Management
+                    </option>
+                    <option value="System Settings">
+                        System Settings
+                    </option>
+                </select>
+
+                <input
+                    type="date"
+                    id="dateFilter"
+                    title="Filter by date"
+                >
+
+            </div>
+
+            <!-- LOG TABLE -->
+            <div class="table-wrapper">
+
+                <table class="logs-table">
+
+                    <thead>
+                        <tr>
+                            <th>Log ID</th>
+                            <th>Date and Time</th>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                            <th>Module</th>
+                            <th>Activity Details</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="logsTableBody">
+                        <!-- JavaScript inserts audit logs here -->
+                    </tbody>
+
+                </table>
+
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <h3>No audit logs found</h3>
+                    <p>No activities match the selected filters.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- CLEAR LOGS CONFIRMATION -->
+<div class="modal-overlay" id="clearModal">
+
+    <section class="modal">
+
+        <div class="warning-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <h2>Clear All Audit Logs?</h2>
+
+        <p>
+            All recorded activities will be permanently removed.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelClear"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="confirm-clear-button"
+                id="confirmClear"
+            >
+                Clear Logs
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="audit-logs.js"></script>
+
+</body>
+</html>

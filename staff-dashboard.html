@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Staff Dashboard | MedTrack</title>
+
+    <link rel="stylesheet" href="staff-dashboard.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- STAFF SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p>Staff Portal</p>
+            </div>
+        </div>
+
+        <p class="menu-label">STAFF MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="staff-dashboard.html" class="nav-item active">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+        </nav>
+
+        <button type="button" class="logout-button" id="logoutButton">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- STAFF MAIN CONTENT -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <h2>Staff Dashboard</h2>
+                <p>Manage daily inventory operations.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search" placeholder="Search inventory...">
+                </div>
+
+                <button type="button" class="notification-button">
+                    <i class="fa-solid fa-bell"></i>
+                    <span>4</span>
+                </button>
+
+                <div class="user-profile">
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">Staff Member</strong>
+                        <small>Staff</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+        <section class="welcome-banner">
+            <div>
+                <p class="welcome-label">STAFF ACCESS</p>
+                <h2>Welcome back, <span id="welcomeName">Staff Member</span>!</h2>
+                <p>Review inventory alerts and complete daily operations.</p>
+            </div>
+
+            <i class="fa-solid fa-clipboard-check banner-icon"></i>
+        </section>
+
+        <!-- STAFF STATISTICS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-pills"></i>
+                </div>
+
+                <div>
+                    <p>Medical Supplies</p>
+                    <h3>120</h3>
+                    <small>Total supply categories</small>
+                </div>
+            </article>
+
+            <article class="stat-card orange">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-suitcase-medical"></i>
+                </div>
+
+                <div>
+                    <p>Medical Equipment</p>
+                    <h3>19</h3>
+                    <small>Registered equipment</small>
+                </div>
+            </article>
+
+            <article class="stat-card blue">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-truck-medical"></i>
+                </div>
+
+                <div>
+                    <p>Available Mobility</p>
+                    <h3>4</h3>
+                    <small>Ready for deployment</small>
+                </div>
+            </article>
+
+            <article class="stat-card yellow">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <div>
+                    <p>Low-Stock Items</p>
+                    <h3>7</h3>
+                    <small>Needs restocking</small>
+                </div>
+            </article>
+
+        </section>
+
+        <section class="dashboard-grid">
+
+            <!-- Staff tasks -->
+            <article class="dashboard-card">
+
+                <div class="card-heading">
+                    <div>
+                        <h3>Daily Operations</h3>
+                        <p>Staff inventory tasks</p>
+                    </div>
+                </div>
+
+                <div class="operation-grid">
+
+                    <a href="medical-supplies.html" class="operation-button">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        <span>Update Supplies</span>
+                    </a>
+
+                    <a href="medical-equipment.html" class="operation-button">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <span>Check Equipment</span>
+                    </a>
+
+                    <a href="borrow-return.html" class="operation-button">
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                        <span>Process Borrowing</span>
+                    </a>
+
+                    <a href="emergency-response.html" class="operation-button">
+                        <i class="fa-solid fa-truck-fast"></i>
+                        <span>Emergency Request</span>
+                    </a>
+
+                </div>
+
+            </article>
+
+            <!-- Staff alerts -->
+            <article class="dashboard-card">
+
+                <div class="card-heading">
+                    <div>
+                        <h3>Items Requiring Action</h3>
+                        <p>Current inventory notifications</p>
+                    </div>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-icon danger">
+                        <i class="fa-solid fa-arrow-trend-down"></i>
+                    </div>
+
+                    <div>
+                        <strong>Low Stock</strong>
+                        <p>First Aid Kits</p>
+                    </div>
+
+                    <span class="alert-status danger-text">4 left</span>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-icon danger">
+                        <i class="fa-solid fa-calendar-xmark"></i>
+                    </div>
+
+                    <div>
+                        <strong>Expired Item</strong>
+                        <p>Medical Gloves</p>
+                    </div>
+
+                    <span class="alert-status danger-text">Expired</span>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-icon warning">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+
+                    <div>
+                        <strong>Maintenance Due</strong>
+                        <p>Portable Generator</p>
+                    </div>
+
+                    <span class="alert-status warning-text">Overdue</span>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-icon information">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+
+                    <div>
+                        <strong>Return Due</strong>
+                        <p>Handheld Radio</p>
+                    </div>
+
+                    <span class="alert-status information-text">Today</span>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- RECENT STAFF ACTIVITY -->
+        <section class="dashboard-card">
+
+            <div class="card-heading">
+                <div>
+                    <h3>Recent Inventory Activity</h3>
+                    <p>Latest staff operations</p>
+                </div>
+            </div>
+
+            <div class="activity-table-wrapper">
+
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>Activity</th>
+                            <th>Item</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td>Borrowing processed</td>
+                            <td>Handheld Radio</td>
+                            <td><span class="status borrowed">Borrowed</span></td>
+                            <td>9:30 AM</td>
+                        </tr>
+
+                        <tr>
+                            <td>Inventory updated</td>
+                            <td>First Aid Kit</td>
+                            <td><span class="status updated">Updated</span></td>
+                            <td>10:15 AM</td>
+                        </tr>
+
+                        <tr>
+                            <td>Equipment checked</td>
+                            <td>Portable Generator</td>
+                            <td><span class="status pending">Maintenance</span></td>
+                            <td>11:00 AM</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="staff-dashboard.js"></script>
+
+</body>
+</html>

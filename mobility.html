@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Mobility Assets | MedTrack</title>
+
+    <link rel="stylesheet" href="mobility.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p id="portalName">Inventory Portal</p>
+            </div>
+
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="#" class="nav-item" id="dashboardLink">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item active">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a href="borrow-return.html" class="nav-item">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <!-- ADMIN-ONLY LINKS -->
+            <div id="adminNavigation" class="admin-navigation">
+
+                <p class="menu-label">ADMINISTRATION</p>
+
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>Manage Users</span>
+                </a>
+
+                <a href="reports.html" class="nav-item">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Reports</span>
+                </a>
+
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Audit Logs</span>
+                </a>
+
+                <a href="settings.html" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>System Settings</span>
+                </a>
+
+            </div>
+
+        </nav>
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h2>Mobility Assets</h2>
+                <p>Manage PDRRMO emergency and service vehicles.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <button
+                    type="button"
+                    class="notification-button"
+                    id="notificationButton"
+                >
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notificationCount">0</span>
+                </button>
+
+                <div class="user-profile">
+
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">User</strong>
+                        <small id="currentUserRole">Role</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- SUMMARY CARDS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-truck-medical"></i>
+                </div>
+
+                <div>
+                    <p>Total Vehicles</p>
+                    <h3 id="totalVehicles">0</h3>
+                    <small>Registered mobility assets</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card green">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <div>
+                    <p>Available</p>
+                    <h3 id="availableVehicles">0</h3>
+                    <small>Ready for deployment</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card blue">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-route"></i>
+                </div>
+
+                <div>
+                    <p>Deployed</p>
+                    <h3 id="deployedVehicles">0</h3>
+                    <small>Currently in operation</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card yellow">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                </div>
+
+                <div>
+                    <p>Maintenance</p>
+                    <h3 id="maintenanceVehicles">0</h3>
+                    <small>Needs servicing</small>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- MOBILITY INVENTORY -->
+        <section class="inventory-card">
+
+            <div class="inventory-header">
+
+                <div>
+                    <h3>Mobility Inventory</h3>
+                    <p>View, add and update mobility assets.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="add-button"
+                    id="openAddModal"
+                >
+                    <i class="fa-solid fa-plus"></i>
+                    Add Vehicle
+                </button>
+
+            </div>
+
+            <!-- SEARCH AND FILTERS -->
+            <div class="inventory-tools">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="search"
+                        id="vehicleSearch"
+                        placeholder="Search vehicle or plate number..."
+                    >
+
+                </div>
+
+                <select id="typeFilter">
+                    <option value="all">All Vehicle Types</option>
+                    <option value="Ambulance">Ambulance</option>
+                    <option value="Rescue Vehicle">Rescue Vehicle</option>
+                    <option value="Service Vehicle">Service Vehicle</option>
+                    <option value="Command Vehicle">Command Vehicle</option>
+                    <option value="Motorcycle">Motorcycle</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <select id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="Available">Available</option>
+                    <option value="Deployed">Deployed</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Unavailable">Unavailable</option>
+                </select>
+
+            </div>
+
+            <!-- MOBILITY TABLE -->
+            <div class="table-wrapper">
+
+                <table class="mobility-table">
+
+                    <thead>
+                        <tr>
+                            <th>Vehicle ID</th>
+                            <th>Vehicle Name</th>
+                            <th>Type</th>
+                            <th>Plate Number</th>
+                            <th>Condition</th>
+                            <th>Driver</th>
+                            <th>Location</th>
+                            <th>Next Maintenance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="vehicleTableBody">
+                        <!-- JavaScript inserts vehicles here -->
+                    </tbody>
+
+                </table>
+
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-solid fa-truck"></i>
+                    <h3>No mobility assets found</h3>
+                    <p>Add a vehicle or change the filters.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- ADD/EDIT VEHICLE MODAL -->
+<div class="modal-overlay" id="vehicleModal">
+
+    <section class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modalTitle">Add Mobility Asset</h2>
+                <p>Enter the vehicle information.</p>
+            </div>
+
+            <button
+                type="button"
+                class="close-button"
+                id="closeModal"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+        <form id="vehicleForm">
+
+            <input type="hidden" id="editingVehicleId">
+
+            <div class="form-grid">
+
+                <div class="input-group full-width">
+
+                    <label for="vehicleName">Vehicle Name</label>
+
+                    <input
+                        type="text"
+                        id="vehicleName"
+                        placeholder="Example: Rescue Ambulance 1"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="vehicleType">Vehicle Type</label>
+
+                    <select id="vehicleType" required>
+                        <option value="" disabled selected>
+                            Select vehicle type
+                        </option>
+                        <option value="Ambulance">Ambulance</option>
+                        <option value="Rescue Vehicle">
+                            Rescue Vehicle
+                        </option>
+                        <option value="Service Vehicle">
+                            Service Vehicle
+                        </option>
+                        <option value="Command Vehicle">
+                            Command Vehicle
+                        </option>
+                        <option value="Motorcycle">Motorcycle</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="plateNumber">Plate Number</label>
+
+                    <input
+                        type="text"
+                        id="plateNumber"
+                        placeholder="Enter plate number"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="vehicleCondition">Condition</label>
+
+                    <select id="vehicleCondition" required>
+                        <option value="" disabled selected>
+                            Select condition
+                        </option>
+                        <option value="Excellent">Excellent</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                        <option value="Damaged">Damaged</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="vehicleStatus">Status</label>
+
+                    <select id="vehicleStatus" required>
+                        <option value="" disabled selected>
+                            Select status
+                        </option>
+                        <option value="Available">Available</option>
+                        <option value="Deployed">Deployed</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Unavailable">Unavailable</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="assignedDriver">
+                        Assigned Driver
+                    </label>
+
+                    <input
+                        type="text"
+                        id="assignedDriver"
+                        placeholder="Enter driver name"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="vehicleLocation">
+                        Current Location
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleLocation"
+                        placeholder="Enter current location"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group full-width">
+
+                    <label for="maintenanceDate">
+                        Next Maintenance Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="maintenanceDate"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+            <p class="form-message" id="formMessage"></p>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    id="cancelButton"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="save-button">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save Vehicle
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal-overlay" id="deleteModal">
+
+    <section class="modal delete-modal">
+
+        <div class="delete-icon">
+            <i class="fa-solid fa-trash-can"></i>
+        </div>
+
+        <h2>Delete Mobility Asset?</h2>
+
+        <p>
+            This vehicle will be permanently removed.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelDelete"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="delete-button"
+                id="confirmDelete"
+            >
+                Delete
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="mobility.js"></script>
+
+</body>
+</html>

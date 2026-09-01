@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Borrow and Return | MedTrack</title>
+
+    <link rel="stylesheet" href="borrow-return.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="page-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <h1>MedTrack</h1>
+                <p id="portalName">Inventory Portal</p>
+            </div>
+
+        </div>
+
+        <p class="menu-label">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <a href="#" class="nav-item" id="dashboardLink">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="medical-supplies.html" class="nav-item">
+                <i class="fa-solid fa-pills"></i>
+                <span>Medical Supplies</span>
+            </a>
+
+            <a href="medical-equipment.html" class="nav-item">
+                <i class="fa-solid fa-suitcase-medical"></i>
+                <span>Medical Equipment</span>
+            </a>
+
+            <a href="mobility.html" class="nav-item">
+                <i class="fa-solid fa-truck-medical"></i>
+                <span>Mobility</span>
+            </a>
+
+            <a
+                href="borrow-return.html"
+                class="nav-item active"
+            >
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                <span>Borrow and Return</span>
+            </a>
+
+            <a href="emergency-response.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Emergency Response</span>
+            </a>
+
+            <!-- ADMIN-ONLY LINKS -->
+            <div id="adminNavigation" class="admin-navigation">
+
+                <p class="menu-label">ADMINISTRATION</p>
+
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>Manage Users</span>
+                </a>
+
+                <a href="reports.html" class="nav-item">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Reports</span>
+                </a>
+
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Audit Logs</span>
+                </a>
+
+                <a href="settings.html" class="nav-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>System Settings</span>
+                </a>
+
+            </div>
+
+        </nav>
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h2>Borrow and Return</h2>
+                <p>Track borrowed and returned inventory items.</p>
+            </div>
+
+            <div class="topbar-actions">
+
+                <button
+                    type="button"
+                    class="notification-button"
+                    id="notificationButton"
+                >
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notificationCount">0</span>
+                </button>
+
+                <div class="user-profile">
+
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">User</strong>
+                        <small id="currentUserRole">Role</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- SUMMARY CARDS -->
+        <section class="statistics-grid">
+
+            <article class="stat-card red">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                </div>
+
+                <div>
+                    <p>Total Transactions</p>
+                    <h3 id="totalTransactions">0</h3>
+                    <small>All borrowing records</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card blue">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </div>
+
+                <div>
+                    <p>Borrowed</p>
+                    <h3 id="borrowedTransactions">0</h3>
+                    <small>Currently borrowed</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card green">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <div>
+                    <p>Returned</p>
+                    <h3 id="returnedTransactions">0</h3>
+                    <small>Successfully returned</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card yellow">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+
+                <div>
+                    <p>Overdue</p>
+                    <h3 id="overdueTransactions">0</h3>
+                    <small>Past the return date</small>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- BORROWING RECORDS -->
+        <section class="inventory-card">
+
+            <div class="inventory-header">
+
+                <div>
+                    <h3>Borrowing Records</h3>
+                    <p>View and manage borrowing transactions.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="add-button"
+                    id="openAddModal"
+                >
+                    <i class="fa-solid fa-plus"></i>
+                    New Borrowing
+                </button>
+
+            </div>
+
+            <!-- SEARCH AND FILTERS -->
+            <div class="inventory-tools">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="search"
+                        id="transactionSearch"
+                        placeholder="Search borrower or item..."
+                    >
+
+                </div>
+
+                <select id="itemTypeFilter">
+                    <option value="all">All Item Types</option>
+                    <option value="Medical Supply">
+                        Medical Supply
+                    </option>
+                    <option value="Medical Equipment">
+                        Medical Equipment
+                    </option>
+                    <option value="Mobility Asset">
+                        Mobility Asset
+                    </option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <select id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="Borrowed">Borrowed</option>
+                    <option value="Returned">Returned</option>
+                    <option value="Overdue">Overdue</option>
+                </select>
+
+            </div>
+
+            <!-- TRANSACTION TABLE -->
+            <div class="table-wrapper">
+
+                <table class="transaction-table">
+
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Borrower</th>
+                            <th>Department</th>
+                            <th>Item Type</th>
+                            <th>Item Name</th>
+                            <th>Quantity</th>
+                            <th>Borrow Date</th>
+                            <th>Due Date</th>
+                            <th>Return Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="transactionTableBody">
+                        <!-- JavaScript inserts transactions here -->
+                    </tbody>
+
+                </table>
+
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-solid fa-clipboard"></i>
+                    <h3>No borrowing records found</h3>
+                    <p>Create a transaction or change the filters.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- ADD/EDIT BORROWING MODAL -->
+<div class="modal-overlay" id="transactionModal">
+
+    <section class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="modalTitle">New Borrowing Transaction</h2>
+                <p>Enter the borrowing information.</p>
+            </div>
+
+            <button
+                type="button"
+                class="close-button"
+                id="closeModal"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+        <form id="transactionForm">
+
+            <input type="hidden" id="editingTransactionId">
+
+            <div class="form-grid">
+
+                <div class="input-group">
+
+                    <label for="borrowerName">Borrower Name</label>
+
+                    <input
+                        type="text"
+                        id="borrowerName"
+                        placeholder="Enter borrower name"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="borrowerDepartment">
+                        Department or Office
+                    </label>
+
+                    <input
+                        type="text"
+                        id="borrowerDepartment"
+                        placeholder="Enter department"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="itemType">Item Type</label>
+
+                    <select id="itemType" required>
+                        <option value="" disabled selected>
+                            Select item type
+                        </option>
+                        <option value="Medical Supply">
+                            Medical Supply
+                        </option>
+                        <option value="Medical Equipment">
+                            Medical Equipment
+                        </option>
+                        <option value="Mobility Asset">
+                            Mobility Asset
+                        </option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="itemName">Item Name</label>
+
+                    <input
+                        type="text"
+                        id="itemName"
+                        placeholder="Enter item name"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="itemQuantity">Quantity</label>
+
+                    <input
+                        type="number"
+                        id="itemQuantity"
+                        min="1"
+                        value="1"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="borrowDate">Borrow Date</label>
+
+                    <input
+                        type="date"
+                        id="borrowDate"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="dueDate">Due Date</label>
+
+                    <input
+                        type="date"
+                        id="dueDate"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="transactionStatus">Status</label>
+
+                    <select id="transactionStatus" required>
+                        <option value="Borrowed">Borrowed</option>
+                        <option value="Returned">Returned</option>
+                    </select>
+
+                </div>
+
+                <div class="input-group full-width">
+
+                    <label for="borrowPurpose">Purpose</label>
+
+                    <textarea
+                        id="borrowPurpose"
+                        rows="4"
+                        placeholder="Enter the purpose of borrowing"
+                        required
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+            <p class="form-message" id="formMessage"></p>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-button"
+                    id="cancelButton"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="save-button">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save Transaction
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+<!-- RETURN CONFIRMATION MODAL -->
+<div class="modal-overlay" id="returnModal">
+
+    <section class="modal action-modal">
+
+        <div class="return-icon">
+            <i class="fa-solid fa-rotate-left"></i>
+        </div>
+
+        <h2>Mark Item as Returned?</h2>
+
+        <p>
+            The current date will be recorded as the return date.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelReturn"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="return-button"
+                id="confirmReturn"
+            >
+                Confirm Return
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal-overlay" id="deleteModal">
+
+    <section class="modal action-modal">
+
+        <div class="delete-icon">
+            <i class="fa-solid fa-trash-can"></i>
+        </div>
+
+        <h2>Delete Transaction?</h2>
+
+        <p>
+            This borrowing record will be permanently removed.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelDelete"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="delete-button"
+                id="confirmDelete"
+            >
+                Delete
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="borrow-return.js"></script>
+
+</body>
+</html>
