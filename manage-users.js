@@ -3,7 +3,7 @@
 // ADMIN ONLY
 // =====================================
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
 
     // =====================================
     // ELEMENTS
@@ -88,6 +88,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const formMessage =
         document.getElementById("formMessage");
 
+    const saveUserButton =
+        userForm.querySelector("button[type='submit']");
+
     // Delete modal
     const deleteModal =
         document.getElementById("deleteModal");
@@ -99,37 +102,16 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("confirmDelete");
 
     let userToDelete = null;
+    let accounts = [];
 
     // =====================================
     // CURRENT ADMIN
     // =====================================
 
-    function getCurrentUser() {
-        const savedUser =
-            localStorage.getItem("medtrackCurrentUser") ||
-            sessionStorage.getItem("medtrackCurrentUser");
-
-        if (!savedUser) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(savedUser);
-        } catch (error) {
-            return null;
-        }
-    }
-
-    const currentUser = getCurrentUser();
+    const currentUser =
+        await window.medtrackAuth.requireRoles(["admin"]);
 
     if (!currentUser) {
-        window.location.replace("login.html");
-        return;
-    }
-
-    // Staff cannot access Manage Users
-    if (currentUser.role !== "admin") {
-        window.location.replace("staff-dashboard.html");
         return;
     }
 
@@ -139,78 +121,68 @@ document.addEventListener("DOMContentLoaded", function () {
         "Administrator";
 
     // =====================================
-    // ACCOUNT STORAGE
+    // SUPABASE ACCOUNT ADMINISTRATION
     // =====================================
 
-    function generateUserCode(accounts) {
-        let highestNumber = 0;
+    async function getFunctionErrorMessage(error) {
+        const response = error && error.context;
 
-        accounts.forEach(function (account) {
-            const number = Number(
-                String(account.userId || "").replace("USR-", "")
+        if (response && typeof response.clone === "function") {
+            try {
+                const responseBody =
+                    await response.clone().json();
+
+                if (responseBody && responseBody.error) {
+                    return responseBody.error;
+                }
+            } catch (parseError) {
+                console.error(
+                    "Unable to read the account-admin error response:",
+                    parseError
+                );
+            }
+        }
+
+        return (
+            (error && error.message) ||
+            "Unable to complete the account operation."
+        );
+    }
+
+    async function invokeAccountAdmin(action, values) {
+        const result =
+            await window.medtrackSupabase.functions.invoke(
+                "dynamic-worker",
+                {
+                    body: {
+                        action: action,
+                        ...(values || {})
+                    }
+                }
             );
 
-            if (!Number.isNaN(number) && number > highestNumber) {
-                highestNumber = number;
-            }
-        });
-
-        return `USR-${String(highestNumber + 1).padStart(3, "0")}`;
-    }
-
-    function getAccounts() {
-        const savedAccounts =
-            localStorage.getItem("medtrackAccounts");
-
-        if (!savedAccounts) {
-            return [];
+        if (result.error) {
+            throw new Error(
+                await getFunctionErrorMessage(result.error)
+            );
         }
 
-        try {
-            const accounts = JSON.parse(savedAccounts);
-
-            if (!Array.isArray(accounts)) {
-                return [];
-            }
-
-            let accountChanged = false;
-
-            accounts.forEach(function (account, index) {
-                if (!account.userId) {
-                    account.userId =
-                        `USR-${String(index + 1).padStart(3, "0")}`;
-
-                    accountChanged = true;
-                }
-
-                if (!account.status) {
-                    account.status = "active";
-                    accountChanged = true;
-                }
-
-                if (!account.createdAt) {
-                    account.createdAt =
-                        new Date().toISOString();
-
-                    accountChanged = true;
-                }
-            });
-
-            if (accountChanged) {
-                saveAccounts(accounts);
-            }
-
-            return accounts;
-        } catch (error) {
-            return [];
+        if (result.data && result.data.error) {
+            throw new Error(result.data.error);
         }
+
+        return result.data || {};
     }
 
-    function saveAccounts(accounts) {
-        localStorage.setItem(
-            "medtrackAccounts",
-            JSON.stringify(accounts)
-        );
+    async function loadAccounts() {
+        const result =
+            await invokeAccountAdmin("list");
+
+        accounts = Array.isArray(result.users)
+            ? result.users
+            : [];
+
+        renderAccounts();
     }
 
     // =====================================
@@ -245,8 +217,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // =====================================
 
     function renderAccounts() {
-        const accounts = getAccounts();
-
         const searchValue =
             userSearch.value.trim().toLowerCase();
 
@@ -353,7 +323,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             data-action="toggle"
                             data-id="${escapeHTML(account.id)}"
                             title="${toggleTitle}"
-                            ${isCurrentAccount ? "disabled" : ""}
+                            ${
+                                isCurrentAccount ? "disabled" : ""
+                            }
                         >
                             <i class="fa-solid ${toggleIcon}"></i>
                         </button>
@@ -374,7 +346,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             data-action="delete"
                             data-id="${escapeHTML(account.id)}"
                             title="Delete account"
-                            ${isCurrentAccount ? "disabled" : ""}
+                            ${
+                                isCurrentAccount ? "disabled" : ""
+                            }
                         >
                             <i class="fa-solid fa-trash"></i>
                         </button>
@@ -421,9 +395,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         editingUserId.value = "";
         accountStatusInput.value = "active";
+        accountStatusInput.disabled = true;
         modalTitle.textContent = "Add User";
         formMessage.textContent = "";
 
+        passwordInput.disabled = false;
+        confirmPasswordInput.disabled = false;
         passwordInput.required = true;
         confirmPasswordInput.required = true;
 
@@ -436,8 +413,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // =====================================
 
     function openEditModal(userId) {
-        const accounts = getAccounts();
-
         const account = accounts.find(function (item) {
             return String(item.id) === String(userId);
         });
@@ -456,6 +431,8 @@ document.addEventListener("DOMContentLoaded", function () {
         passwordInput.value = "";
         confirmPasswordInput.value = "";
 
+        passwordInput.disabled = false;
+        confirmPasswordInput.disabled = false;
         passwordInput.required = false;
         confirmPasswordInput.required = false;
 
@@ -483,6 +460,8 @@ document.addEventListener("DOMContentLoaded", function () {
         roleInput.disabled = false;
         accountStatusInput.disabled = false;
 
+        passwordInput.disabled = false;
+        confirmPasswordInput.disabled = false;
         passwordInput.required = false;
         confirmPasswordInput.required = false;
     }
@@ -491,7 +470,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // SAVE USER
     // =====================================
 
-    userForm.addEventListener("submit", function (event) {
+    userForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
         const fullnameValue =
@@ -511,8 +490,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const editId =
             editingUserId.value;
-
-        const accounts = getAccounts();
 
         const existingAccount = accounts.find(function (account) {
             return String(account.id) === String(editId);
@@ -584,9 +561,9 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        if (passwordValue && passwordValue.length < 6) {
+        if (passwordValue && passwordValue.length < 8) {
             formMessage.textContent =
-                "Password must contain at least 6 characters.";
+                "Password must contain at least 8 characters.";
 
             return;
         }
@@ -598,75 +575,42 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        if (editId) {
-            const accountIndex = accounts.findIndex(function (account) {
-                return String(account.id) === String(editId);
-            });
+        saveUserButton.disabled = true;
+        formMessage.textContent = editId
+            ? "Updating account securely..."
+            : "Creating account securely...";
 
-            if (accountIndex !== -1) {
-                accounts[accountIndex] = {
-                    ...accounts[accountIndex],
-                    fullname: fullnameValue,
-                    username: usernameValue,
-                    email: emailValue,
-                    role: roleValue,
-                    status: statusValue
-                };
-
-                if (passwordValue) {
-                    accounts[accountIndex].password =
-                        passwordValue;
-                }
-
-                // Update the current session if Admin edited themselves
-                if (String(editId) === String(currentUser.id)) {
-                    updateCurrentSession({
-                        ...currentUser,
-                        fullname: fullnameValue,
-                        username: usernameValue,
-                        email: emailValue
-                    });
-
-                    currentUserName.textContent =
-                        fullnameValue;
-                }
-            }
-        } else {
-            const newAccount = {
-                id: Date.now(),
-                userId: generateUserCode(accounts),
-                fullname: fullnameValue,
-                username: usernameValue,
+        try {
+            const values = {
                 email: emailValue,
+                fullName: fullnameValue,
+                username: usernameValue,
                 role: roleValue,
-                password: passwordValue,
-                status: statusValue,
-                createdAt: new Date().toISOString()
+                status: statusValue
             };
 
-            accounts.push(newAccount);
-        }
+            if (passwordValue) {
+                values.password = passwordValue;
+            }
 
-        saveAccounts(accounts);
-        closeUserModal();
-        renderAccounts();
+            if (editId) {
+                values.userId = editId;
+                await invokeAccountAdmin("update", values);
+            } else {
+                values.password = passwordValue;
+                await invokeAccountAdmin("create", values);
+            }
+
+            await loadAccounts();
+            closeUserModal();
+        } catch (error) {
+            formMessage.textContent =
+                error.message ||
+                "Unable to save the account.";
+        } finally {
+            saveUserButton.disabled = false;
+        }
     });
-
-    function updateCurrentSession(updatedUser) {
-        if (localStorage.getItem("medtrackCurrentUser")) {
-            localStorage.setItem(
-                "medtrackCurrentUser",
-                JSON.stringify(updatedUser)
-            );
-        }
-
-        if (sessionStorage.getItem("medtrackCurrentUser")) {
-            sessionStorage.setItem(
-                "medtrackCurrentUser",
-                JSON.stringify(updatedUser)
-            );
-        }
-    }
 
     // =====================================
     // TABLE ACTIONS
@@ -697,31 +641,40 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Enable or disable account
-    function toggleAccountStatus(userId) {
-        const accounts = getAccounts();
-
-        const accountIndex = accounts.findIndex(function (account) {
+    async function toggleAccountStatus(userId) {
+        const account = accounts.find(function (account) {
             return String(account.id) === String(userId);
         });
 
-        if (accountIndex === -1) {
+        if (!account) {
             return;
         }
 
-        accounts[accountIndex].status =
-            accounts[accountIndex].status === "active"
+        const nextStatus =
+            account.status === "active"
                 ? "disabled"
                 : "active";
 
-        saveAccounts(accounts);
-        renderAccounts();
+        try {
+            await invokeAccountAdmin("set-status", {
+                userId: userId,
+                status: nextStatus
+            });
+
+            await loadAccounts();
+        } catch (error) {
+            alert(
+                error.message ||
+                "Unable to change the account status."
+            );
+        }
     }
 
     // =====================================
     // DELETE USER
     // =====================================
 
-    confirmDelete.addEventListener("click", function () {
+    confirmDelete.addEventListener("click", async function () {
         if (!userToDelete) {
             return;
         }
@@ -732,18 +685,24 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const accounts = getAccounts();
+        confirmDelete.disabled = true;
 
-        const updatedAccounts = accounts.filter(function (account) {
-            return String(account.id) !== String(userToDelete);
-        });
+        try {
+            await invokeAccountAdmin("delete", {
+                userId: userToDelete
+            });
 
-        saveAccounts(updatedAccounts);
-
-        userToDelete = null;
-        deleteModal.classList.remove("show");
-
-        renderAccounts();
+            userToDelete = null;
+            deleteModal.classList.remove("show");
+            await loadAccounts();
+        } catch (error) {
+            alert(
+                error.message ||
+                "Unable to delete the account."
+            );
+        } finally {
+            confirmDelete.disabled = false;
+        }
     });
 
     cancelDelete.addEventListener("click", function () {
@@ -808,7 +767,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // LOGOUT
     // =====================================
 
-    logoutButton.addEventListener("click", function () {
+    logoutButton.addEventListener("click", async function () {
         const confirmLogout = confirm(
             "Are you sure you want to log out?"
         );
@@ -817,15 +776,21 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        localStorage.removeItem("medtrackCurrentUser");
-        sessionStorage.removeItem("medtrackCurrentUser");
-
-        window.location.replace("login.html");
+        await window.medtrackAuth.signOutAndRedirect();
     });
 
     // =====================================
     // INITIAL DISPLAY
     // =====================================
 
-    renderAccounts();
+    try {
+        await loadAccounts();
+    } catch (error) {
+        console.error("Unable to load Supabase accounts:", error);
+        alert(
+            error.message ||
+            "Unable to load the account list."
+        );
+        renderAccounts();
+    }
 });

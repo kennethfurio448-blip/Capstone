@@ -3,7 +3,7 @@
 // ADMIN ONLY
 // =====================================
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
 
     // =====================================
     // ELEMENTS
@@ -77,31 +77,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // ADMIN ACCESS CHECK
     // =====================================
 
-    function getCurrentUser() {
-        const savedUser =
-            localStorage.getItem("medtrackCurrentUser") ||
-            sessionStorage.getItem("medtrackCurrentUser");
-
-        if (!savedUser) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(savedUser);
-        } catch (error) {
-            return null;
-        }
-    }
-
-    const currentUser = getCurrentUser();
+    const currentUser =
+        await window.medtrackAuth.requireRoles(["admin"]);
 
     if (!currentUser) {
-        window.location.replace("login.html");
-        return;
-    }
-
-    if (currentUser.role !== "admin") {
-        window.location.replace("staff-dashboard.html");
         return;
     }
 
@@ -744,7 +723,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // LOGOUT
     // =====================================
 
-    logoutButton.addEventListener("click", function () {
+    logoutButton.addEventListener("click", async function () {
         const confirmLogout = confirm(
             "Are you sure you want to log out?"
         );
@@ -753,10 +732,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        localStorage.removeItem("medtrackCurrentUser");
-        sessionStorage.removeItem("medtrackCurrentUser");
-
-        window.location.replace("login.html");
+        await window.medtrackAuth.signOutAndRedirect();
     });
 
     // =====================================

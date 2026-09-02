@@ -2,7 +2,7 @@
 // MEDTRACK BORROW AND RETURN
 // =====================================
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
 
     // =====================================
     // ELEMENTS
@@ -138,37 +138,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // LOGIN AND ROLE CHECK
     // =====================================
 
-    function getCurrentUser() {
-        const savedUser =
-            localStorage.getItem("medtrackCurrentUser") ||
-            sessionStorage.getItem("medtrackCurrentUser");
-
-        if (!savedUser) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(savedUser);
-        } catch (error) {
-            return null;
-        }
-    }
-
-    const currentUser = getCurrentUser();
+    const currentUser =
+        await window.medtrackAuth.requireRoles(["admin", "staff"]);
 
     if (!currentUser) {
-        window.location.replace("login.html");
-        return;
-    }
-
-    if (
-        currentUser.role !== "admin" &&
-        currentUser.role !== "staff"
-    ) {
-        localStorage.removeItem("medtrackCurrentUser");
-        sessionStorage.removeItem("medtrackCurrentUser");
-
-        window.location.replace("login.html");
         return;
     }
 
@@ -958,7 +931,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // LOGOUT
     // =====================================
 
-    logoutButton.addEventListener("click", function () {
+    logoutButton.addEventListener("click", async function () {
         const confirmLogout = confirm(
             "Are you sure you want to log out?"
         );
@@ -967,10 +940,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        localStorage.removeItem("medtrackCurrentUser");
-        sessionStorage.removeItem("medtrackCurrentUser");
-
-        window.location.replace("login.html");
+        await window.medtrackAuth.signOutAndRedirect();
     });
 
     // =====================================

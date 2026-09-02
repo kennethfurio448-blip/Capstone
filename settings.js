@@ -3,7 +3,7 @@
 // ADMIN ONLY
 // =====================================
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
 
     // =====================================
     // ELEMENTS
@@ -113,31 +113,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // ADMIN ACCESS CHECK
     // =====================================
 
-    function getCurrentUser() {
-        const savedUser =
-            localStorage.getItem("medtrackCurrentUser") ||
-            sessionStorage.getItem("medtrackCurrentUser");
-
-        if (!savedUser) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(savedUser);
-        } catch (error) {
-            return null;
-        }
-    }
-
-    const currentUser = getCurrentUser();
+    const currentUser =
+        await window.medtrackAuth.requireRoles(["admin"]);
 
     if (!currentUser) {
-        window.location.replace("login.html");
-        return;
-    }
-
-    if (currentUser.role !== "admin") {
-        window.location.replace("staff-dashboard.html");
         return;
     }
 
@@ -487,7 +466,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // CHANGE ADMIN PASSWORD
     // =====================================
 
-    securitySection.addEventListener("submit", function (event) {
+    securitySection.addEventListener("submit", async function (event) {
         event.preventDefault();
 
         const currentPasswordValue =
@@ -498,35 +477,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const confirmPasswordValue =
             confirmNewPassword.value;
-
-        const accounts = getAccounts();
-
-        const accountIndex =
-            accounts.findIndex(function (account) {
-                return String(account.id) ===
-                    String(currentUser.id);
-            });
-
-        if (accountIndex === -1) {
-            showMessage(
-                "Admin account could not be found.",
-                "error"
-            );
-
-            return;
-        }
-
-        if (
-            accounts[accountIndex].password !==
-            currentPasswordValue
-        ) {
-            showMessage(
-                "Current password is incorrect.",
-                "error"
-            );
-
-            return;
-        }
 
         if (newPasswordValue.length < 6) {
             showMessage(
@@ -555,13 +505,35 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        accounts[accountIndex].password =
-            newPasswordValue;
+        const reauthentication =
+            await window.medtrackAuth.client.auth.signInWithPassword({
+                email: currentUser.email,
+                password: currentPasswordValue
+            });
 
-        localStorage.setItem(
-            "medtrackAccounts",
-            JSON.stringify(accounts)
-        );
+        if (reauthentication.error) {
+            showMessage(
+                "Current password is incorrect.",
+                "error"
+            );
+
+            return;
+        }
+
+        const passwordUpdate =
+            await window.medtrackAuth.client.auth.updateUser({
+                password: newPasswordValue
+            });
+
+        if (passwordUpdate.error) {
+            showMessage(
+                passwordUpdate.error.message ||
+                    "Unable to change the password.",
+                "error"
+            );
+
+            return;
+        }
 
         securitySection.reset();
 
@@ -576,25 +548,6 @@ document.addEventListener("DOMContentLoaded", function () {
             "success"
         );
     });
-
-    function getAccounts() {
-        const savedAccounts =
-            localStorage.getItem("medtrackAccounts");
-
-        if (!savedAccounts) {
-            return [];
-        }
-
-        try {
-            const accounts = JSON.parse(savedAccounts);
-
-            return Array.isArray(accounts)
-                ? accounts
-                : [];
-        } catch (error) {
-            return [];
-        }
-    }
 
     // =====================================
     // DOWNLOAD BACKUP
@@ -859,7 +812,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // LOGOUT
     // =====================================
 
-    logoutButton.addEventListener("click", function () {
+    logoutButton.addEventListener("click", async function () {
         const confirmLogout = confirm(
             "Are you sure you want to log out?"
         );
@@ -874,10 +827,7 @@ document.addEventListener("DOMContentLoaded", function () {
             "Administrator logged out of MedTrack."
         );
 
-        localStorage.removeItem("medtrackCurrentUser");
-        sessionStorage.removeItem("medtrackCurrentUser");
-
-        window.location.replace("login.html");
+        await window.medtrackAuth.signOutAndRedirect();
     });
 
     // =====================================

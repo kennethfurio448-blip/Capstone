@@ -2,7 +2,7 @@
 // MEDTRACK ADMIN DASHBOARD
 // =====================================
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
     const currentUserName =
         document.getElementById("currentUserName");
 
@@ -18,34 +18,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const notificationButton =
         document.querySelector(".notification-button");
 
-    // Get the currently logged-in account
-    function getCurrentUser() {
-        const savedUser =
-            localStorage.getItem("medtrackCurrentUser") ||
-            sessionStorage.getItem("medtrackCurrentUser");
+    const currentUser =
+        await window.medtrackAuth.requireRoles(["admin"]);
 
-        if (!savedUser) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(savedUser);
-        } catch (error) {
-            return null;
-        }
-    }
-
-    const currentUser = getCurrentUser();
-
-    // No logged-in account
     if (!currentUser) {
-        window.location.replace("login.html");
-        return;
-    }
-
-    // Staff cannot access the Admin dashboard
-    if (currentUser.role !== "admin") {
-        window.location.replace("staff-dashboard.html");
         return;
     }
 
@@ -99,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Logout Admin
     if (logoutButton) {
-        logoutButton.addEventListener("click", function () {
+        logoutButton.addEventListener("click", async function () {
             const confirmLogout = confirm(
                 "Are you sure you want to log out?"
             );
@@ -108,12 +84,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            // Remove only the login session.
-            // Registered accounts will not be deleted.
-            localStorage.removeItem("medtrackCurrentUser");
-            sessionStorage.removeItem("medtrackCurrentUser");
-
-            window.location.replace("login.html");
+            await window.medtrackAuth.signOutAndRedirect();
         });
     }
 });

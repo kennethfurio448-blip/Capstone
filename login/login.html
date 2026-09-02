@@ -35,16 +35,16 @@
             <form id="loginForm">
 
                 <div class="input-group">
-                    <label for="username">Username or Email</label>
+                    <label for="email">Email Address</label>
 
                     <div class="input-box">
                         <i class="fa-solid fa-user"></i>
 
                         <input
-                            type="text"
-                            id="username"
-                            placeholder="Enter your username or email"
-                            autocomplete="username"
+                            type="email"
+                            id="email"
+                            placeholder="Enter your email address"
+                            autocomplete="email"
                             required
                         >
                     </div>
@@ -96,14 +96,16 @@
             </form>
 
             <p class="create-account-link">
-                Don’t have an account?
-                <a href="create-account.html">Create account</a>
+                Accounts are created by an administrator.
             </p>
 
         </section>
 
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../auth/supabase-client.js"></script>
+    <script src="../auth/supabase-auth.js"></script>
     <script src="login.js"></script>
 
 </body>
