@@ -952,7 +952,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     availableItemsBody.addEventListener(
         "click",
-        function (event) {
+        async function (event) {
             const borrowButton =
                 event.target.closest(
                     ".borrow-item-button"
@@ -987,6 +987,45 @@ document.addEventListener("DOMContentLoaded", async function () {
             borrowButton.disabled = true;
 
             try {
+                if (
+                    window.medtrackData &&
+                    typeof window.medtrackData
+                        .borrowItem === "function"
+                ) {
+                    const newTransaction =
+                        await window.medtrackData
+                            .borrowItem({
+                                itemType:
+                                    selectedItem.type,
+                                itemId:
+                                    selectedItem.id,
+                                borrower:
+                                    displayName,
+                                department:
+                                    currentUser.role ===
+                                    "admin"
+                                        ? "Administration"
+                                        : "Staff",
+                                borrowDate:
+                                    getLocalDateString(
+                                        new Date()
+                                    ),
+                                dueDate:
+                                    getDueDate(),
+                                purpose:
+                                    "Borrowed from Available Items"
+                            });
+
+                    refreshAvailableItems();
+
+                    window.alert(
+                        `${selectedItem.name} was borrowed successfully.\n` +
+                        `Transaction ID: ${newTransaction.id}`
+                    );
+
+                    return;
+                }
+
                 const borrowed =
                     deductBorrowedItem(
                         selectedItem
@@ -1078,6 +1117,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
 
                 window.alert(
+                    error.message ||
                     "The item could not be borrowed. Please try again."
                 );
             } finally {

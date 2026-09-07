@@ -966,7 +966,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     transactionForm.addEventListener(
         "submit",
-        function (event) {
+        async function (event) {
             event.preventDefault();
 
             const borrowerValue =
@@ -1037,14 +1037,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            const transactions =
+            let transactions =
                 getTransactions();
 
             const editId =
                 editingTransactionId.value;
 
             if (editId) {
-                const transactionIndex =
+                let transactionIndex =
                     transactions.findIndex(
                         function (transaction) {
                             return (
@@ -1057,7 +1057,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (
                     transactionIndex !== -1
                 ) {
-                    const previousTransaction =
+                    let previousTransaction =
                         transactions[
                             transactionIndex
                         ];
@@ -1079,9 +1079,62 @@ document.addEventListener("DOMContentLoaded", async function () {
                             .status !==
                             "Returned"
                     ) {
-                        restoreBorrowedInventory(
-                            previousTransaction
-                        );
+                        if (
+                            window.medtrackData &&
+                            typeof window.medtrackData
+                                .returnBorrowedItem ===
+                                "function"
+                        ) {
+                            try {
+                                const returnResult =
+                                    await window.medtrackData
+                                        .returnBorrowedItem(
+                                            previousTransaction.id
+                                        );
+
+                                transactions =
+                                    getTransactions();
+
+                                transactionIndex =
+                                    transactions.findIndex(
+                                        function (transaction) {
+                                            return (
+                                                transaction.id ===
+                                                editId
+                                            );
+                                        }
+                                    );
+
+                                if (transactionIndex === -1) {
+                                    formMessage.textContent =
+                                        "The returned transaction could not be reloaded.";
+
+                                    return;
+                                }
+
+                                previousTransaction =
+                                    transactions[
+                                        transactionIndex
+                                    ];
+
+                                previousTransaction
+                                    .inventoryReturned =
+                                    Boolean(
+                                        returnResult
+                                            .inventoryReturned
+                                    );
+                            } catch (error) {
+                                formMessage.textContent =
+                                    error.message ||
+                                    "Unable to return the borrowed item.";
+
+                                return;
+                            }
+                        } else {
+                            restoreBorrowedInventory(
+                                previousTransaction
+                            );
+                        }
 
                         returnDateValue =
                             getTodayDate();
@@ -1240,54 +1293,91 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     confirmReturn.addEventListener(
         "click",
-        function () {
+        async function () {
             if (!transactionToReturn) {
                 return;
             }
 
-            const transactions =
-                getTransactions();
+            confirmReturn.disabled = true;
 
-            const transactionIndex =
-                transactions.findIndex(
-                    function (transaction) {
-                        return (
-                            transaction.id ===
+            try {
+                if (
+                    window.medtrackData &&
+                    typeof window.medtrackData
+                        .returnBorrowedItem ===
+                        "function"
+                ) {
+                    await window.medtrackData
+                        .returnBorrowedItem(
                             transactionToReturn
                         );
-                    }
+
+                    transactionToReturn = null;
+
+                    returnModal.classList.remove(
+                        "show"
+                    );
+
+                    renderTransactions();
+                    return;
+                }
+
+                const transactions =
+                    getTransactions();
+
+                let transactionIndex =
+                    transactions.findIndex(
+                        function (transaction) {
+                            return (
+                                transaction.id ===
+                                transactionToReturn
+                            );
+                        }
+                    );
+
+                if (
+                    transactionIndex !== -1
+                ) {
+                    const transaction =
+                        transactions[
+                            transactionIndex
+                        ];
+
+                    restoreBorrowedInventory(
+                        transaction
+                    );
+
+                    transaction.status =
+                        "Returned";
+
+                    transaction.returnDate =
+                        getTodayDate();
+                }
+
+                saveTransactions(
+                    transactions
                 );
 
-            if (
-                transactionIndex !== -1
-            ) {
-                const transaction =
-                    transactions[
-                        transactionIndex
-                    ];
+                transactionToReturn = null;
 
-                restoreBorrowedInventory(
-                    transaction
+                returnModal.classList.remove(
+                    "show"
                 );
 
-                transaction.status =
-                    "Returned";
+                renderTransactions();
+            } catch (error) {
+                console.error(
+                    "Unable to return item:",
+                    error
+                );
 
-                transaction.returnDate =
-                    getTodayDate();
+                window.alert(
+                    error.message ||
+                    "The item could not be returned."
+                );
+            } finally {
+                confirmReturn.disabled = false;
             }
-
-            saveTransactions(
-                transactions
-            );
-
-            transactionToReturn = null;
-
-            returnModal.classList.remove(
-                "show"
-            );
-
-            renderTransactions();
         }
     );
 
@@ -1315,6 +1405,30 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const transactions =
                 getTransactions();
+
+            const selectedTransaction =
+                transactions.find(
+                    function (transaction) {
+                        return (
+                            transaction.id ===
+                            transactionToDelete
+                        );
+                    }
+                );
+
+            if (
+                selectedTransaction &&
+                selectedTransaction
+                    .inventoryAdjusted &&
+                selectedTransaction.status !==
+                    "Returned"
+            ) {
+                window.alert(
+                    "Return this item before deleting its transaction."
+                );
+
+                return;
+            }
 
             const updatedTransactions =
                 transactions.filter(

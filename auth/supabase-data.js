@@ -20,6 +20,7 @@
     let refreshInProgress = null;
 
     const uploadTimers = new Map();
+    const collectionSnapshots = new Map();
 
     function text(value, fallback = "") {
         const normalized =
@@ -259,6 +260,27 @@
         }
     }
 
+    function createSnapshot(records) {
+        const snapshot = new Map();
+
+        records.forEach(function (record) {
+            const id = text(record && record.id);
+
+            if (id) {
+                snapshot.set(id, JSON.stringify(record));
+            }
+        });
+
+        return snapshot;
+    }
+
+    function rememberSnapshot(storageKey, records) {
+        collectionSnapshots.set(
+            storageKey,
+            createSnapshot(records)
+        );
+    }
+
     async function downloadCollection(storageKey) {
         const collection = collections[storageKey];
 
@@ -285,6 +307,11 @@
                 storageKey,
                 JSON.stringify(localRecords)
             );
+
+            rememberSnapshot(
+                storageKey,
+                localRecords
+            );
         } finally {
             applyingCloudData = false;
         }
@@ -292,28 +319,40 @@
         return localRecords;
     }
 
-    async function uploadCollection(storageKey) {
+    async function uploadCollection(
+        storageKey,
+        forceUpload = false
+    ) {
         const collection = collections[storageKey];
         const localRecords = readLocalCollection(storageKey);
+        const previousSnapshot =
+            collectionSnapshots.get(storageKey) ||
+            new Map();
 
-        const cloudRecords = localRecords
+        const validLocalRecords = localRecords
             .filter(function (item) {
                 return text(item.id) !== "";
+            });
+
+        const currentSnapshot =
+            createSnapshot(validLocalRecords);
+
+        const changedRecords = validLocalRecords
+            .filter(function (item) {
+                const id = text(item.id);
+
+                return (
+                    forceUpload ||
+                    previousSnapshot.get(id) !==
+                        currentSnapshot.get(id)
+                );
             })
             .map(collection.toCloud);
 
-        const existingResult = await client
-            .from(collection.table)
-            .select("id");
-
-        if (existingResult.error) {
-            throw new Error(existingResult.error.message);
-        }
-
-        if (cloudRecords.length > 0) {
+        if (changedRecords.length > 0) {
             const upsertResult = await client
                 .from(collection.table)
-                .upsert(cloudRecords, {
+                .upsert(changedRecords, {
                     onConflict: "id"
                 });
 
@@ -322,18 +361,11 @@
             }
         }
 
-        const localIds = new Set(
-            cloudRecords.map(function (item) {
-                return String(item.id);
-            })
-        );
-
-        const idsToDelete = (existingResult.data || [])
-            .map(function (item) {
-                return String(item.id);
-            })
+        const idsToDelete = Array.from(
+            previousSnapshot.keys()
+        )
             .filter(function (id) {
-                return !localIds.has(id);
+                return !currentSnapshot.has(id);
             });
 
         if (idsToDelete.length > 0) {
@@ -346,6 +378,11 @@
                 throw new Error(deleteResult.error.message);
             }
         }
+
+        rememberSnapshot(
+            storageKey,
+            validLocalRecords
+        );
     }
 
     function reportError(action, error) {
@@ -466,10 +503,86 @@
         const storageKeys = Object.keys(collections);
 
         for (const storageKey of storageKeys) {
-            await uploadCollection(storageKey);
+            await uploadCollection(storageKey, true);
         }
 
         return true;
+    }
+
+
+    async function runInventoryOperation(
+        functionName,
+        parameters,
+        storageKeys = Object.keys(collections)
+    ) {
+        const result = await client.rpc(
+            functionName,
+            parameters
+        );
+
+        if (result.error) {
+            throw new Error(result.error.message);
+        }
+
+        await Promise.all(
+            storageKeys.map(downloadCollection)
+        );
+
+        window.dispatchEvent(
+            new CustomEvent("medtrack:data-ready")
+        );
+
+        return result.data;
+    }
+
+    async function borrowItem(details) {
+        return runInventoryOperation(
+            "medtrack_borrow_item",
+            {
+                p_item_type: details.itemType,
+                p_item_id: details.itemId,
+                p_borrower: details.borrower,
+                p_department: details.department,
+                p_borrow_date: details.borrowDate,
+                p_due_date: details.dueDate,
+                p_purpose: details.purpose
+            }
+        );
+    }
+
+    async function returnBorrowedItem(transactionId) {
+        return runInventoryOperation(
+            "medtrack_return_item",
+            {
+                p_transaction_id: transactionId
+            }
+        );
+    }
+
+    async function useInventoryItem(details) {
+        const storageByType = {
+            "Medical Supply":
+                "medtrackMedicalSupplies",
+            "Medical Equipment":
+                "medtrackMedicalEquipment",
+            "Mobility Asset":
+                "medtrackMobilityAssets"
+        };
+
+        const storageKey =
+            storageByType[details.itemType];
+
+        return runInventoryOperation(
+            "medtrack_use_inventory",
+            {
+                p_operation_key:
+                    details.operationKey,
+                p_item_type: details.itemType,
+                p_item_id: details.itemId,
+                p_quantity: details.quantity
+            },
+            storageKey ? [storageKey] : []
+        );
     }
 
     const ready = refresh();
@@ -477,7 +590,10 @@
     window.medtrackData = {
         ready: ready,
         refresh: refresh,
-        pushAll: pushAll
+        pushAll: pushAll,
+        borrowItem: borrowItem,
+        returnBorrowedItem: returnBorrowedItem,
+        useInventoryItem: useInventoryItem
     };
 
     window.addEventListener("focus", function () {

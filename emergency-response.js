@@ -819,9 +819,41 @@ document.addEventListener("DOMContentLoaded", async function () {
     // DEDUCT INVENTORY
     // =====================================
 
-    function deductInventory(usage) {
+    async function deductInventory(
+        usage,
+        operationKey
+    ) {
         if (!usage) {
             return { ok: true };
+        }
+
+        if (
+            window.medtrackData &&
+            typeof window.medtrackData
+                .useInventoryItem === "function"
+        ) {
+            try {
+                await window.medtrackData
+                    .useInventoryItem({
+                        operationKey:
+                            operationKey,
+                        itemType:
+                            usage.itemType,
+                        itemId:
+                            usage.itemId,
+                        quantity:
+                            usage.quantity
+                    });
+
+                return { ok: true };
+            } catch (error) {
+                return {
+                    ok: false,
+                    message:
+                        error.message ||
+                        "Unable to update the inventory."
+                };
+            }
         }
 
         const records =
@@ -913,7 +945,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // Prevent double deduction
-    function deductRequestInventory(request) {
+    async function deductRequestInventory(request) {
         if (
             request.inventoryDeducted ||
             !request.inventoryUsage
@@ -922,8 +954,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         const result =
-            deductInventory(
-                request.inventoryUsage
+            await deductInventory(
+                request.inventoryUsage,
+                request.id
             );
 
         if (result.ok) {
@@ -1381,7 +1414,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     requestForm.addEventListener(
         "submit",
-        function (event) {
+        async function (event) {
             event.preventDefault();
 
             const dateValue =
@@ -1540,7 +1573,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Completed"
                 ) {
                     const deductionResult =
-                        deductRequestInventory(
+                        await deductRequestInventory(
                             updatedRequest
                         );
 
@@ -1594,7 +1627,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Completed"
                 ) {
                     const deductionResult =
-                        deductRequestInventory(
+                        await deductRequestInventory(
                             newRequest
                         );
 
@@ -1621,7 +1654,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     requestTableBody.addEventListener(
         "click",
-        function (event) {
+        async function (event) {
             const button =
                 event.target.closest("button");
 
@@ -1658,7 +1691,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (requestIndex !== -1) {
                     const deductionResult =
-                        deductRequestInventory(
+                        await deductRequestInventory(
                             requests[
                                 requestIndex
                             ]
@@ -1716,7 +1749,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     confirmComplete.addEventListener(
         "click",
-        function () {
+        async function () {
             if (!requestToComplete) {
                 return;
             }
@@ -1748,7 +1781,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const deductionResult =
-                deductRequestInventory(
+                await deductRequestInventory(
                     requests[requestIndex]
                 );
 
