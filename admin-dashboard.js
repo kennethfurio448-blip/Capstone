@@ -25,6 +25,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
+    if (window.medtrackData) {
+        await window.medtrackData.refresh();
+    }
+
     // Display Admin name
     const displayName =
         currentUser.fullname ||

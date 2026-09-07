@@ -180,6 +180,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
+    if (window.medtrackData) {
+        await window.medtrackData.refresh();
+    }
+
     const displayName =
         currentUser.fullname ||
         currentUser.username ||

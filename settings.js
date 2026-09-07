@@ -120,6 +120,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
+    if (window.medtrackData) {
+        await window.medtrackData.refresh();
+    }
+
     currentUserName.textContent =
         currentUser.fullname ||
         currentUser.username ||

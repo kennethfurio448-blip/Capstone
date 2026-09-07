@@ -213,6 +213,11 @@ document.addEventListener("DOMContentLoaded", function () {
     updateDashboardAnalytics();
 
     window.addEventListener("storage", updateDashboardAnalytics);
+
+    window.addEventListener(
+        "medtrack:data-ready",
+        updateDashboardAnalytics
+    );
     window.addEventListener(
         "medtrack:dataChanged",
         updateDashboardAnalytics
