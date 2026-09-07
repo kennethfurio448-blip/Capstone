@@ -67,6 +67,11 @@
                 <span>Borrow and Return</span>
             </a>
 
+            <a href="available-items.html" class="nav-item">
+                <i class="fa-solid fa-box-open"></i>
+                <span>Available Items</span>
+            </a>
+
             <a
                 href="emergency-response.html"
                 class="nav-item active"
@@ -76,7 +81,10 @@
             </a>
 
             <!-- ADMIN-ONLY LINKS -->
-            <div id="adminNavigation" class="admin-navigation">
+            <div
+                id="adminNavigation"
+                class="admin-navigation"
+            >
 
                 <p class="menu-label">ADMINISTRATION</p>
 
@@ -123,7 +131,9 @@
 
             <div>
                 <h2>Emergency Response</h2>
-                <p>Record and monitor emergency response requests.</p>
+                <p>
+                    Record and monitor emergency response requests.
+                </p>
             </div>
 
             <div class="topbar-actions">
@@ -144,8 +154,13 @@
                     </div>
 
                     <div>
-                        <strong id="currentUserName">User</strong>
-                        <small id="currentUserRole">Role</small>
+                        <strong id="currentUserName">
+                            User
+                        </strong>
+
+                        <small id="currentUserRole">
+                            Role
+                        </small>
                     </div>
 
                 </div>
@@ -252,23 +267,33 @@
                 </div>
 
                 <select id="emergencyTypeFilter">
-                    <option value="all">All Emergency Types</option>
+                    <option value="all">
+                        All Emergency Types
+                    </option>
+
                     <option value="Medical Emergency">
                         Medical Emergency
                     </option>
+
                     <option value="Fire Incident">
                         Fire Incident
                     </option>
+
                     <option value="Flood Response">
                         Flood Response
                     </option>
+
                     <option value="Road Accident">
                         Road Accident
                     </option>
+
                     <option value="Rescue Operation">
                         Rescue Operation
                     </option>
-                    <option value="Other">Other</option>
+
+                    <option value="Other">
+                        Other
+                    </option>
                 </select>
 
                 <select id="priorityFilter">
@@ -282,9 +307,15 @@
                 <select id="statusFilter">
                     <option value="all">All Status</option>
                     <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
+                    <option value="In Progress">
+                        In Progress
+                    </option>
+                    <option value="Completed">
+                        Completed
+                    </option>
+                    <option value="Cancelled">
+                        Cancelled
+                    </option>
                 </select>
 
             </div>
@@ -317,8 +348,12 @@
 
                 <div class="empty-state" id="emptyState">
                     <i class="fa-solid fa-triangle-exclamation"></i>
+
                     <h3>No response records found</h3>
-                    <p>Create a request or change the filters.</p>
+
+                    <p>
+                        Create a request or change the filters.
+                    </p>
                 </div>
 
             </div>
@@ -337,14 +372,20 @@
         <div class="modal-header">
 
             <div>
-                <h2 id="modalTitle">New Emergency Request</h2>
-                <p>Enter the emergency response information.</p>
+                <h2 id="modalTitle">
+                    New Emergency Request
+                </h2>
+
+                <p>
+                    Enter the emergency response information.
+                </p>
             </div>
 
             <button
                 type="button"
                 class="close-button"
                 id="closeModal"
+                aria-label="Close modal"
             >
                 <i class="fa-solid fa-xmark"></i>
             </button>
@@ -353,13 +394,18 @@
 
         <form id="requestForm">
 
-            <input type="hidden" id="editingRequestId">
+            <input
+                type="hidden"
+                id="editingRequestId"
+            >
 
             <div class="form-grid">
 
                 <div class="input-group">
 
-                    <label for="requestDate">Date</label>
+                    <label for="requestDate">
+                        Date
+                    </label>
 
                     <input
                         type="date"
@@ -371,7 +417,9 @@
 
                 <div class="input-group">
 
-                    <label for="requestTime">Time</label>
+                    <label for="requestTime">
+                        Time
+                    </label>
 
                     <input
                         type="time"
@@ -387,42 +435,78 @@
                         Emergency Type
                     </label>
 
-                    <select id="emergencyType" required>
-                        <option value="" disabled selected>
+                    <select
+                        id="emergencyType"
+                        required
+                    >
+                        <option
+                            value=""
+                            disabled
+                            selected
+                        >
                             Select emergency type
                         </option>
+
                         <option value="Medical Emergency">
                             Medical Emergency
                         </option>
+
                         <option value="Fire Incident">
                             Fire Incident
                         </option>
+
                         <option value="Flood Response">
                             Flood Response
                         </option>
+
                         <option value="Road Accident">
                             Road Accident
                         </option>
+
                         <option value="Rescue Operation">
                             Rescue Operation
                         </option>
-                        <option value="Other">Other</option>
+
+                        <option value="Other">
+                            Other
+                        </option>
                     </select>
 
                 </div>
 
                 <div class="input-group">
 
-                    <label for="requestPriority">Priority</label>
+                    <label for="requestPriority">
+                        Priority
+                    </label>
 
-                    <select id="requestPriority" required>
-                        <option value="" disabled selected>
+                    <select
+                        id="requestPriority"
+                        required
+                    >
+                        <option
+                            value=""
+                            disabled
+                            selected
+                        >
                             Select priority
                         </option>
-                        <option value="Critical">Critical</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
+
+                        <option value="Critical">
+                            Critical
+                        </option>
+
+                        <option value="High">
+                            High
+                        </option>
+
+                        <option value="Medium">
+                            Medium
+                        </option>
+
+                        <option value="Low">
+                            Low
+                        </option>
                     </select>
 
                 </div>
@@ -489,16 +573,97 @@
 
                 <div class="input-group">
 
-                    <label for="requestStatus">Status</label>
+                    <label for="requestStatus">
+                        Status
+                    </label>
 
-                    <select id="requestStatus" required>
-                        <option value="Pending">Pending</option>
+                    <select
+                        id="requestStatus"
+                        required
+                    >
+                        <option value="Pending">
+                            Pending
+                        </option>
+
                         <option value="In Progress">
                             In Progress
                         </option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
+
+                        <option value="Completed">
+                            Completed
+                        </option>
+
+                        <option value="Cancelled">
+                            Cancelled
+                        </option>
                     </select>
+
+                </div>
+
+                <!-- INVENTORY DEDUCTION -->
+                <div class="input-group">
+
+                    <label for="resourceInventoryType">
+                        Inventory Type
+                    </label>
+
+                    <select id="resourceInventoryType">
+                        <option value="">
+                            No inventory item
+                        </option>
+
+                        <option value="Medical Supply">
+                            Medical Supply
+                        </option>
+
+                        <option value="Medical Equipment">
+                            Medical Equipment
+                        </option>
+
+                        <option value="Mobility Asset">
+                            Mobility Asset
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="resourceItem">
+                        Item Used
+                    </label>
+
+                    <select
+                        id="resourceItem"
+                        disabled
+                    >
+                        <option value="">
+                            Select inventory type first
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="input-group full-width">
+
+                    <label for="resourceQuantity">
+                        Quantity Used
+                    </label>
+
+                    <input
+                        type="number"
+                        id="resourceQuantity"
+                        min="1"
+                        value="1"
+                        disabled
+                    >
+
+                    <small
+                        class="field-help"
+                        id="resourceAvailability"
+                    >
+                        Select an inventory item to see its available quantity.
+                    </small>
 
                 </div>
 
@@ -534,7 +699,10 @@
 
             </div>
 
-            <p class="form-message" id="formMessage"></p>
+            <p
+                class="form-message"
+                id="formMessage"
+            ></p>
 
             <div class="modal-actions">
 
@@ -546,7 +714,10 @@
                     Cancel
                 </button>
 
-                <button type="submit" class="save-button">
+                <button
+                    type="submit"
+                    class="save-button"
+                >
                     <i class="fa-solid fa-floppy-disk"></i>
                     Save Request
                 </button>

@@ -122,7 +122,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     const currentUser =
-        await window.medtrackAuth.requireRoles(["admin", "staff"]);
+        await window.medtrackAuth.requireRoles([
+            "admin",
+            "staff"
+        ]);
 
     if (!currentUser) {
         return;
@@ -136,7 +139,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     currentUserName.textContent = displayName;
     currentUserRole.textContent = currentUser.role;
 
-    // Separate role navigation
     if (currentUser.role === "admin") {
         portalName.textContent = "Admin Portal";
         dashboardLink.href = "admin-dashboard.html";
@@ -200,7 +202,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function getEquipment() {
         const savedEquipment =
-            localStorage.getItem("medtrackMedicalEquipment");
+            localStorage.getItem(
+                "medtrackMedicalEquipment"
+            );
 
         if (!savedEquipment) {
             localStorage.setItem(
@@ -219,6 +223,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 ? parsedEquipment
                 : [];
         } catch (error) {
+            console.error(
+                "Unable to read medical equipment:",
+                error
+            );
+
             return [];
         }
     }
@@ -235,12 +244,20 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     function escapeHTML(value) {
-        return String(value)
+        return String(value ?? "")
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
             .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
+    }
+
+    function normalizeId(value) {
+        return String(value ?? "").trim();
+    }
+
+    function normalizeText(value) {
+        return String(value ?? "").trim();
     }
 
     // =====================================
@@ -252,7 +269,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             return "Not scheduled";
         }
 
-        const date = new Date(dateValue + "T00:00:00");
+        const date = new Date(
+            dateValue + "T00:00:00"
+        );
+
+        if (Number.isNaN(date.getTime())) {
+            return dateValue;
+        }
 
         return date.toLocaleDateString("en-US", {
             month: "short",
@@ -270,7 +293,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         today.setHours(0, 0, 0, 0);
 
         const scheduledDate =
-            new Date(dateValue + "T00:00:00");
+            new Date(
+                dateValue + "T00:00:00"
+            );
+
+        if (Number.isNaN(scheduledDate.getTime())) {
+            return false;
+        }
 
         return scheduledDate < today;
     }
@@ -319,16 +348,33 @@ document.addEventListener("DOMContentLoaded", async function () {
         let highestNumber = 0;
 
         equipment.forEach(function (item) {
-            const number = Number(
-                String(item.id).replace("EQP-", "")
-            );
+            const equipmentId =
+                normalizeId(item.id);
 
-            if (!Number.isNaN(number) && number > highestNumber) {
+            const match =
+                equipmentId.match(
+                    /^EQP-(\d+)$/i
+                );
+
+            if (!match) {
+                return;
+            }
+
+            const number = Number(match[1]);
+
+            if (
+                Number.isInteger(number) &&
+                number > highestNumber
+            ) {
                 highestNumber = number;
             }
         });
 
-        return `EQP-${String(highestNumber + 1).padStart(3, "0")}`;
+        return (
+            "EQP-" +
+            String(highestNumber + 1)
+                .padStart(3, "0")
+        );
     }
 
     // =====================================
@@ -339,7 +385,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const equipment = getEquipment();
 
         const searchValue =
-            equipmentSearch.value.trim().toLowerCase();
+            equipmentSearch.value
+                .trim()
+                .toLowerCase();
 
         const selectedCategory =
             categoryFilter.value;
@@ -347,96 +395,159 @@ document.addEventListener("DOMContentLoaded", async function () {
         const selectedStatus =
             statusFilter.value;
 
-        const filteredEquipment = equipment.filter(function (item) {
-            const matchesSearch =
-                item.name.toLowerCase().includes(searchValue) ||
-                item.category.toLowerCase().includes(searchValue) ||
-                item.id.toLowerCase().includes(searchValue) ||
-                item.location.toLowerCase().includes(searchValue);
+        const filteredEquipment =
+            equipment.filter(function (item) {
+                const itemId =
+                    normalizeId(item.id);
 
-            const matchesCategory =
-                selectedCategory === "all" ||
-                item.category === selectedCategory;
+                const itemName =
+                    normalizeText(item.name);
 
-            const matchesStatus =
-                selectedStatus === "all" ||
-                item.status === selectedStatus;
+                const itemCategory =
+                    normalizeText(item.category);
 
-            return (
-                matchesSearch &&
-                matchesCategory &&
-                matchesStatus
-            );
-        });
+                const itemLocation =
+                    normalizeText(item.location);
+
+                const itemStatus =
+                    normalizeText(item.status);
+
+                const searchableText = `
+                    ${itemId}
+                    ${itemName}
+                    ${itemCategory}
+                    ${itemLocation}
+                `.toLowerCase();
+
+                const matchesSearch =
+                    searchableText.includes(
+                        searchValue
+                    );
+
+                const matchesCategory =
+                    selectedCategory === "all" ||
+                    itemCategory === selectedCategory;
+
+                const matchesStatus =
+                    selectedStatus === "all" ||
+                    itemStatus === selectedStatus;
+
+                return (
+                    matchesSearch &&
+                    matchesCategory &&
+                    matchesStatus
+                );
+            });
 
         equipmentTableBody.innerHTML = "";
 
-        if (filteredEquipment.length === 0) {
-            emptyState.classList.add("show");
-        } else {
-            emptyState.classList.remove("show");
-        }
+        emptyState.classList.toggle(
+            "show",
+            filteredEquipment.length === 0
+        );
 
         filteredEquipment.forEach(function (item) {
+            const itemId =
+                normalizeId(item.id);
+
+            const itemName =
+                normalizeText(item.name);
+
+            const itemCategory =
+                normalizeText(item.category);
+
+            const itemCondition =
+                normalizeText(item.condition);
+
+            const itemLocation =
+                normalizeText(item.location);
+
+            const itemStatus =
+                normalizeText(item.status);
+
             const statusClass =
-                getStatusClass(item.status);
+                getStatusClass(itemStatus);
 
             const conditionClass =
-                getConditionClass(item.condition);
+                getConditionClass(itemCondition);
 
             const overdue =
-                isMaintenanceOverdue(item.maintenanceDate);
+                isMaintenanceOverdue(
+                    item.maintenanceDate
+                );
 
-            const maintenanceDisplay = overdue
-                ? `${formatDate(item.maintenanceDate)} (Overdue)`
-                : formatDate(item.maintenanceDate);
+            const maintenanceDisplay =
+                overdue
+                    ? `${formatDate(
+                        item.maintenanceDate
+                    )} (Overdue)`
+                    : formatDate(
+                        item.maintenanceDate
+                    );
 
-            const row = document.createElement("tr");
+            const row =
+                document.createElement("tr");
 
             row.innerHTML = `
-                <td>${escapeHTML(item.id)}</td>
-
                 <td>
-                    <strong>${escapeHTML(item.name)}</strong>
+                    ${escapeHTML(itemId)}
                 </td>
 
-                <td>${escapeHTML(item.category)}</td>
+                <td>
+                    <strong>
+                        ${escapeHTML(itemName)}
+                    </strong>
+                </td>
 
-                <td>${escapeHTML(item.quantity)}</td>
+                <td>
+                    ${escapeHTML(itemCategory)}
+                </td>
+
+                <td>
+                    ${escapeHTML(item.quantity)}
+                </td>
 
                 <td>
                     <span class="condition-badge ${conditionClass}">
-                        ${escapeHTML(item.condition)}
+                        ${escapeHTML(itemCondition)}
                     </span>
                 </td>
 
-                <td>${escapeHTML(item.location)}</td>
+                <td>
+                    ${escapeHTML(itemLocation)}
+                </td>
 
                 <td>
                     ${
                         overdue
-                            ? `<span class="status-badge status-maintenance">
-                                ${escapeHTML(maintenanceDisplay)}
-                               </span>`
-                            : escapeHTML(maintenanceDisplay)
+                            ? `
+                                <span class="status-badge status-maintenance">
+                                    ${escapeHTML(
+                                        maintenanceDisplay
+                                    )}
+                                </span>
+                            `
+                            : escapeHTML(
+                                maintenanceDisplay
+                            )
                     }
                 </td>
 
                 <td>
                     <span class="status-badge ${statusClass}">
-                        ${escapeHTML(item.status)}
+                        ${escapeHTML(itemStatus)}
                     </span>
                 </td>
 
                 <td>
                     <div class="table-actions">
-
                         <button
                             type="button"
                             class="edit-button"
                             data-action="edit"
-                            data-id="${escapeHTML(item.id)}"
+                            data-id="${escapeHTML(itemId)}"
                             title="Edit equipment"
+                            aria-label="Edit ${escapeHTML(itemName)}"
                         >
                             <i class="fa-solid fa-pen"></i>
                         </button>
@@ -445,12 +556,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                             type="button"
                             class="remove-button"
                             data-action="delete"
-                            data-id="${escapeHTML(item.id)}"
+                            data-id="${escapeHTML(itemId)}"
                             title="Delete equipment"
+                            aria-label="Delete ${escapeHTML(itemName)}"
                         >
                             <i class="fa-solid fa-trash"></i>
                         </button>
-
                     </div>
                 </td>
             `;
@@ -472,36 +583,50 @@ document.addEventListener("DOMContentLoaded", async function () {
         let alertCount = 0;
 
         equipment.forEach(function (item) {
-            if (item.status === "Available") {
+            const status =
+                normalizeText(item.status);
+
+            if (status === "Available") {
                 availableCount++;
             }
 
-            if (item.status === "Maintenance") {
+            if (status === "Maintenance") {
                 maintenanceCount++;
                 alertCount++;
             }
 
-            if (item.status === "In Use") {
+            if (status === "In Use") {
                 inUseCount++;
             }
 
-            if (item.status === "Unavailable") {
+            if (status === "Unavailable") {
                 alertCount++;
             }
 
             if (
-                isMaintenanceOverdue(item.maintenanceDate) &&
-                item.status !== "Maintenance"
+                isMaintenanceOverdue(
+                    item.maintenanceDate
+                ) &&
+                status !== "Maintenance"
             ) {
                 alertCount++;
             }
         });
 
-        totalEquipment.textContent = equipment.length;
-        availableEquipment.textContent = availableCount;
-        maintenanceEquipment.textContent = maintenanceCount;
-        inUseEquipment.textContent = inUseCount;
-        notificationCount.textContent = alertCount;
+        totalEquipment.textContent =
+            equipment.length;
+
+        availableEquipment.textContent =
+            availableCount;
+
+        maintenanceEquipment.textContent =
+            maintenanceCount;
+
+        inUseEquipment.textContent =
+            inUseCount;
+
+        notificationCount.textContent =
+            alertCount;
     }
 
     // =====================================
@@ -512,7 +637,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         equipmentForm.reset();
 
         editingEquipmentId.value = "";
-        modalTitle.textContent = "Add Medical Equipment";
+
+        modalTitle.textContent =
+            "Add Medical Equipment";
+
         formMessage.textContent = "";
 
         equipmentModal.classList.add("show");
@@ -524,47 +652,73 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     function openEditModal(equipmentId) {
+        const normalizedEquipmentId =
+            normalizeId(equipmentId);
+
         const equipment = getEquipment();
 
         const selectedEquipment =
             equipment.find(function (item) {
-                return item.id === equipmentId;
+                return (
+                    normalizeId(item.id) ===
+                    normalizedEquipmentId
+                );
             });
 
         if (!selectedEquipment) {
+            alert(
+                "The selected equipment could not be found."
+            );
+
             return;
         }
 
         editingEquipmentId.value =
-            selectedEquipment.id;
+            normalizeId(selectedEquipment.id);
 
         equipmentName.value =
-            selectedEquipment.name;
+            normalizeText(selectedEquipment.name);
 
         equipmentCategory.value =
-            selectedEquipment.category;
+            normalizeText(
+                selectedEquipment.category
+            );
 
         equipmentQuantity.value =
-            selectedEquipment.quantity;
+            Number(selectedEquipment.quantity) || 1;
 
         equipmentCondition.value =
-            selectedEquipment.condition;
+            normalizeText(
+                selectedEquipment.condition
+            );
 
         equipmentStatus.value =
-            selectedEquipment.status;
+            normalizeText(
+                selectedEquipment.status
+            );
 
         equipmentLocation.value =
-            selectedEquipment.location;
+            normalizeText(
+                selectedEquipment.location
+            );
 
         maintenanceDate.value =
-            selectedEquipment.maintenanceDate;
+            normalizeText(
+                selectedEquipment.maintenanceDate
+            );
 
-        modalTitle.textContent = "Edit Medical Equipment";
+        modalTitle.textContent =
+            "Edit Medical Equipment";
+
         formMessage.textContent = "";
 
         equipmentModal.classList.add("show");
         equipmentName.focus();
     }
+
+    // =====================================
+    // CLOSE EQUIPMENT MODAL
+    // =====================================
 
     function closeEquipmentModal() {
         equipmentModal.classList.remove("show");
@@ -578,140 +732,225 @@ document.addEventListener("DOMContentLoaded", async function () {
     // SAVE OR UPDATE EQUIPMENT
     // =====================================
 
-    equipmentForm.addEventListener("submit", function (event) {
-        event.preventDefault();
+    equipmentForm.addEventListener(
+        "submit",
+        function (event) {
+            event.preventDefault();
 
-        const nameValue =
-            equipmentName.value.trim();
+            const nameValue =
+                equipmentName.value.trim();
 
-        const categoryValue =
-            equipmentCategory.value;
+            const categoryValue =
+                equipmentCategory.value;
 
-        const quantityValue =
-            Number(equipmentQuantity.value);
+            const quantityValue =
+                Number(equipmentQuantity.value);
 
-        const conditionValue =
-            equipmentCondition.value;
+            const conditionValue =
+                equipmentCondition.value;
 
-        const statusValue =
-            equipmentStatus.value;
+            const statusValue =
+                equipmentStatus.value;
 
-        const locationValue =
-            equipmentLocation.value.trim();
+            const locationValue =
+                equipmentLocation.value.trim();
 
-        const maintenanceValue =
-            maintenanceDate.value;
+            const maintenanceValue =
+                maintenanceDate.value;
 
-        if (
-            !nameValue ||
-            !categoryValue ||
-            !conditionValue ||
-            !statusValue ||
-            !locationValue ||
-            !maintenanceValue
-        ) {
-            formMessage.textContent =
-                "Please complete all fields.";
+            if (
+                !nameValue ||
+                !categoryValue ||
+                !conditionValue ||
+                !statusValue ||
+                !locationValue ||
+                !maintenanceValue
+            ) {
+                formMessage.textContent =
+                    "Please complete all fields.";
 
-            return;
-        }
+                return;
+            }
 
-        if (quantityValue < 1) {
-            formMessage.textContent =
-                "Quantity must be at least 1.";
+            if (
+                !Number.isFinite(quantityValue) ||
+                quantityValue < 1
+            ) {
+                formMessage.textContent =
+                    "Quantity must be at least 1.";
 
-            return;
-        }
+                return;
+            }
 
-        const equipment = getEquipment();
-        const editId = editingEquipmentId.value;
+            const equipment = getEquipment();
 
-        if (editId) {
-            const equipmentIndex =
-                equipment.findIndex(function (item) {
-                    return item.id === editId;
-                });
+            const editId =
+                normalizeId(
+                    editingEquipmentId.value
+                );
 
-            if (equipmentIndex !== -1) {
+            if (editId) {
+                const equipmentIndex =
+                    equipment.findIndex(
+                        function (item) {
+                            return (
+                                normalizeId(item.id) ===
+                                editId
+                            );
+                        }
+                    );
+
+                if (equipmentIndex === -1) {
+                    formMessage.textContent =
+                        "The selected equipment could not be found.";
+
+                    return;
+                }
+
                 equipment[equipmentIndex] = {
                     ...equipment[equipmentIndex],
+                    id: normalizeId(
+                        equipment[equipmentIndex].id
+                    ),
                     name: nameValue,
                     category: categoryValue,
                     quantity: quantityValue,
                     condition: conditionValue,
                     location: locationValue,
-                    maintenanceDate: maintenanceValue,
+                    maintenanceDate:
+                        maintenanceValue,
                     status: statusValue
                 };
+            } else {
+                const newEquipment = {
+                    id: generateEquipmentId(
+                        equipment
+                    ),
+                    name: nameValue,
+                    category: categoryValue,
+                    quantity: quantityValue,
+                    condition: conditionValue,
+                    location: locationValue,
+                    maintenanceDate:
+                        maintenanceValue,
+                    status: statusValue
+                };
+
+                equipment.push(newEquipment);
             }
-        } else {
-            const newEquipment = {
-                id: generateEquipmentId(equipment),
-                name: nameValue,
-                category: categoryValue,
-                quantity: quantityValue,
-                condition: conditionValue,
-                location: locationValue,
-                maintenanceDate: maintenanceValue,
-                status: statusValue
-            };
 
-            equipment.push(newEquipment);
+            saveEquipment(equipment);
+            closeEquipmentModal();
+            renderEquipment();
         }
-
-        saveEquipment(equipment);
-        closeEquipmentModal();
-        renderEquipment();
-    });
+    );
 
     // =====================================
     // EDIT AND DELETE ACTIONS
     // =====================================
 
-    equipmentTableBody.addEventListener("click", function (event) {
-        const button = event.target.closest("button");
+    equipmentTableBody.addEventListener(
+        "click",
+        function (event) {
+            const button =
+                event.target.closest(
+                    ".edit-button, .remove-button"
+                );
 
-        if (!button) {
-            return;
+            if (
+                !button ||
+                !equipmentTableBody.contains(button)
+            ) {
+                return;
+            }
+
+            const action =
+                button.dataset.action;
+
+            const equipmentId =
+                normalizeId(button.dataset.id);
+
+            if (!equipmentId) {
+                return;
+            }
+
+            if (action === "edit") {
+                openEditModal(equipmentId);
+                return;
+            }
+
+            if (action === "delete") {
+                equipmentToDelete =
+                    equipmentId;
+
+                deleteModal.classList.add("show");
+            }
         }
+    );
 
-        const action = button.dataset.action;
-        const equipmentId = button.dataset.id;
+    // =====================================
+    // CONFIRM DELETE
+    // =====================================
 
-        if (action === "edit") {
-            openEditModal(equipmentId);
+    confirmDelete.addEventListener(
+        "click",
+        function () {
+            const deleteId =
+                normalizeId(equipmentToDelete);
+
+            if (!deleteId) {
+                return;
+            }
+
+            const equipment = getEquipment();
+
+            const equipmentExists =
+                equipment.some(function (item) {
+                    return (
+                        normalizeId(item.id) ===
+                        deleteId
+                    );
+                });
+
+            if (!equipmentExists) {
+                equipmentToDelete = null;
+                deleteModal.classList.remove("show");
+
+                alert(
+                    "The selected equipment could not be found."
+                );
+
+                return;
+            }
+
+            const updatedEquipment =
+                equipment.filter(function (item) {
+                    return (
+                        normalizeId(item.id) !==
+                        deleteId
+                    );
+                });
+
+            saveEquipment(updatedEquipment);
+
+            equipmentToDelete = null;
+            deleteModal.classList.remove("show");
+
+            renderEquipment();
         }
+    );
 
-        if (action === "delete") {
-            equipmentToDelete = equipmentId;
-            deleteModal.classList.add("show");
+    // =====================================
+    // CANCEL DELETE
+    // =====================================
+
+    cancelDelete.addEventListener(
+        "click",
+        function () {
+            equipmentToDelete = null;
+            deleteModal.classList.remove("show");
         }
-    });
-
-    confirmDelete.addEventListener("click", function () {
-        if (!equipmentToDelete) {
-            return;
-        }
-
-        const equipment = getEquipment();
-
-        const updatedEquipment =
-            equipment.filter(function (item) {
-                return item.id !== equipmentToDelete;
-            });
-
-        saveEquipment(updatedEquipment);
-
-        equipmentToDelete = null;
-        deleteModal.classList.remove("show");
-
-        renderEquipment();
-    });
-
-    cancelDelete.addEventListener("click", function () {
-        equipmentToDelete = null;
-        deleteModal.classList.remove("show");
-    });
+    );
 
     // =====================================
     // SEARCH AND FILTERS
@@ -751,68 +990,130 @@ document.addEventListener("DOMContentLoaded", async function () {
         closeEquipmentModal
     );
 
-    equipmentModal.addEventListener("click", function (event) {
-        if (event.target === equipmentModal) {
-            closeEquipmentModal();
+    equipmentModal.addEventListener(
+        "click",
+        function (event) {
+            if (event.target === equipmentModal) {
+                closeEquipmentModal();
+            }
         }
-    });
+    );
 
-    deleteModal.addEventListener("click", function (event) {
-        if (event.target === deleteModal) {
-            equipmentToDelete = null;
-            deleteModal.classList.remove("show");
+    deleteModal.addEventListener(
+        "click",
+        function (event) {
+            if (event.target === deleteModal) {
+                equipmentToDelete = null;
+                deleteModal.classList.remove("show");
+            }
         }
-    });
+    );
 
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-            closeEquipmentModal();
+    // =====================================
+    // KEYBOARD SUPPORT
+    // =====================================
 
-            equipmentToDelete = null;
-            deleteModal.classList.remove("show");
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key !== "Escape") {
+                return;
+            }
+
+            if (
+                equipmentModal.classList.contains(
+                    "show"
+                )
+            ) {
+                closeEquipmentModal();
+            }
+
+            if (
+                deleteModal.classList.contains(
+                    "show"
+                )
+            ) {
+                equipmentToDelete = null;
+
+                deleteModal.classList.remove(
+                    "show"
+                );
+            }
         }
-    });
+    );
 
     // =====================================
     // NOTIFICATIONS
     // =====================================
 
-    notificationButton.addEventListener("click", function () {
-        const equipment = getEquipment();
+    notificationButton.addEventListener(
+        "click",
+        function () {
+            const equipment = getEquipment();
 
-        const alerts = equipment.filter(function (item) {
-            return (
-                item.status === "Maintenance" ||
-                item.status === "Unavailable" ||
-                isMaintenanceOverdue(item.maintenanceDate)
+            const alerts =
+                equipment.filter(function (item) {
+                    return (
+                        item.status ===
+                            "Maintenance" ||
+                        item.status ===
+                            "Unavailable" ||
+                        isMaintenanceOverdue(
+                            item.maintenanceDate
+                        )
+                    );
+                });
+
+            if (alerts.length === 0) {
+                alert(
+                    "There are no equipment alerts."
+                );
+
+                return;
+            }
+
+            alert(
+                `There are ${alerts.length} equipment items requiring attention.`
             );
-        });
-
-        if (alerts.length === 0) {
-            alert("There are no equipment alerts.");
-            return;
         }
+    );
 
-        alert(
-            `There are ${alerts.length} equipment items requiring attention.`
-        );
-    });
+    // =====================================
+    // UPDATE FROM OTHER TABS
+    // =====================================
+
+    window.addEventListener(
+        "storage",
+        function (event) {
+            if (
+                event.key ===
+                "medtrackMedicalEquipment"
+            ) {
+                renderEquipment();
+            }
+        }
+    );
 
     // =====================================
     // LOGOUT
     // =====================================
 
-    logoutButton.addEventListener("click", async function () {
-        const confirmLogout = confirm(
-            "Are you sure you want to log out?"
-        );
+    logoutButton.addEventListener(
+        "click",
+        async function () {
+            const confirmLogout =
+                window.confirm(
+                    "Are you sure you want to log out?"
+                );
 
-        if (!confirmLogout) {
-            return;
+            if (!confirmLogout) {
+                return;
+            }
+
+            await window.medtrackAuth
+                .signOutAndRedirect();
         }
-
-        await window.medtrackAuth.signOutAndRedirect();
-    });
+    );
 
     // =====================================
     // INITIAL DISPLAY

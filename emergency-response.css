@@ -34,6 +34,10 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+body[hidden] {
+    display: none;
+}
+
 button,
 input,
 select,
@@ -66,11 +70,12 @@ a {
 .sidebar {
     position: fixed;
     top: 0;
-    left: 0;
     bottom: 0;
+    left: 0;
     z-index: 1000;
 
     width: 270px;
+    min-width: 270px;
     min-height: 100vh;
     padding: 24px 16px;
 
@@ -81,6 +86,10 @@ a {
     background-color: var(--sidebar);
     overflow-y: auto;
 }
+
+/* =====================================
+   BRAND
+===================================== */
 
 .brand {
     padding: 0 10px 22px;
@@ -98,8 +107,8 @@ a {
     flex-shrink: 0;
 
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     color: var(--white);
     background-color: var(--primary);
@@ -116,6 +125,10 @@ a {
     color: #b9b9b9;
     font-size: 12px;
 }
+
+/* =====================================
+   SIDEBAR NAVIGATION
+===================================== */
 
 .menu-label {
     margin: 25px 12px 10px;
@@ -150,6 +163,8 @@ a {
 
 .nav-item i {
     width: 21px;
+    flex-shrink: 0;
+
     color: #aaaaaa;
     text-align: center;
     font-size: 17px;
@@ -181,7 +196,9 @@ a {
     display: block;
 }
 
-/* Logout */
+/* =====================================
+   LOGOUT
+===================================== */
 
 .logout-button {
     width: 100%;
@@ -199,12 +216,16 @@ a {
     border-radius: 10px;
 
     font-size: 14px;
+    text-align: left;
     transition: 0.25s ease;
 }
 
 .logout-button i {
     width: 21px;
+    flex-shrink: 0;
+
     color: #aaaaaa;
+    text-align: center;
     font-size: 17px;
 }
 
@@ -218,7 +239,9 @@ a {
     color: var(--white);
 }
 
-/* Sidebar scrollbar */
+/* =====================================
+   SIDEBAR SCROLLBAR
+===================================== */
 
 .sidebar::-webkit-scrollbar {
     width: 6px;
@@ -252,8 +275,8 @@ a {
     margin-bottom: 26px;
 
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     gap: 25px;
 }
 
@@ -273,7 +296,9 @@ a {
     gap: 14px;
 }
 
-/* Notification */
+/* =====================================
+   NOTIFICATION
+===================================== */
 
 .notification-button {
     position: relative;
@@ -299,8 +324,8 @@ a {
     padding: 0 5px;
 
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     color: var(--white);
     background-color: var(--primary);
@@ -311,7 +336,9 @@ a {
     font-weight: bold;
 }
 
-/* User profile */
+/* =====================================
+   USER PROFILE
+===================================== */
 
 .user-profile {
     min-width: 165px;
@@ -329,10 +356,11 @@ a {
 .profile-icon {
     width: 34px;
     height: 34px;
+    flex-shrink: 0;
 
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     color: var(--primary);
     background-color: var(--primary-light);
@@ -400,8 +428,8 @@ a {
     flex-shrink: 0;
 
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     border-radius: 13px;
     font-size: 22px;
@@ -460,8 +488,8 @@ a {
     margin-bottom: 23px;
 
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     gap: 20px;
 }
 
@@ -602,7 +630,7 @@ a {
 }
 
 /* =====================================
-   STATUS BADGES
+   STATUS AND PRIORITY BADGES
 ===================================== */
 
 .status-badge,
@@ -636,10 +664,8 @@ a {
     background-color: #eeeeee;
 }
 
-/* Priority badges */
-
 .priority-critical {
-    color: #ffffff;
+    color: var(--white);
     background-color: var(--red);
 }
 
@@ -722,7 +748,9 @@ a {
     background-color: var(--red);
 }
 
-/* Empty state */
+/* =====================================
+   EMPTY STATE
+===================================== */
 
 .empty-state {
     display: none;
@@ -763,8 +791,8 @@ a {
     padding: 20px;
 
     display: none;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     background-color: rgba(0, 0, 0, 0.55);
 }
@@ -804,8 +832,8 @@ a {
     padding-bottom: 17px;
 
     display: flex;
-    justify-content: space-between;
     align-items: flex-start;
+    justify-content: space-between;
     gap: 15px;
 
     border-bottom: 1px solid var(--border);
@@ -901,6 +929,23 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
+.input-group input:disabled,
+.input-group select:disabled {
+    color: #888888;
+    background-color: #eeeeee;
+    cursor: not-allowed;
+}
+
+/* New inventory availability text */
+
+.field-help {
+    margin-top: 6px;
+
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 .form-message {
     min-height: 19px;
     margin-top: 14px;
@@ -911,14 +956,16 @@ a {
     font-weight: bold;
 }
 
-/* Modal buttons */
+/* =====================================
+   MODAL BUTTONS
+===================================== */
 
 .modal-actions {
     margin-top: 22px;
 
     display: flex;
-    justify-content: flex-end;
     align-items: center;
+    justify-content: flex-end;
     gap: 10px;
 }
 
@@ -981,7 +1028,9 @@ a {
     background-color: #a91515;
 }
 
-/* Confirmation modals */
+/* =====================================
+   CONFIRMATION MODALS
+===================================== */
 
 .action-modal {
     max-width: 430px;
@@ -995,8 +1044,8 @@ a {
     margin: 0 auto 17px;
 
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     border-radius: 50%;
     font-size: 25px;
@@ -1046,8 +1095,8 @@ a {
     }
 
     .response-tools select {
-        flex: 1;
         width: auto;
+        flex: 1;
     }
 }
 

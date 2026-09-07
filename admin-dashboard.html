@@ -59,6 +59,11 @@
                 <span>Borrow and Return</span>
             </a>
 
+             <a href="available-items.html" class="nav-item" >
+               <i class="fa-solid fa-box-open"></i>
+               <span>Available Items</span>
+            </a>
+
             <a href="emergency-response.html" class="nav-item">
                 <i class="fa-solid fa-triangle-exclamation"></i>
                 <span>Emergency Response</span>
@@ -152,7 +157,7 @@
 
                 <div>
                     <p>Medical Supplies</p>
-                    <h3>120</h3>
+                    <h3 id="supplyTotal"></h3>
                     <small>Total supply categories</small>
                 </div>
             </article>
@@ -164,7 +169,7 @@
 
                 <div>
                     <p>Medical Equipment</p>
-                    <h3>19</h3>
+                    <h3 id="equipmentTotal"></h3>
                     <small>Registered equipment</small>
                 </div>
             </article>
@@ -176,7 +181,7 @@
 
                 <div>
                     <p>Mobility Assets</p>
-                    <h3>4</h3>
+                    <h3 id="mobilityTotal"></h3>
                     <small>Available vehicles</small>
                 </div>
             </article>
@@ -188,7 +193,7 @@
 
                 <div>
                     <p>System Users</p>
-                    <h3>12</h3>
+                    <h3 id="userTotal"></h3>
                     <small>Admin and staff accounts</small>
                 </div>
             </article>
@@ -197,7 +202,6 @@
 
         <section class="dashboard-grid">
 
-            <!-- Inventory overview -->
             <article class="dashboard-card inventory-overview">
 
                 <div class="card-heading">
@@ -213,47 +217,51 @@
                     </select>
                 </div>
 
-                <div class="inventory-item">
+                <div class="progress-info">
                     <div class="inventory-information">
                         <span>Medical Supplies</span>
-                        <strong>620</strong>
+                        <strong id="supplyOverviewCount">0</strong>
                     </div>
 
                     <div class="progress-bar">
-                        <span class="progress red-progress"></span>
+                        <span id="supplyProgress"
+                              class="progress red-progress"></span>
                     </div>
                 </div>
 
-                <div class="inventory-item">
+                <div class="progress-info">
                     <div class="inventory-information">
                         <span>Medical Equipment</span>
-                        <strong>55</strong>
+                        <strong id="equipmentOverviewCount">0</strong>
                     </div>
 
                     <div class="progress-bar">
-                        <span class="progress orange-progress"></span>
+                        <span id="equipmentProgress" 
+                               class="progress orange-progress"></span>
                     </div>
                 </div>
 
-                <div class="inventory-item">
+                <div class="progress-info">
                     <div class="inventory-information">
                         <span>Mobility Assets</span>
-                        <strong>32</strong>
+                        <strong id="mobilityOverviewCount">0</strong>
                     </div>
 
                     <div class="progress-bar">
-                        <span class="progress blue-progress"></span>
+                        <span id="mobilityProgress"
+                              class="progress blue-progress"></span>
                     </div>
                 </div>
 
-                <div class="inventory-item">
+                <div class="progress-info">
                     <div class="inventory-information">
                         <span>Emergency Supplies</span>
-                        <strong>67</strong>
+                        <strong id="emergencyOverviewCount">0</strong>
                     </div>
 
                     <div class="progress-bar">
-                        <span class="progress green-progress"></span>
+                        <span id="emergencyProgress"
+                              class="progress green-progress"></span>
                     </div>
                 </div>
 
@@ -271,58 +279,10 @@
                     <a href="reports.html">View all</a>
                 </div>
 
-                <div class="alert-item">
-                    <div class="alert-icon danger">
-                        <i class="fa-solid fa-arrow-trend-down"></i>
-                    </div>
-
-                    <div>
-                        <strong>Low Stock</strong>
-                        <p>First Aid Kits</p>
-                    </div>
-
-                    <span class="alert-status danger-text">4 left</span>
+                <div id="inventoryAlerts">
+                    <p>Loading inventory alerts...</p>
                 </div>
-
-                <div class="alert-item">
-                    <div class="alert-icon danger">
-                        <i class="fa-solid fa-calendar-xmark"></i>
-                    </div>
-
-                    <div>
-                        <strong>Expired Item</strong>
-                        <p>Medical Gloves</p>
-                    </div>
-
-                    <span class="alert-status danger-text">Expired</span>
-                </div>
-
-                <div class="alert-item">
-                    <div class="alert-icon warning">
-                        <i class="fa-solid fa-screwdriver-wrench"></i>
-                    </div>
-
-                    <div>
-                        <strong>Maintenance Due</strong>
-                        <p>Portable Generator</p>
-                    </div>
-
-                    <span class="alert-status warning-text">Overdue</span>
-                </div>
-
-                <div class="alert-item">
-                    <div class="alert-icon information">
-                        <i class="fa-solid fa-clock"></i>
-                    </div>
-
-                    <div>
-                        <strong>Return Due</strong>
-                        <p>Handheld Radio</p>
-                    </div>
-
-                    <span class="alert-status information-text">Today</span>
-                </div>
-
+     
             </article>
 
         </section>
@@ -370,6 +330,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth/supabase-client.js"></script>
 <script src="auth/supabase-auth.js"></script>
+<script src="analytics.js"></script>
 <script src="admin-dashboard.js"></script>
 
 </body>

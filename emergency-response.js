@@ -3,6 +3,7 @@
 // =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
+    "use strict";
 
     // =====================================
     // ELEMENTS
@@ -62,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const statusFilter =
         document.getElementById("statusFilter");
 
-    // Request form modal
+    // Request form
     const requestModal =
         document.getElementById("requestModal");
 
@@ -111,6 +112,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     const requestStatus =
         document.getElementById("requestStatus");
 
+    const resourceInventoryType =
+        document.getElementById("resourceInventoryType");
+
+    const resourceItem =
+        document.getElementById("resourceItem");
+
+    const resourceQuantity =
+        document.getElementById("resourceQuantity");
+
+    const resourceAvailability =
+        document.getElementById("resourceAvailability");
+
     const requiredResources =
         document.getElementById("requiredResources");
 
@@ -144,11 +157,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     let requestToDelete = null;
 
     // =====================================
+    // SHARED INVENTORY KEYS
+    // =====================================
+
+    const inventoryKeys = {
+        "Medical Supply": "medtrackMedicalSupplies",
+        "Medical Equipment": "medtrackMedicalEquipment",
+        "Mobility Asset": "medtrackMobilityAssets"
+    };
+
+    // =====================================
     // LOGIN AND ROLE CHECK
     // =====================================
 
     const currentUser =
-        await window.medtrackAuth.requireRoles(["admin", "staff"]);
+        await window.medtrackAuth.requireRoles([
+            "admin",
+            "staff"
+        ]);
 
     if (!currentUser) {
         return;
@@ -180,8 +206,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         const today = new Date();
 
         const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, "0");
-        const day = String(today.getDate()).padStart(2, "0");
+
+        const month =
+            String(today.getMonth() + 1)
+                .padStart(2, "0");
+
+        const day =
+            String(today.getDate())
+                .padStart(2, "0");
 
         return `${year}-${month}-${day}`;
     }
@@ -189,8 +221,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     function getCurrentTime() {
         const now = new Date();
 
-        const hours = String(now.getHours()).padStart(2, "0");
-        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const hours =
+            String(now.getHours())
+                .padStart(2, "0");
+
+        const minutes =
+            String(now.getMinutes())
+                .padStart(2, "0");
 
         return `${hours}:${minutes}`;
     }
@@ -203,6 +240,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         const date = new Date(
             `${dateValue}T${timeValue || "00:00"}`
         );
+
+        if (Number.isNaN(date.getTime())) {
+            return dateValue;
+        }
 
         return date.toLocaleString("en-US", {
             month: "short",
@@ -231,6 +272,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             status: "In Progress",
             resources: "Ambulance and first aid kit",
             description: "Medical assistance requested.",
+            inventoryUsage: null,
+            inventoryDeducted: false,
+            inventoryDeductedAt: "",
             completedAt: ""
         },
         {
@@ -246,6 +290,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             status: "Pending",
             resources: "Rescue vehicle and safety equipment",
             description: "Residents requested evacuation assistance.",
+            inventoryUsage: null,
+            inventoryDeducted: false,
+            inventoryDeductedAt: "",
             completedAt: ""
         },
         {
@@ -261,56 +308,156 @@ document.addEventListener("DOMContentLoaded", async function () {
             status: "Completed",
             resources: "Ambulance and medical equipment",
             description: "Response team provided assistance.",
+            inventoryUsage: null,
+            inventoryDeducted: false,
+            inventoryDeductedAt: "",
             completedAt: "2026-08-27T15:20:00"
         }
     ];
 
     // =====================================
-    // LOCAL STORAGE
+    // REQUEST STORAGE
     // =====================================
 
     function getRequests() {
         const savedRequests =
-            localStorage.getItem("medtrackEmergencyRequests");
+            localStorage.getItem(
+                "medtrackEmergencyRequests"
+            );
 
-        if (!savedRequests) {
+        if (savedRequests === null) {
             localStorage.setItem(
                 "medtrackEmergencyRequests",
                 JSON.stringify(defaultRequests)
             );
 
-            return [...defaultRequests];
+            return defaultRequests.map(function (request) {
+                return { ...request };
+            });
         }
 
         try {
-            const parsedRequests = JSON.parse(savedRequests);
+            const parsedRequests =
+                JSON.parse(savedRequests);
 
             return Array.isArray(parsedRequests)
                 ? parsedRequests
                 : [];
         } catch (error) {
+            console.error(
+                "Unable to read emergency requests:",
+                error
+            );
+
             return [];
         }
     }
 
     function saveRequests(requests) {
-        localStorage.setItem(
-            "medtrackEmergencyRequests",
-            JSON.stringify(requests)
-        );
+        try {
+            localStorage.setItem(
+                "medtrackEmergencyRequests",
+                JSON.stringify(requests)
+            );
+
+            return true;
+        } catch (error) {
+            console.error(
+                "Unable to save emergency requests:",
+                error
+            );
+
+            return false;
+        }
     }
 
     // =====================================
-    // SAFE TEXT
+    // INVENTORY STORAGE
+    // =====================================
+
+    function getInventoryRecords(itemType) {
+        const storageKey =
+            inventoryKeys[itemType];
+
+        if (!storageKey) {
+            return [];
+        }
+
+        try {
+            const savedInventory =
+                localStorage.getItem(storageKey);
+
+            if (!savedInventory) {
+                return [];
+            }
+
+            const parsedInventory =
+                JSON.parse(savedInventory);
+
+            return Array.isArray(parsedInventory)
+                ? parsedInventory
+                : [];
+        } catch (error) {
+            console.error(
+                "Unable to read emergency inventory:",
+                error
+            );
+
+            return [];
+        }
+    }
+
+    function saveInventoryRecords(
+        itemType,
+        records
+    ) {
+        const storageKey =
+            inventoryKeys[itemType];
+
+        if (!storageKey) {
+            return false;
+        }
+
+        try {
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify(records)
+            );
+
+            return true;
+        } catch (error) {
+            console.error(
+                "Unable to update emergency inventory:",
+                error
+            );
+
+            return false;
+        }
+    }
+
+    // =====================================
+    // SAFE VALUES
     // =====================================
 
     function escapeHTML(value) {
-        return String(value)
+        return String(value ?? "")
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
             .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
+    }
+
+    function normalizeId(value) {
+        return String(value ?? "").trim();
+    }
+
+    function normalizeText(value) {
+        return String(value ?? "").trim();
+    }
+
+    function normalizeStatus(value) {
+        return normalizeText(value).toLowerCase();
     }
 
     // =====================================
@@ -357,16 +504,432 @@ document.addEventListener("DOMContentLoaded", async function () {
         let highestNumber = 0;
 
         requests.forEach(function (request) {
-            const number = Number(
-                String(request.id).replace("RES-", "")
-            );
+            const requestId =
+                normalizeId(request.id);
 
-            if (!Number.isNaN(number) && number > highestNumber) {
+            const match =
+                requestId.match(/^RES-(\d+)$/i);
+
+            if (!match) {
+                return;
+            }
+
+            const number = Number(match[1]);
+
+            if (
+                Number.isInteger(number) &&
+                number > highestNumber
+            ) {
                 highestNumber = number;
             }
         });
 
-        return `RES-${String(highestNumber + 1).padStart(3, "0")}`;
+        return (
+            "RES-" +
+            String(highestNumber + 1)
+                .padStart(3, "0")
+        );
+    }
+
+    // =====================================
+    // INVENTORY AVAILABILITY
+    // =====================================
+
+    function isSupplyExpired(dateValue) {
+        if (!dateValue) {
+            return false;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const expirationDate =
+            new Date(
+                dateValue + "T00:00:00"
+            );
+
+        return (
+            !Number.isNaN(
+                expirationDate.getTime()
+            ) &&
+            expirationDate < today
+        );
+    }
+
+    function isInventoryItemUsable(
+        itemType,
+        item
+    ) {
+        if (itemType === "Medical Supply") {
+            return (
+                Number(item.quantity) > 0 &&
+                !isSupplyExpired(
+                    item.expirationDate
+                )
+            );
+        }
+
+        if (itemType === "Medical Equipment") {
+            return (
+                Number(item.quantity) > 0 &&
+                normalizeStatus(item.status) ===
+                    "available"
+            );
+        }
+
+        if (itemType === "Mobility Asset") {
+            return (
+                normalizeStatus(item.status) ===
+                "available"
+            );
+        }
+
+        return false;
+    }
+
+    // =====================================
+    // POPULATE INVENTORY ITEMS
+    // =====================================
+
+    function populateResourceItems(
+        selectedId = ""
+    ) {
+        const itemType =
+            resourceInventoryType.value;
+
+        const normalizedSelectedId =
+            normalizeId(selectedId);
+
+        resourceItem.innerHTML = "";
+
+        if (!itemType) {
+            resourceItem.disabled = true;
+            resourceQuantity.disabled = true;
+
+            resourceAvailability.textContent =
+                "Select an inventory type to view available items.";
+
+            const option =
+                document.createElement("option");
+
+            option.value = "";
+            option.textContent =
+                "Select inventory type first";
+
+            resourceItem.appendChild(option);
+            return;
+        }
+
+        const records =
+            getInventoryRecords(itemType);
+
+        const selectableRecords =
+            records.filter(function (item) {
+                return (
+                    isInventoryItemUsable(
+                        itemType,
+                        item
+                    ) ||
+                    normalizeId(item.id) ===
+                        normalizedSelectedId
+                );
+            });
+
+        const placeholder =
+            document.createElement("option");
+
+        placeholder.value = "";
+
+        placeholder.textContent =
+            selectableRecords.length > 0
+                ? "Select an available item"
+                : "No available items";
+
+        resourceItem.appendChild(placeholder);
+
+        selectableRecords.forEach(
+            function (item) {
+                const option =
+                    document.createElement("option");
+
+                const quantity =
+                    itemType === "Mobility Asset"
+                        ? 1
+                        : Number(item.quantity) || 0;
+
+                option.value =
+                    normalizeId(item.id);
+
+                option.textContent =
+                    `${item.name} (${quantity} available)`;
+
+                resourceItem.appendChild(option);
+            }
+        );
+
+        resourceItem.disabled =
+            selectableRecords.length === 0;
+
+        resourceQuantity.disabled =
+            selectableRecords.length === 0;
+
+        resourceItem.value =
+            normalizedSelectedId;
+
+        updateResourceAvailability();
+    }
+
+    // =====================================
+    // DISPLAY AVAILABLE QUANTITY
+    // =====================================
+
+    function updateResourceAvailability() {
+        const itemType =
+            resourceInventoryType.value;
+
+        const itemId =
+            normalizeId(resourceItem.value);
+
+        if (!itemType || !itemId) {
+            resourceAvailability.textContent =
+                "Select an inventory item to see its available quantity.";
+
+            return;
+        }
+
+        const item =
+            getInventoryRecords(itemType)
+                .find(function (record) {
+                    return (
+                        normalizeId(record.id) ===
+                        itemId
+                    );
+                });
+
+        if (!item) {
+            resourceAvailability.textContent =
+                "This inventory item could not be found.";
+
+            return;
+        }
+
+        const availableQuantity =
+            itemType === "Mobility Asset"
+                ? 1
+                : Number(item.quantity) || 0;
+
+        resourceQuantity.max =
+            String(availableQuantity);
+
+        if (itemType === "Mobility Asset") {
+            resourceQuantity.value = "1";
+            resourceQuantity.disabled = true;
+        } else {
+            resourceQuantity.disabled = false;
+        }
+
+        resourceAvailability.textContent =
+            `${availableQuantity} available for emergency use.`;
+
+        if (!requiredResources.value.trim()) {
+            requiredResources.value =
+                item.name || "";
+        }
+    }
+
+    // =====================================
+    // READ INVENTORY USAGE
+    // =====================================
+
+    function getInventoryUsageFromForm() {
+        const itemType =
+            resourceInventoryType.value;
+
+        const itemId =
+            normalizeId(resourceItem.value);
+
+        if (!itemType && !itemId) {
+            return {
+                ok: true,
+                usage: null
+            };
+        }
+
+        if (!itemType || !itemId) {
+            return {
+                ok: false,
+                message:
+                    "Select both an inventory type and item."
+            };
+        }
+
+        const records =
+            getInventoryRecords(itemType);
+
+        const selectedItem =
+            records.find(function (item) {
+                return (
+                    normalizeId(item.id) ===
+                    itemId
+                );
+            });
+
+        if (!selectedItem) {
+            return {
+                ok: false,
+                message:
+                    "The selected inventory item was not found."
+            };
+        }
+
+        const quantity =
+            itemType === "Mobility Asset"
+                ? 1
+                : Number(resourceQuantity.value);
+
+        if (
+            !Number.isInteger(quantity) ||
+            quantity < 1
+        ) {
+            return {
+                ok: false,
+                message:
+                    "Quantity used must be at least 1."
+            };
+        }
+
+        return {
+            ok: true,
+            usage: {
+                itemType: itemType,
+                itemId: itemId,
+                itemName:
+                    selectedItem.name ||
+                    "Unnamed item",
+                quantity: quantity
+            }
+        };
+    }
+
+    // =====================================
+    // DEDUCT INVENTORY
+    // =====================================
+
+    function deductInventory(usage) {
+        if (!usage) {
+            return { ok: true };
+        }
+
+        const records =
+            getInventoryRecords(
+                usage.itemType
+            );
+
+        const itemIndex =
+            records.findIndex(
+                function (item) {
+                    return (
+                        normalizeId(item.id) ===
+                        normalizeId(
+                            usage.itemId
+                        )
+                    );
+                }
+            );
+
+        if (itemIndex === -1) {
+            return {
+                ok: false,
+                message:
+                    `${usage.itemName} was not found in inventory.`
+            };
+        }
+
+        const item = records[itemIndex];
+
+        if (
+            usage.itemType ===
+            "Mobility Asset"
+        ) {
+            if (
+                normalizeStatus(item.status) !==
+                "available"
+            ) {
+                return {
+                    ok: false,
+                    message:
+                        `${usage.itemName} is no longer available.`
+                };
+            }
+
+            item.status = "Deployed";
+        } else {
+            const availableQuantity =
+                Number(item.quantity) || 0;
+
+            if (
+                availableQuantity <
+                usage.quantity
+            ) {
+                return {
+                    ok: false,
+                    message:
+                        `Only ${availableQuantity} ${usage.itemName} available.`
+                };
+            }
+
+            item.quantity =
+                availableQuantity -
+                usage.quantity;
+
+            if (
+                usage.itemType ===
+                    "Medical Equipment" &&
+                item.quantity === 0
+            ) {
+                item.status = "Unavailable";
+            }
+        }
+
+        const saved =
+            saveInventoryRecords(
+                usage.itemType,
+                records
+            );
+
+        if (!saved) {
+            return {
+                ok: false,
+                message:
+                    "Unable to update the inventory."
+            };
+        }
+
+        return { ok: true };
+    }
+
+    // Prevent double deduction
+    function deductRequestInventory(request) {
+        if (
+            request.inventoryDeducted ||
+            !request.inventoryUsage
+        ) {
+            return { ok: true };
+        }
+
+        const result =
+            deductInventory(
+                request.inventoryUsage
+            );
+
+        if (result.ok) {
+            request.inventoryDeducted = true;
+
+            request.inventoryDeductedAt =
+                new Date().toISOString();
+        }
+
+        return result;
     }
 
     // =====================================
@@ -377,7 +940,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const requests = getRequests();
 
         const searchValue =
-            requestSearch.value.trim().toLowerCase();
+            requestSearch.value
+                .trim()
+                .toLowerCase();
 
         const selectedType =
             emergencyTypeFilter.value;
@@ -388,145 +953,201 @@ document.addEventListener("DOMContentLoaded", async function () {
         const selectedStatus =
             statusFilter.value;
 
-        const filteredRequests = requests.filter(function (request) {
-            const matchesSearch =
-                request.id.toLowerCase().includes(searchValue) ||
-                request.location.toLowerCase().includes(searchValue) ||
-                request.contactPerson.toLowerCase().includes(searchValue) ||
-                request.assignedTeam.toLowerCase().includes(searchValue);
+        const filteredRequests =
+            requests.filter(function (request) {
+                const searchableText = `
+                    ${request.id}
+                    ${request.location}
+                    ${request.contactPerson}
+                    ${request.assignedTeam}
+                    ${request.resources}
+                `.toLowerCase();
 
-            const matchesType =
-                selectedType === "all" ||
-                request.type === selectedType;
+                const matchesSearch =
+                    searchableText.includes(
+                        searchValue
+                    );
 
-            const matchesPriority =
-                selectedPriority === "all" ||
-                request.priority === selectedPriority;
+                const matchesType =
+                    selectedType === "all" ||
+                    request.type === selectedType;
 
-            const matchesStatus =
-                selectedStatus === "all" ||
-                request.status === selectedStatus;
+                const matchesPriority =
+                    selectedPriority === "all" ||
+                    request.priority ===
+                        selectedPriority;
 
-            return (
-                matchesSearch &&
-                matchesType &&
-                matchesPriority &&
-                matchesStatus
-            );
-        });
+                const matchesStatus =
+                    selectedStatus === "all" ||
+                    request.status ===
+                        selectedStatus;
+
+                return (
+                    matchesSearch &&
+                    matchesType &&
+                    matchesPriority &&
+                    matchesStatus
+                );
+            });
 
         requestTableBody.innerHTML = "";
 
-        if (filteredRequests.length === 0) {
-            emptyState.classList.add("show");
-        } else {
-            emptyState.classList.remove("show");
-        }
+        emptyState.classList.toggle(
+            "show",
+            filteredRequests.length === 0
+        );
 
-        filteredRequests.forEach(function (request) {
-            const statusClass =
-                getStatusClass(request.status);
+        filteredRequests.forEach(
+            function (request) {
+                const statusClass =
+                    getStatusClass(
+                        request.status
+                    );
 
-            const priorityClass =
-                getPriorityClass(request.priority);
+                const priorityClass =
+                    getPriorityClass(
+                        request.priority
+                    );
 
-            const row = document.createElement("tr");
+                const row =
+                    document.createElement("tr");
 
-            row.innerHTML = `
-                <td>${escapeHTML(request.id)}</td>
+                row.innerHTML = `
+                    <td>
+                        ${escapeHTML(request.id)}
+                    </td>
 
-                <td>
-                    ${escapeHTML(
-                        formatDateTime(request.date, request.time)
-                    )}
-                </td>
+                    <td>
+                        ${escapeHTML(
+                            formatDateTime(
+                                request.date,
+                                request.time
+                            )
+                        )}
+                    </td>
 
-                <td>${escapeHTML(request.type)}</td>
+                    <td>
+                        ${escapeHTML(request.type)}
+                    </td>
 
-                <td>
-                    <strong>${escapeHTML(request.location)}</strong>
-                </td>
+                    <td>
+                        <strong>
+                            ${escapeHTML(
+                                request.location
+                            )}
+                        </strong>
+                    </td>
 
-                <td>${escapeHTML(request.contactPerson)}</td>
+                    <td>
+                        ${escapeHTML(
+                            request.contactPerson
+                        )}
+                    </td>
 
-                <td>${escapeHTML(request.contactNumber)}</td>
+                    <td>
+                        ${escapeHTML(
+                            request.contactNumber
+                        )}
+                    </td>
 
-                <td>${escapeHTML(request.assignedTeam)}</td>
+                    <td>
+                        ${escapeHTML(
+                            request.assignedTeam
+                        )}
+                    </td>
 
-                <td>
-                    <span class="priority-badge ${priorityClass}">
-                        ${escapeHTML(request.priority)}
-                    </span>
-                </td>
+                    <td>
+                        <span class="priority-badge ${priorityClass}">
+                            ${escapeHTML(
+                                request.priority
+                            )}
+                        </span>
+                    </td>
 
-                <td>
-                    <span class="status-badge ${statusClass}">
-                        ${escapeHTML(request.status)}
-                    </span>
-                </td>
+                    <td>
+                        <span class="status-badge ${statusClass}">
+                            ${escapeHTML(
+                                request.status
+                            )}
+                        </span>
+                    </td>
 
-                <td>
-                    <div class="table-actions">
+                    <td>
+                        <div class="table-actions">
 
-                        ${
-                            request.status === "Pending"
-                                ? `
-                                    <button
-                                        type="button"
-                                        class="start-action"
-                                        data-action="start"
-                                        data-id="${escapeHTML(request.id)}"
-                                        title="Start response"
-                                    >
-                                        <i class="fa-solid fa-play"></i>
-                                    </button>
-                                `
-                                : ""
-                        }
+                            ${
+                                request.status ===
+                                "Pending"
+                                    ? `
+                                        <button
+                                            type="button"
+                                            class="start-action"
+                                            data-action="start"
+                                            data-id="${escapeHTML(
+                                                request.id
+                                            )}"
+                                            title="Start response"
+                                        >
+                                            <i class="fa-solid fa-play"></i>
+                                        </button>
+                                    `
+                                    : ""
+                            }
 
-                        ${
-                            request.status === "Pending" ||
-                            request.status === "In Progress"
-                                ? `
-                                    <button
-                                        type="button"
-                                        class="complete-action"
-                                        data-action="complete"
-                                        data-id="${escapeHTML(request.id)}"
-                                        title="Complete response"
-                                    >
-                                        <i class="fa-solid fa-check"></i>
-                                    </button>
-                                `
-                                : ""
-                        }
+                            ${
+                                request.status ===
+                                    "Pending" ||
+                                request.status ===
+                                    "In Progress"
+                                    ? `
+                                        <button
+                                            type="button"
+                                            class="complete-action"
+                                            data-action="complete"
+                                            data-id="${escapeHTML(
+                                                request.id
+                                            )}"
+                                            title="Complete response"
+                                        >
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
+                                    `
+                                    : ""
+                            }
 
-                        <button
-                            type="button"
-                            class="edit-button"
-                            data-action="edit"
-                            data-id="${escapeHTML(request.id)}"
-                            title="Edit request"
-                        >
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
+                            <button
+                                type="button"
+                                class="edit-button"
+                                data-action="edit"
+                                data-id="${escapeHTML(
+                                    request.id
+                                )}"
+                                title="Edit request"
+                            >
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
 
-                        <button
-                            type="button"
-                            class="remove-button"
-                            data-action="delete"
-                            data-id="${escapeHTML(request.id)}"
-                            title="Delete request"
-                        >
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                            <button
+                                type="button"
+                                class="remove-button"
+                                data-action="delete"
+                                data-id="${escapeHTML(
+                                    request.id
+                                )}"
+                                title="Delete request"
+                            >
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
 
-                    </div>
-                </td>
-            `;
+                        </div>
+                    </td>
+                `;
 
-            requestTableBody.appendChild(row);
-        });
+                requestTableBody.appendChild(
+                    row
+                );
+            }
+        );
 
         updateStatistics(requests);
     }
@@ -536,34 +1157,59 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     function updateStatistics(requests) {
-        const pendingCount = requests.filter(function (request) {
-            return request.status === "Pending";
-        }).length;
+        const pendingCount =
+            requests.filter(function (request) {
+                return (
+                    request.status === "Pending"
+                );
+            }).length;
 
-        const activeCount = requests.filter(function (request) {
-            return request.status === "In Progress";
-        }).length;
+        const activeCount =
+            requests.filter(function (request) {
+                return (
+                    request.status ===
+                    "In Progress"
+                );
+            }).length;
 
-        const completedCount = requests.filter(function (request) {
-            return request.status === "Completed";
-        }).length;
+        const completedCount =
+            requests.filter(function (request) {
+                return (
+                    request.status ===
+                    "Completed"
+                );
+            }).length;
 
-        const urgentCount = requests.filter(function (request) {
-            return (
-                request.status !== "Completed" &&
-                request.status !== "Cancelled" &&
-                (
-                    request.priority === "Critical" ||
-                    request.priority === "High"
-                )
-            );
-        }).length;
+        const urgentCount =
+            requests.filter(function (request) {
+                return (
+                    request.status !==
+                        "Completed" &&
+                    request.status !==
+                        "Cancelled" &&
+                    (
+                        request.priority ===
+                            "Critical" ||
+                        request.priority ===
+                            "High"
+                    )
+                );
+            }).length;
 
-        totalRequests.textContent = requests.length;
-        pendingRequests.textContent = pendingCount;
-        activeRequests.textContent = activeCount;
-        completedRequests.textContent = completedCount;
-        notificationCount.textContent = urgentCount;
+        totalRequests.textContent =
+            requests.length;
+
+        pendingRequests.textContent =
+            pendingCount;
+
+        activeRequests.textContent =
+            activeCount;
+
+        completedRequests.textContent =
+            completedCount;
+
+        notificationCount.textContent =
+            urgentCount;
     }
 
     // =====================================
@@ -578,7 +1224,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         requestTime.value = getCurrentTime();
         requestStatus.value = "Pending";
 
-        modalTitle.textContent = "New Emergency Request";
+        resourceInventoryType.value = "";
+        resourceInventoryType.disabled = false;
+
+        resourceQuantity.value = "1";
+        resourceQuantity.disabled = true;
+
+        resourceItem.disabled = true;
+
+        populateResourceItems();
+
+        modalTitle.textContent =
+            "New Emergency Request";
+
         formMessage.textContent = "";
 
         requestModal.classList.add("show");
@@ -592,32 +1250,109 @@ document.addEventListener("DOMContentLoaded", async function () {
     function openEditModal(requestId) {
         const requests = getRequests();
 
-        const selectedRequest = requests.find(function (request) {
-            return request.id === requestId;
-        });
+        const selectedRequest =
+            requests.find(function (request) {
+                return (
+                    normalizeId(request.id) ===
+                    normalizeId(requestId)
+                );
+            });
 
         if (!selectedRequest) {
             return;
         }
 
-        editingRequestId.value = selectedRequest.id;
-        requestDate.value = selectedRequest.date;
-        requestTime.value = selectedRequest.time;
-        emergencyType.value = selectedRequest.type;
-        requestPriority.value = selectedRequest.priority;
-        requestLocation.value = selectedRequest.location;
-        contactPerson.value = selectedRequest.contactPerson;
-        contactNumber.value = selectedRequest.contactNumber;
-        assignedTeam.value = selectedRequest.assignedTeam;
-        requestStatus.value = selectedRequest.status;
-        requiredResources.value = selectedRequest.resources;
-        requestDescription.value = selectedRequest.description;
+        editingRequestId.value =
+            selectedRequest.id;
 
-        modalTitle.textContent = "Edit Emergency Request";
+        requestDate.value =
+            selectedRequest.date;
+
+        requestTime.value =
+            selectedRequest.time;
+
+        emergencyType.value =
+            selectedRequest.type;
+
+        requestPriority.value =
+            selectedRequest.priority;
+
+        requestLocation.value =
+            selectedRequest.location;
+
+        contactPerson.value =
+            selectedRequest.contactPerson;
+
+        contactNumber.value =
+            selectedRequest.contactNumber;
+
+        assignedTeam.value =
+            selectedRequest.assignedTeam;
+
+        requestStatus.value =
+            selectedRequest.status;
+
+        requiredResources.value =
+            selectedRequest.resources;
+
+        requestDescription.value =
+            selectedRequest.description;
+
+        const inventoryUsage =
+            selectedRequest.inventoryUsage ||
+            null;
+
+        resourceInventoryType.value =
+            inventoryUsage
+                ? inventoryUsage.itemType
+                : "";
+
+        populateResourceItems(
+            inventoryUsage
+                ? inventoryUsage.itemId
+                : ""
+        );
+
+        resourceQuantity.value =
+            inventoryUsage
+                ? String(
+                    inventoryUsage.quantity
+                )
+                : "1";
+
+        const inventoryAlreadyUsed =
+            Boolean(
+                selectedRequest
+                    .inventoryDeducted
+            );
+
+        resourceInventoryType.disabled =
+            inventoryAlreadyUsed;
+
+        resourceItem.disabled =
+            inventoryAlreadyUsed;
+
+        resourceQuantity.disabled =
+            inventoryAlreadyUsed ||
+            resourceInventoryType.value ===
+                "Mobility Asset";
+
+        if (inventoryAlreadyUsed) {
+            resourceAvailability.textContent =
+                "This item was already deducted from inventory.";
+        }
+
+        modalTitle.textContent =
+            "Edit Emergency Request";
+
         formMessage.textContent = "";
 
         requestModal.classList.add("show");
     }
+
+    // =====================================
+    // CLOSE REQUEST MODAL
+    // =====================================
 
     function closeRequestModal() {
         requestModal.classList.remove("show");
@@ -625,235 +1360,488 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         editingRequestId.value = "";
         formMessage.textContent = "";
+
+        resourceInventoryType.disabled =
+            false;
+
+        resourceItem.disabled = true;
+        resourceQuantity.disabled = true;
+
+        resourceAvailability.textContent =
+            "Select an inventory item to see its available quantity.";
     }
 
     // =====================================
     // SAVE OR UPDATE REQUEST
     // =====================================
 
-    requestForm.addEventListener("submit", function (event) {
-        event.preventDefault();
+    requestForm.addEventListener(
+        "submit",
+        function (event) {
+            event.preventDefault();
 
-        const dateValue = requestDate.value;
-        const timeValue = requestTime.value;
-        const typeValue = emergencyType.value;
-        const priorityValue = requestPriority.value;
-        const locationValue = requestLocation.value.trim();
-        const contactPersonValue = contactPerson.value.trim();
+            const dateValue =
+                requestDate.value;
 
-        const contactNumberValue =
-            contactNumber.value.trim();
+            const timeValue =
+                requestTime.value;
 
-        const assignedTeamValue =
-            assignedTeam.value.trim();
+            const typeValue =
+                emergencyType.value;
 
-        const statusValue = requestStatus.value;
+            const priorityValue =
+                requestPriority.value;
 
-        const resourcesValue =
-            requiredResources.value.trim();
+            const locationValue =
+                requestLocation.value.trim();
 
-        const descriptionValue =
-            requestDescription.value.trim();
+            const contactPersonValue =
+                contactPerson.value.trim();
 
-        if (
-            !dateValue ||
-            !timeValue ||
-            !typeValue ||
-            !priorityValue ||
-            !locationValue ||
-            !contactPersonValue ||
-            !contactNumberValue ||
-            !assignedTeamValue ||
-            !statusValue ||
-            !resourcesValue ||
-            !descriptionValue
-        ) {
-            formMessage.textContent =
-                "Please complete all fields.";
+            const contactNumberValue =
+                contactNumber.value.trim();
 
-            return;
-        }
+            const assignedTeamValue =
+                assignedTeam.value.trim();
 
-        const validContactNumber =
-            /^[0-9+\-\s]{7,15}$/.test(contactNumberValue);
+            const statusValue =
+                requestStatus.value;
 
-        if (!validContactNumber) {
-            formMessage.textContent =
-                "Please enter a valid contact number.";
+            const resourcesValue =
+                requiredResources.value.trim();
 
-            return;
-        }
+            const descriptionValue =
+                requestDescription.value.trim();
 
-        const requests = getRequests();
-        const editId = editingRequestId.value;
+            if (
+                !dateValue ||
+                !timeValue ||
+                !typeValue ||
+                !priorityValue ||
+                !locationValue ||
+                !contactPersonValue ||
+                !contactNumberValue ||
+                !assignedTeamValue ||
+                !statusValue ||
+                !resourcesValue ||
+                !descriptionValue
+            ) {
+                formMessage.textContent =
+                    "Please complete all fields.";
 
-        if (editId) {
-            const requestIndex = requests.findIndex(function (request) {
-                return request.id === editId;
-            });
+                return;
+            }
 
-            if (requestIndex !== -1) {
-                const previousRequest = requests[requestIndex];
+            const validContactNumber =
+                /^[0-9+\-\s]{7,15}$/.test(
+                    contactNumberValue
+                );
 
-                requests[requestIndex] = {
+            if (!validContactNumber) {
+                formMessage.textContent =
+                    "Please enter a valid contact number.";
+
+                return;
+            }
+
+            const usageResult =
+                getInventoryUsageFromForm();
+
+            if (!usageResult.ok) {
+                formMessage.textContent =
+                    usageResult.message;
+
+                return;
+            }
+
+            const requests = getRequests();
+
+            const editId =
+                normalizeId(
+                    editingRequestId.value
+                );
+
+            if (editId) {
+                const requestIndex =
+                    requests.findIndex(
+                        function (request) {
+                            return (
+                                normalizeId(
+                                    request.id
+                                ) === editId
+                            );
+                        }
+                    );
+
+                if (requestIndex === -1) {
+                    formMessage.textContent =
+                        "The emergency request could not be found.";
+
+                    return;
+                }
+
+                const previousRequest =
+                    requests[requestIndex];
+
+                const updatedRequest = {
                     ...previousRequest,
                     date: dateValue,
                     time: timeValue,
                     type: typeValue,
                     priority: priorityValue,
                     location: locationValue,
-                    contactPerson: contactPersonValue,
-                    contactNumber: contactNumberValue,
-                    assignedTeam: assignedTeamValue,
+                    contactPerson:
+                        contactPersonValue,
+                    contactNumber:
+                        contactNumberValue,
+                    assignedTeam:
+                        assignedTeamValue,
                     status: statusValue,
                     resources: resourcesValue,
-                    description: descriptionValue,
+                    description:
+                        descriptionValue,
+
+                    inventoryUsage:
+                        previousRequest
+                            .inventoryDeducted
+                            ? previousRequest
+                                  .inventoryUsage ||
+                              null
+                            : usageResult.usage,
+
+                    inventoryDeducted:
+                        Boolean(
+                            previousRequest
+                                .inventoryDeducted
+                        ),
+
+                    inventoryDeductedAt:
+                        previousRequest
+                            .inventoryDeductedAt ||
+                        "",
+
                     completedAt:
                         statusValue === "Completed"
-                            ? previousRequest.completedAt ||
-                              new Date().toISOString()
+                            ? previousRequest
+                                  .completedAt ||
+                              new Date()
+                                  .toISOString()
                             : ""
                 };
+
+                if (
+                    statusValue ===
+                        "In Progress" ||
+                    statusValue ===
+                        "Completed"
+                ) {
+                    const deductionResult =
+                        deductRequestInventory(
+                            updatedRequest
+                        );
+
+                    if (!deductionResult.ok) {
+                        formMessage.textContent =
+                            deductionResult.message;
+
+                        return;
+                    }
+                }
+
+                requests[requestIndex] =
+                    updatedRequest;
+            } else {
+                const newRequest = {
+                    id:
+                        generateRequestId(
+                            requests
+                        ),
+                    date: dateValue,
+                    time: timeValue,
+                    type: typeValue,
+                    priority: priorityValue,
+                    location: locationValue,
+                    contactPerson:
+                        contactPersonValue,
+                    contactNumber:
+                        contactNumberValue,
+                    assignedTeam:
+                        assignedTeamValue,
+                    status: statusValue,
+                    resources: resourcesValue,
+                    description:
+                        descriptionValue,
+                    inventoryUsage:
+                        usageResult.usage,
+                    inventoryDeducted: false,
+                    inventoryDeductedAt: "",
+
+                    completedAt:
+                        statusValue === "Completed"
+                            ? new Date()
+                                  .toISOString()
+                            : ""
+                };
+
+                if (
+                    statusValue ===
+                        "In Progress" ||
+                    statusValue ===
+                        "Completed"
+                ) {
+                    const deductionResult =
+                        deductRequestInventory(
+                            newRequest
+                        );
+
+                    if (!deductionResult.ok) {
+                        formMessage.textContent =
+                            deductionResult.message;
+
+                        return;
+                    }
+                }
+
+                requests.push(newRequest);
             }
-        } else {
-            const newRequest = {
-                id: generateRequestId(requests),
-                date: dateValue,
-                time: timeValue,
-                type: typeValue,
-                priority: priorityValue,
-                location: locationValue,
-                contactPerson: contactPersonValue,
-                contactNumber: contactNumberValue,
-                assignedTeam: assignedTeamValue,
-                status: statusValue,
-                resources: resourcesValue,
-                description: descriptionValue,
-                completedAt:
-                    statusValue === "Completed"
-                        ? new Date().toISOString()
-                        : ""
-            };
 
-            requests.push(newRequest);
+            saveRequests(requests);
+            closeRequestModal();
+            renderRequests();
         }
-
-        saveRequests(requests);
-        closeRequestModal();
-        renderRequests();
-    });
+    );
 
     // =====================================
     // TABLE ACTIONS
     // =====================================
 
-    requestTableBody.addEventListener("click", function (event) {
-        const button = event.target.closest("button");
+    requestTableBody.addEventListener(
+        "click",
+        function (event) {
+            const button =
+                event.target.closest("button");
 
-        if (!button) {
-            return;
-        }
+            if (
+                !button ||
+                !requestTableBody.contains(button)
+            ) {
+                return;
+            }
 
-        const action = button.dataset.action;
-        const requestId = button.dataset.id;
+            const action =
+                button.dataset.action;
 
-        if (action === "start") {
-            const requests = getRequests();
+            const requestId =
+                normalizeId(button.dataset.id);
 
-            const requestIndex = requests.findIndex(function (request) {
-                return request.id === requestId;
-            });
+            if (!requestId) {
+                return;
+            }
 
-            if (requestIndex !== -1) {
-                requests[requestIndex].status = "In Progress";
-                saveRequests(requests);
-                renderRequests();
+            if (action === "start") {
+                const requests = getRequests();
+
+                const requestIndex =
+                    requests.findIndex(
+                        function (request) {
+                            return (
+                                normalizeId(
+                                    request.id
+                                ) === requestId
+                            );
+                        }
+                    );
+
+                if (requestIndex !== -1) {
+                    const deductionResult =
+                        deductRequestInventory(
+                            requests[
+                                requestIndex
+                            ]
+                        );
+
+                    if (!deductionResult.ok) {
+                        alert(
+                            deductionResult.message
+                        );
+
+                        return;
+                    }
+
+                    requests[
+                        requestIndex
+                    ].status = "In Progress";
+
+                    saveRequests(requests);
+                    renderRequests();
+                }
+
+                return;
+            }
+
+            if (action === "complete") {
+                requestToComplete =
+                    requestId;
+
+                completeModal.classList.add(
+                    "show"
+                );
+
+                return;
+            }
+
+            if (action === "edit") {
+                openEditModal(requestId);
+                return;
+            }
+
+            if (action === "delete") {
+                requestToDelete =
+                    requestId;
+
+                deleteModal.classList.add(
+                    "show"
+                );
             }
         }
-
-        if (action === "complete") {
-            requestToComplete = requestId;
-            completeModal.classList.add("show");
-        }
-
-        if (action === "edit") {
-            openEditModal(requestId);
-        }
-
-        if (action === "delete") {
-            requestToDelete = requestId;
-            deleteModal.classList.add("show");
-        }
-    });
+    );
 
     // =====================================
     // COMPLETE REQUEST
     // =====================================
 
-    confirmComplete.addEventListener("click", function () {
-        if (!requestToComplete) {
-            return;
-        }
+    confirmComplete.addEventListener(
+        "click",
+        function () {
+            if (!requestToComplete) {
+                return;
+            }
 
-        const requests = getRequests();
+            const requests = getRequests();
 
-        const requestIndex = requests.findIndex(function (request) {
-            return request.id === requestToComplete;
-        });
+            const requestIndex =
+                requests.findIndex(
+                    function (request) {
+                        return (
+                            normalizeId(
+                                request.id
+                            ) ===
+                            normalizeId(
+                                requestToComplete
+                            )
+                        );
+                    }
+                );
 
-        if (requestIndex !== -1) {
-            requests[requestIndex].status = "Completed";
+            if (requestIndex === -1) {
+                requestToComplete = null;
 
-            requests[requestIndex].completedAt =
+                completeModal.classList.remove(
+                    "show"
+                );
+
+                return;
+            }
+
+            const deductionResult =
+                deductRequestInventory(
+                    requests[requestIndex]
+                );
+
+            if (!deductionResult.ok) {
+                alert(deductionResult.message);
+                return;
+            }
+
+            requests[requestIndex].status =
+                "Completed";
+
+            requests[
+                requestIndex
+            ].completedAt =
                 new Date().toISOString();
+
+            saveRequests(requests);
+
+            requestToComplete = null;
+
+            completeModal.classList.remove(
+                "show"
+            );
+
+            renderRequests();
         }
+    );
 
-        saveRequests(requests);
+    cancelComplete.addEventListener(
+        "click",
+        function () {
+            requestToComplete = null;
 
-        requestToComplete = null;
-        completeModal.classList.remove("show");
-
-        renderRequests();
-    });
-
-    cancelComplete.addEventListener("click", function () {
-        requestToComplete = null;
-        completeModal.classList.remove("show");
-    });
+            completeModal.classList.remove(
+                "show"
+            );
+        }
+    );
 
     // =====================================
     // DELETE REQUEST
     // =====================================
 
-    confirmDelete.addEventListener("click", function () {
-        if (!requestToDelete) {
-            return;
+    confirmDelete.addEventListener(
+        "click",
+        function () {
+            if (!requestToDelete) {
+                return;
+            }
+
+            const requests = getRequests();
+
+            const updatedRequests =
+                requests.filter(
+                    function (request) {
+                        return (
+                            normalizeId(
+                                request.id
+                            ) !==
+                            normalizeId(
+                                requestToDelete
+                            )
+                        );
+                    }
+                );
+
+            saveRequests(updatedRequests);
+
+            requestToDelete = null;
+
+            deleteModal.classList.remove(
+                "show"
+            );
+
+            renderRequests();
         }
+    );
 
-        const requests = getRequests();
+    cancelDelete.addEventListener(
+        "click",
+        function () {
+            requestToDelete = null;
 
-        const updatedRequests = requests.filter(function (request) {
-            return request.id !== requestToDelete;
-        });
-
-        saveRequests(updatedRequests);
-
-        requestToDelete = null;
-        deleteModal.classList.remove("show");
-
-        renderRequests();
-    });
-
-    cancelDelete.addEventListener("click", function () {
-        requestToDelete = null;
-        deleteModal.classList.remove("show");
-    });
+            deleteModal.classList.remove(
+                "show"
+            );
+        }
+    );
 
     // =====================================
     // SEARCH AND FILTERS
     // =====================================
 
-    requestSearch.addEventListener("input", renderRequests);
+    requestSearch.addEventListener(
+        "input",
+        renderRequests
+    );
 
     emergencyTypeFilter.addEventListener(
         "change",
@@ -868,6 +1856,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     statusFilter.addEventListener(
         "change",
         renderRequests
+    );
+
+    resourceInventoryType.addEventListener(
+        "change",
+        function () {
+            resourceQuantity.value = "1";
+            populateResourceItems();
+        }
+    );
+
+    resourceItem.addEventListener(
+        "change",
+        updateResourceAvailability
     );
 
     // =====================================
@@ -889,81 +1890,126 @@ document.addEventListener("DOMContentLoaded", async function () {
         closeRequestModal
     );
 
-    requestModal.addEventListener("click", function (event) {
-        if (event.target === requestModal) {
+    requestModal.addEventListener(
+        "click",
+        function (event) {
+            if (event.target === requestModal) {
+                closeRequestModal();
+            }
+        }
+    );
+
+    completeModal.addEventListener(
+        "click",
+        function (event) {
+            if (
+                event.target === completeModal
+            ) {
+                requestToComplete = null;
+
+                completeModal.classList.remove(
+                    "show"
+                );
+            }
+        }
+    );
+
+    deleteModal.addEventListener(
+        "click",
+        function (event) {
+            if (event.target === deleteModal) {
+                requestToDelete = null;
+
+                deleteModal.classList.remove(
+                    "show"
+                );
+            }
+        }
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key !== "Escape") {
+                return;
+            }
+
             closeRequestModal();
-        }
-    });
-
-    completeModal.addEventListener("click", function (event) {
-        if (event.target === completeModal) {
-            requestToComplete = null;
-            completeModal.classList.remove("show");
-        }
-    });
-
-    deleteModal.addEventListener("click", function (event) {
-        if (event.target === deleteModal) {
-            requestToDelete = null;
-            deleteModal.classList.remove("show");
-        }
-    });
-
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-            closeRequestModal();
 
             requestToComplete = null;
             requestToDelete = null;
 
-            completeModal.classList.remove("show");
-            deleteModal.classList.remove("show");
-        }
-    });
-
-    // =====================================
-    // NOTIFICATION
-    // =====================================
-
-    notificationButton.addEventListener("click", function () {
-        const requests = getRequests();
-
-        const urgentRequests = requests.filter(function (request) {
-            return (
-                request.status !== "Completed" &&
-                request.status !== "Cancelled" &&
-                (
-                    request.priority === "Critical" ||
-                    request.priority === "High"
-                )
+            completeModal.classList.remove(
+                "show"
             );
-        });
 
-        if (urgentRequests.length === 0) {
-            alert("There are no urgent response requests.");
-            return;
+            deleteModal.classList.remove(
+                "show"
+            );
         }
+    );
 
-        alert(
-            `There are ${urgentRequests.length} urgent response requests.`
-        );
-    });
+    // =====================================
+    // NOTIFICATIONS
+    // =====================================
+
+    notificationButton.addEventListener(
+        "click",
+        function () {
+            const requests = getRequests();
+
+            const urgentRequests =
+                requests.filter(
+                    function (request) {
+                        return (
+                            request.status !==
+                                "Completed" &&
+                            request.status !==
+                                "Cancelled" &&
+                            (
+                                request.priority ===
+                                    "Critical" ||
+                                request.priority ===
+                                    "High"
+                            )
+                        );
+                    }
+                );
+
+            if (urgentRequests.length === 0) {
+                alert(
+                    "There are no urgent response requests."
+                );
+
+                return;
+            }
+
+            alert(
+                `There are ${urgentRequests.length} urgent response requests.`
+            );
+        }
+    );
 
     // =====================================
     // LOGOUT
     // =====================================
 
-    logoutButton.addEventListener("click", async function () {
-        const confirmLogout = confirm(
-            "Are you sure you want to log out?"
-        );
+    logoutButton.addEventListener(
+        "click",
+        async function () {
+            const confirmLogout =
+                window.confirm(
+                    "Are you sure you want to log out?"
+                );
 
-        if (!confirmLogout) {
-            return;
+            if (!confirmLogout) {
+                return;
+            }
+
+            await window.medtrackAuth
+                .signOutAndRedirect();
         }
-
-        await window.medtrackAuth.signOutAndRedirect();
-    });
+    );
 
     // =====================================
     // INITIAL DISPLAY

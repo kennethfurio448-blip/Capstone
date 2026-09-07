@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Available Items | MedTrack</title>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+    <link rel="stylesheet" href="available-items.css">
+</head>
+
+<body hidden>
+    <div class="page-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                </div>
+
+                <div>
+                    <h1>MedTrack</h1>
+                    <p id="portalName">Inventory Portal</p>
+                </div>
+            </div>
+
+            <p class="menu-label">MAIN MENU</p>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item" id="dashboardLink">
+                    <i class="fa-solid fa-table-columns"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="medical-supplies.html" class="nav-item">
+                    <i class="fa-solid fa-pills"></i>
+                    <span>Medical Supplies</span>
+                </a>
+
+                <a href="medical-equipment.html" class="nav-item">
+                    <i class="fa-solid fa-suitcase-medical"></i>
+                    <span>Medical Equipment</span>
+                </a>
+
+                <a href="mobility.html" class="nav-item">
+                    <i class="fa-solid fa-truck-medical"></i>
+                    <span>Mobility</span>
+                </a>
+
+                <a href="borrow-return.html" class="nav-item">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    <span>Borrow and Return</span>
+                </a>
+
+                <a href="available-items.html" class="nav-item active">
+                    <i class="fa-solid fa-box-open"></i>
+                    <span>Available Items</span>
+                </a>
+
+                <a href="emergency-response.html" class="nav-item">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Emergency Response</span>
+                </a>
+
+                <!-- ADMIN-ONLY NAVIGATION -->
+                <div id="adminNavigation" class="admin-navigation">
+                    <p class="menu-label">ADMINISTRATION</p>
+
+                    <a href="manage-users.html" class="nav-item">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span>Manage Users</span>
+                    </a>
+
+                    <a href="reports.html" class="nav-item">
+                        <i class="fa-solid fa-chart-column"></i>
+                        <span>Reports</span>
+                    </a>
+
+                    <a href="audit-logs.html" class="nav-item">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Audit Logs</span>
+                    </a>
+
+                    <a href="settings.html" class="nav-item">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>System Settings</span>
+                    </a>
+                </div>
+            </nav>
+
+            <button type="button" class="logout-button" id="logoutButton">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </button>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <h2>Available Items</h2>
+                    <p>Items available for borrowing or emergency use.</p>
+                </div>
+
+                <div class="user-profile">
+                    <div class="profile-icon">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div>
+                        <strong id="currentUserName">MedTrack User</strong>
+                        <small id="currentUserRole">Role</small>
+                    </div>
+                </div>
+            </header>
+
+            <!-- SUMMARY CARDS -->
+            <section class="statistics-grid">
+                <article class="stat-card red">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-pills"></i>
+                    </div>
+
+                    <div>
+                        <p>Medical Supplies</p>
+                        <h3 id="availableSupplyCount">0</h3>
+                        <small>Available supply records</small>
+                    </div>
+                </article>
+
+                <article class="stat-card orange">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-suitcase-medical"></i>
+                    </div>
+
+                    <div>
+                        <p>Medical Equipment</p>
+                        <h3 id="availableEquipmentCount">0</h3>
+                        <small>Available equipment records</small>
+                    </div>
+                </article>
+
+                <article class="stat-card blue">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-truck-medical"></i>
+                    </div>
+
+                    <div>
+                        <p>Mobility Assets</p>
+                        <h3 id="availableMobilityCount">0</h3>
+                        <small>Available vehicles</small>
+                    </div>
+                </article>
+
+                <article class="stat-card green">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+
+                    <div>
+                        <p>Total Available</p>
+                        <h3 id="totalAvailableCount">0</h3>
+                        <small>All available records</small>
+                    </div>
+                </article>
+            </section>
+
+            <!-- AVAILABLE INVENTORY -->
+            <section class="inventory-card">
+                <div class="inventory-header">
+                    <div>
+                        <h3>Emergency-Ready Inventory</h3>
+                        <p>Available supplies, equipment and mobility assets.</p>
+                    </div>
+
+                    <a href="borrow-return.html" class="borrow-page-link">
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                        <span>Borrow and Return</span>
+                    </a>
+                </div>
+
+                <!-- SEARCH AND FILTER -->
+                <div class="inventory-tools">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input
+                            type="search"
+                            id="availableItemSearch"
+                            placeholder="Search available items..."
+                        >
+                    </div>
+
+                    <select id="availableItemType">
+                        <option value="all">All Item Types</option>
+                        <option value="Medical Supply">Medical Supplies</option>
+                        <option value="Medical Equipment">Medical Equipment</option>
+                        <option value="Mobility Asset">Mobility Assets</option>
+                    </select>
+                </div>
+
+                <!-- TABLE -->
+                <div class="table-wrapper">
+                    <table class="available-items-table">
+                        <thead>
+                            <tr>
+                                <th>Item ID</th>
+                                <th>Item Name</th>
+                                <th>Item Type</th>
+                                <th>Category</th>
+                                <th>Available Quantity</th>
+                                <th>Location / Details</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="availableItemsBody">
+                            <!-- JavaScript displays available items -->
+                        </tbody>
+                    </table>
+
+                    <div class="empty-state" id="availableItemsEmpty">
+                        <i class="fa-solid fa-box-open"></i>
+                        <h3>No available items found</h3>
+                        <p>Add available inventory records first.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth/supabase-client.js"></script>
+    <script src="auth/supabase-auth.js"></script>
+    <script src="available-items.js"></script>
+</body>
+</html>
