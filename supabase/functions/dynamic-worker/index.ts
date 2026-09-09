@@ -1,5 +1,5 @@
 import { withSupabase } from "npm:@supabase/server@^1";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
 function createAdminClient() {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -19,7 +19,25 @@ function createAdminClient() {
 }
 
 function errorResponse(message: string, status = 400) {
-  return Response.json({ error: message }, { status });
+  return Response.json(
+    { error: message },
+    { status, headers: { "Cache-Control": "no-store" } },
+  );
+}
+
+function successResponse(body: Record<string, unknown>, status = 200) {
+  return Response.json(
+    body,
+    { status, headers: { "Cache-Control": "no-store" } },
+  );
+}
+
+function internalError(operation: string, error: unknown) {
+  console.error(`Account administration ${operation} failed:`, error);
+  return errorResponse(
+    "Unable to complete the account operation securely. Please try again.",
+    500,
+  );
 }
 
 function normalizeRole(value: unknown) {
@@ -28,6 +46,25 @@ function normalizeRole(value: unknown) {
 
 function normalizeStatus(value: unknown) {
   return String(value || "").trim().toLowerCase();
+}
+
+async function recordAccountEvent(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  callerId: string,
+  action: string,
+  userId: string,
+  details: string,
+) {
+  const { error } = await supabaseAdmin.from("audit_events").insert({
+    actor_id: callerId,
+    action,
+    module: "Manage Users",
+    entity_type: "account",
+    entity_id: userId,
+    details,
+    metadata: { source: "account_admin_function" },
+  });
+  if (error) console.error("Unable to record account audit event:", error);
 }
 
 async function protectLastActiveAdmin(
@@ -43,10 +80,7 @@ async function protectLastActiveAdmin(
     .maybeSingle();
 
   if (targetError) {
-    return errorResponse(
-      `Target profile lookup failed: ${targetError.message}`,
-      500,
-    );
+    return internalError("target profile lookup", targetError);
   }
 
   if (!target) {
@@ -73,10 +107,7 @@ async function protectLastActiveAdmin(
     .eq("status", "active");
 
   if (countError) {
-    return errorResponse(
-      `Administrator count failed: ${countError.message}`,
-      500,
-    );
+    return internalError("administrator count", countError);
   }
 
   if ((count || 0) <= 1) {
@@ -120,10 +151,7 @@ export default {
           .maybeSingle();
 
       if (callerError) {
-        return errorResponse(
-          `Profile lookup failed: ${callerError.message}`,
-          500,
-        );
+        return internalError("caller profile lookup", callerError);
       }
 
       if (
@@ -151,7 +179,7 @@ export default {
           });
 
         if (authError) {
-          return errorResponse(authError.message, 500);
+          return internalError("user list lookup", authError);
         }
 
         const { data: profiles, error: profilesError } =
@@ -160,7 +188,7 @@ export default {
             .select("id, full_name, username, role, status");
 
         if (profilesError) {
-          return errorResponse(profilesError.message, 500);
+          return internalError("profile list lookup", profilesError);
         }
 
         const profileById = new Map(
@@ -189,7 +217,7 @@ export default {
             userId: `USR-${String(index + 1).padStart(3, "0")}`,
           }));
 
-        return Response.json({ users });
+        return successResponse({ users });
       }
 
       if (action === "create") {
@@ -258,10 +286,9 @@ export default {
           await supabaseAdmin.auth.admin.getUserById(userId);
 
         if (targetAuthError || !targetAuthData.user) {
-          return errorResponse(
-            targetAuthError?.message || "The selected account was not found.",
-            targetAuthError ? 500 : 404,
-          );
+          return targetAuthError
+            ? internalError("target account lookup", targetAuthError)
+            : errorResponse("The selected account was not found.", 404);
         }
 
         if (
@@ -284,7 +311,7 @@ export default {
           );
 
         if (authError) {
-          return errorResponse(authError.message);
+          return internalError("authentication update", authError);
         }
 
         const { error: profileError } = await supabaseAdmin
@@ -299,10 +326,18 @@ export default {
           .eq("id", userId);
 
         if (profileError) {
-          return errorResponse(profileError.message, 500);
+          return internalError("profile update", profileError);
         }
 
-        return Response.json({ message: "Account updated successfully." });
+        await recordAccountEvent(
+          supabaseAdmin,
+          callerId,
+          "Updated",
+          userId,
+          "Updated an account profile, role, or status.",
+        );
+
+        return successResponse({ message: "Account updated successfully." });
       }
 
       if (action === "set-status") {
@@ -336,7 +371,7 @@ export default {
           });
 
         if (authError) {
-          return errorResponse(authError.message);
+          return internalError("account status authentication update", authError);
         }
 
         const { error: profileError } = await supabaseAdmin
@@ -345,10 +380,18 @@ export default {
           .eq("id", userId);
 
         if (profileError) {
-          return errorResponse(profileError.message, 500);
+          return internalError("account status profile update", profileError);
         }
 
-        return Response.json({ message: "Account status updated." });
+        await recordAccountEvent(
+          supabaseAdmin,
+          callerId,
+          status === "active" ? "Enabled" : "Disabled",
+          userId,
+          `${status === "active" ? "Enabled" : "Disabled"} an account.`,
+        );
+
+        return successResponse({ message: "Account status updated." });
       }
 
       if (action === "delete") {
@@ -374,7 +417,7 @@ export default {
           await supabaseAdmin.auth.admin.deleteUser(userId);
 
         if (authError) {
-          return errorResponse(authError.message);
+          return internalError("account deletion", authError);
         }
 
         const { error: profileError } = await supabaseAdmin
@@ -383,13 +426,18 @@ export default {
           .eq("id", userId);
 
         if (profileError) {
-          return errorResponse(
-            `Auth user deleted, but profile cleanup failed: ${profileError.message}`,
-            500,
-          );
+          return internalError("profile cleanup after account deletion", profileError);
         }
 
-        return Response.json({ message: "Account deleted successfully." });
+        await recordAccountEvent(
+          supabaseAdmin,
+          callerId,
+          "Deleted",
+          userId,
+          "Deleted an account.",
+        );
+
+        return successResponse({ message: "Account deleted successfully." });
       }
 
       return errorResponse("Unsupported account operation.");

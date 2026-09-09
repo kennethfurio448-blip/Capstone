@@ -27,6 +27,17 @@ supabase secrets set RESEND_API_KEY="..." OTP_FROM_EMAIL="MedTrack <verify@your-
 
 The sender domain must be verified in Resend for production delivery.
 
+Configure an exact comma-separated origin allowlist for deployed frontends.
+Do not use `*`, paths, or trailing slashes. Localhost development origins are
+allowed separately by the Edge Function.
+
+```sh
+supabase secrets set ALLOWED_ORIGINS="https://medtrack-system-ph.vercel.app,https://your-domain.example,https://www.your-domain.example"
+```
+
+Until a custom domain is purchased, keep only the stable Vercel production
+origin. Add the real custom-domain origins immediately before switching DNS.
+
 ## 3. Deploy both functions
 
 ```sh

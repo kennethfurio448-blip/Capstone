@@ -18,6 +18,7 @@
 
     let applyingCloudData = false;
     let refreshInProgress = null;
+    let logoutInProgress = false;
 
     const uploadTimers = new Map();
     const collectionSnapshots = new Map();
@@ -502,6 +503,10 @@
     };
 
     async function refresh() {
+        if (logoutInProgress) {
+            return false;
+        }
+
         if (refreshInProgress) {
             return refreshInProgress;
         }
@@ -740,6 +745,33 @@
         });
     }
 
+    function clearSensitiveCache() {
+        logoutInProgress = true;
+
+        uploadTimers.forEach(function (timer) {
+            clearTimeout(timer);
+        });
+        uploadTimers.clear();
+        collectionSnapshots.clear();
+
+        const sensitiveKeys = [
+            ...Object.keys(collections),
+            "medtrackAccounts",
+            "medtrackAuditLogs"
+        ];
+
+        applyingCloudData = true;
+
+        try {
+            sensitiveKeys.forEach(function (key) {
+                originalRemoveItem.call(localStorage, key);
+                originalRemoveItem.call(sessionStorage, key);
+            });
+        } finally {
+            applyingCloudData = false;
+        }
+    }
+
     const ready = refresh();
 
     window.medtrackData = {
@@ -752,11 +784,12 @@
         useInventoryItem: useInventoryItem,
         saveMedicalSupply: saveMedicalSupply,
         consumeMedicalSupply: consumeMedicalSupply,
-        loadSupplyTransactions: loadSupplyTransactions
+        loadSupplyTransactions: loadSupplyTransactions,
+        clearSensitiveCache: clearSensitiveCache
     };
 
     window.addEventListener("focus", function () {
-        if (uploadTimers.size === 0) {
+        if (!logoutInProgress && uploadTimers.size === 0) {
             refresh();
         }
     });
@@ -766,6 +799,7 @@
         function () {
             if (
                 document.visibilityState === "visible" &&
+                !logoutInProgress &&
                 uploadTimers.size === 0
             ) {
                 refresh();

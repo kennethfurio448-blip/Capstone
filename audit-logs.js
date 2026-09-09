@@ -1,214 +1,40 @@
 // =====================================
-// MEDTRACK AUDIT LOGS
+// MEDTRACK SERVER AUDIT LOGS
 // ADMIN ONLY
 // =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
+    "use strict";
 
-    // =====================================
-    // ELEMENTS
-    // =====================================
+    const client = window.medtrackSupabase;
+    const currentUserName = document.getElementById("currentUserName");
+    const logoutButton = document.getElementById("logoutButton");
+    const totalLogs = document.getElementById("totalLogs");
+    const loginLogs = document.getElementById("loginLogs");
+    const createdLogs = document.getElementById("createdLogs");
+    const updatedLogs = document.getElementById("updatedLogs");
+    const logsTableBody = document.getElementById("logsTableBody");
+    const emptyState = document.getElementById("emptyState");
+    const emptyTitle = emptyState.querySelector("h3");
+    const emptyMessage = emptyState.querySelector("p");
+    const logSearch = document.getElementById("logSearch");
+    const actionFilter = document.getElementById("actionFilter");
+    const moduleFilter = document.getElementById("moduleFilter");
+    const dateFilter = document.getElementById("dateFilter");
+    const refreshLogs = document.getElementById("refreshLogs");
+    const exportLogs = document.getElementById("exportLogs");
 
-    const currentUserName =
-        document.getElementById("currentUserName");
-
-    const logoutButton =
-        document.getElementById("logoutButton");
-
-    const totalLogs =
-        document.getElementById("totalLogs");
-
-    const loginLogs =
-        document.getElementById("loginLogs");
-
-    const createdLogs =
-        document.getElementById("createdLogs");
-
-    const updatedLogs =
-        document.getElementById("updatedLogs");
-
-    const logsTableBody =
-        document.getElementById("logsTableBody");
-
-    const emptyState =
-        document.getElementById("emptyState");
-
-    const logSearch =
-        document.getElementById("logSearch");
-
-    const actionFilter =
-        document.getElementById("actionFilter");
-
-    const moduleFilter =
-        document.getElementById("moduleFilter");
-
-    const dateFilter =
-        document.getElementById("dateFilter");
-
-    const refreshLogs =
-        document.getElementById("refreshLogs");
-
-    const exportLogs =
-        document.getElementById("exportLogs");
-
-    const openClearModal =
-        document.getElementById("openClearModal");
-
-    const clearModal =
-        document.getElementById("clearModal");
-
-    const cancelClear =
-        document.getElementById("cancelClear");
-
-    const confirmClear =
-        document.getElementById("confirmClear");
-
-    // =====================================
-    // ADMIN ACCESS CHECK
-    // =====================================
-
-    const currentUser =
-        await window.medtrackAuth.requireRoles(["admin"]);
+    const currentUser = await window.medtrackAuth.requireRoles(["admin"]);
 
     if (!currentUser) {
         return;
     }
 
     currentUserName.textContent =
-        currentUser.fullname ||
-        currentUser.username ||
-        "Administrator";
+        currentUser.fullname || currentUser.username || "Administrator";
 
-    // =====================================
-    // DEFAULT LOGS
-    // =====================================
-
-    const defaultLogs = [
-        {
-            id: "LOG-001",
-            timestamp: "2026-08-28T08:00:00",
-            userId: currentUser.id,
-            userName:
-                currentUser.fullname ||
-                currentUser.username,
-            role: "admin",
-            action: "Login",
-            module: "Authentication",
-            details: "Administrator signed in to MedTrack."
-        },
-        {
-            id: "LOG-002",
-            timestamp: "2026-08-28T08:15:00",
-            userId: currentUser.id,
-            userName:
-                currentUser.fullname ||
-                currentUser.username,
-            role: "admin",
-            action: "Updated",
-            module: "Medical Supplies",
-            details: "Updated a medical supply record."
-        },
-        {
-            id: "LOG-003",
-            timestamp: "2026-08-28T08:30:00",
-            userId: currentUser.id,
-            userName:
-                currentUser.fullname ||
-                currentUser.username,
-            role: "admin",
-            action: "Created",
-            module: "Medical Equipment",
-            details: "Added a medical equipment record."
-        }
-    ];
-
-    // =====================================
-    // STORAGE
-    // =====================================
-
-    function getAuditLogs() {
-        const savedLogs =
-            localStorage.getItem("medtrackAuditLogs");
-
-        if (!savedLogs) {
-            localStorage.setItem(
-                "medtrackAuditLogs",
-                JSON.stringify(defaultLogs)
-            );
-
-            return [...defaultLogs];
-        }
-
-        try {
-            const parsedLogs = JSON.parse(savedLogs);
-
-            return Array.isArray(parsedLogs)
-                ? parsedLogs
-                : [];
-        } catch (error) {
-            return [];
-        }
-    }
-
-    function saveAuditLogs(logs) {
-        localStorage.setItem(
-            "medtrackAuditLogs",
-            JSON.stringify(logs)
-        );
-    }
-
-    // =====================================
-    // CREATE AUDIT LOG
-    // =====================================
-
-    function generateLogId(logs) {
-        let highestNumber = 0;
-
-        logs.forEach(function (log) {
-            const number = Number(
-                String(log.id).replace("LOG-", "")
-            );
-
-            if (!Number.isNaN(number) && number > highestNumber) {
-                highestNumber = number;
-            }
-        });
-
-        return `LOG-${String(highestNumber + 1).padStart(3, "0")}`;
-    }
-
-    function addAuditLog(action, module, details, user) {
-        const logs = getAuditLogs();
-
-        const logUser = user || currentUser;
-
-        if (!logUser) {
-            return;
-        }
-
-        logs.unshift({
-            id: generateLogId(logs),
-            timestamp: new Date().toISOString(),
-            userId: logUser.id,
-            userName:
-                logUser.fullname ||
-                logUser.username ||
-                "Unknown User",
-            role: logUser.role || "staff",
-            action: action,
-            module: module,
-            details: details
-        });
-
-        saveAuditLogs(logs);
-    }
-
-    // Make this function available when this script is loaded
-    window.addMedTrackAuditLog = addAuditLog;
-
-    // =====================================
-    // SAFE TEXT AND DATE
-    // =====================================
+    let auditLogs = [];
+    let loadingError = "";
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -220,13 +46,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     function formatDateTime(timestamp) {
-        if (!timestamp) {
-            return "—";
-        }
-
         const date = new Date(timestamp);
 
-        if (Number.isNaN(date.getTime())) {
+        if (!timestamp || Number.isNaN(date.getTime())) {
             return "—";
         }
 
@@ -242,12 +64,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     function getLogDate(timestamp) {
         const date = new Date(timestamp);
 
-        const year = date.getFullYear();
-        const month =
-            String(date.getMonth() + 1).padStart(2, "0");
-        const day =
-            String(date.getDate()).padStart(2, "0");
+        if (Number.isNaN(date.getTime())) {
+            return "";
+        }
 
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
     }
 
@@ -257,190 +80,156 @@ document.addEventListener("DOMContentLoaded", async function () {
             .replaceAll(" ", "-")}`;
     }
 
-    // =====================================
-    // RENDER LOGS
-    // =====================================
+    function normalizeAuditEvent(event) {
+        return {
+            id: `LOG-${String(event.id).padStart(6, "0")}`,
+            timestamp: event.occurred_at,
+            userId: event.actor_id || "",
+            userName: event.actor_name || "System",
+            role: event.actor_role || "system",
+            action: event.action || "Unknown",
+            module: event.module || "System",
+            details: event.details || ""
+        };
+    }
 
-    function renderLogs() {
-        const logs = getAuditLogs();
+    async function loadAuditLogs() {
+        refreshLogs.disabled = true;
+        refreshLogs.setAttribute("aria-busy", "true");
+        loadingError = "";
 
-        const searchValue =
-            logSearch.value.trim().toLowerCase();
+        const result = await client
+            .from("audit_events")
+            .select(
+                "id, occurred_at, actor_id, actor_name, actor_role, action, module, details"
+            )
+            .order("occurred_at", { ascending: false })
+            .limit(5000);
 
-        const selectedAction =
-            actionFilter.value;
+        if (result.error) {
+            console.error("Unable to load audit events:", result.error);
+            auditLogs = [];
+            loadingError =
+                "Audit logs could not be loaded. Confirm that the security migration has been deployed.";
+        } else {
+            auditLogs = (result.data || []).map(normalizeAuditEvent);
+        }
 
-        const selectedModule =
-            moduleFilter.value;
+        refreshLogs.disabled = false;
+        refreshLogs.removeAttribute("aria-busy");
+        renderLogs();
+    }
 
-        const selectedDate =
-            dateFilter.value;
+    function getFilteredLogs() {
+        const searchValue = logSearch.value.trim().toLowerCase();
+        const selectedAction = actionFilter.value;
+        const selectedModule = moduleFilter.value;
+        const selectedDate = dateFilter.value;
 
-        const filteredLogs = logs
-            .filter(function (log) {
-                const matchesSearch =
-                    String(log.userName)
-                        .toLowerCase()
-                        .includes(searchValue) ||
-                    String(log.action)
-                        .toLowerCase()
-                        .includes(searchValue) ||
-                    String(log.module)
-                        .toLowerCase()
-                        .includes(searchValue) ||
-                    String(log.details)
-                        .toLowerCase()
-                        .includes(searchValue);
-
-                const matchesAction =
-                    selectedAction === "all" ||
-                    log.action === selectedAction;
-
-                const matchesModule =
-                    selectedModule === "all" ||
-                    log.module === selectedModule;
-
-                const matchesDate =
-                    !selectedDate ||
-                    getLogDate(log.timestamp) === selectedDate;
-
-                return (
-                    matchesSearch &&
-                    matchesAction &&
-                    matchesModule &&
-                    matchesDate
-                );
-            })
-            .sort(function (firstLog, secondLog) {
-                return (
-                    new Date(secondLog.timestamp) -
-                    new Date(firstLog.timestamp)
-                );
+        return auditLogs.filter(function (log) {
+            const matchesSearch = [
+                log.userName,
+                log.action,
+                log.module,
+                log.details
+            ].some(function (value) {
+                return String(value).toLowerCase().includes(searchValue);
             });
 
+            return (
+                matchesSearch &&
+                (selectedAction === "all" || log.action === selectedAction) &&
+                (selectedModule === "all" || log.module === selectedModule) &&
+                (!selectedDate || getLogDate(log.timestamp) === selectedDate)
+            );
+        });
+    }
+
+    function updateStatistics() {
+        totalLogs.textContent = auditLogs.length;
+        loginLogs.textContent = auditLogs.filter(function (log) {
+            return log.action === "Login" || log.action === "Logout";
+        }).length;
+        createdLogs.textContent = auditLogs.filter(function (log) {
+            return log.action === "Created";
+        }).length;
+        updatedLogs.textContent = auditLogs.filter(function (log) {
+            return log.action === "Updated";
+        }).length;
+    }
+
+    function renderLogs() {
+        const filteredLogs = getFilteredLogs();
         logsTableBody.innerHTML = "";
 
         if (filteredLogs.length === 0) {
             emptyState.classList.add("show");
+            emptyTitle.textContent = loadingError
+                ? "Unable to load audit logs"
+                : "No audit logs found";
+            emptyMessage.textContent = loadingError ||
+                "No activities match the selected filters.";
         } else {
             emptyState.classList.remove("show");
         }
 
         filteredLogs.forEach(function (log) {
-            const roleClass =
-                log.role === "admin"
-                    ? "role-admin"
-                    : "role-staff";
-
-            const actionClass =
-                getActionClass(log.action);
-
+            const roleClass = log.role === "admin"
+                ? "role-admin"
+                : "role-staff";
             const row = document.createElement("tr");
 
             row.innerHTML = `
                 <td>${escapeHTML(log.id)}</td>
-
-                <td>
-                    ${escapeHTML(
-                        formatDateTime(log.timestamp)
-                    )}
-                </td>
-
-                <td>
-                    <strong>${escapeHTML(log.userName)}</strong>
-                </td>
-
+                <td>${escapeHTML(formatDateTime(log.timestamp))}</td>
+                <td><strong>${escapeHTML(log.userName)}</strong></td>
                 <td>
                     <span class="role-badge ${roleClass}">
                         ${escapeHTML(log.role)}
                     </span>
                 </td>
-
                 <td>
-                    <span class="action-badge ${actionClass}">
+                    <span class="action-badge ${getActionClass(log.action)}">
                         ${escapeHTML(log.action)}
                     </span>
                 </td>
-
                 <td>${escapeHTML(log.module)}</td>
-
                 <td>${escapeHTML(log.details)}</td>
             `;
 
             logsTableBody.appendChild(row);
         });
 
-        updateStatistics(logs);
+        updateStatistics();
     }
 
-    // =====================================
-    // STATISTICS
-    // =====================================
-
-    function updateStatistics(logs) {
-        const authenticationCount =
-            logs.filter(function (log) {
-                return (
-                    log.action === "Login" ||
-                    log.action === "Logout"
-                );
-            }).length;
-
-        const createdCount =
-            logs.filter(function (log) {
-                return log.action === "Created";
-            }).length;
-
-        const updatedCount =
-            logs.filter(function (log) {
-                return log.action === "Updated";
-            }).length;
-
-        totalLogs.textContent = logs.length;
-        loginLogs.textContent = authenticationCount;
-        createdLogs.textContent = createdCount;
-        updatedLogs.textContent = updatedCount;
+    function escapeCSV(value) {
+        return `"${String(value ?? "").replaceAll('"', '""')}"`;
     }
-
-    // =====================================
-    // SEARCH AND FILTERS
-    // =====================================
 
     logSearch.addEventListener("input", renderLogs);
     actionFilter.addEventListener("change", renderLogs);
     moduleFilter.addEventListener("change", renderLogs);
     dateFilter.addEventListener("change", renderLogs);
-
-    refreshLogs.addEventListener("click", renderLogs);
-
-    // =====================================
-    // EXPORT CSV
-    // =====================================
-
-    function escapeCSV(value) {
-        return `"${String(value ?? "")
-            .replaceAll('"', '""')}"`;
-    }
+    refreshLogs.addEventListener("click", loadAuditLogs);
 
     exportLogs.addEventListener("click", function () {
-        const logs = getAuditLogs();
+        const logs = getFilteredLogs();
 
         if (logs.length === 0) {
             alert("There are no audit logs to export.");
             return;
         }
 
-        const csvRows = [
-            [
-                "Log ID",
-                "Date and Time",
-                "User",
-                "Role",
-                "Action",
-                "Module",
-                "Details"
-            ]
-        ];
+        const csvRows = [[
+            "Log ID",
+            "Date and Time",
+            "User",
+            "Role",
+            "Action",
+            "Module",
+            "Details"
+        ]];
 
         logs.forEach(function (log) {
             csvRows.push([
@@ -454,90 +243,31 @@ document.addEventListener("DOMContentLoaded", async function () {
             ]);
         });
 
-        const csvContent =
-            "\uFEFF" +
-            csvRows
-                .map(function (row) {
-                    return row.map(escapeCSV).join(",");
-                })
-                .join("\n");
-
-        const file = new Blob(
-            [csvContent],
-            {
-                type: "text/csv;charset=utf-8;"
-            }
-        );
-
+        const csvContent = "\uFEFF" + csvRows
+            .map(function (row) {
+                return row.map(escapeCSV).join(",");
+            })
+            .join("\n");
+        const file = new Blob([csvContent], {
+            type: "text/csv;charset=utf-8;"
+        });
         const link = document.createElement("a");
 
         link.href = URL.createObjectURL(file);
         link.download = "medtrack-audit-logs.csv";
-
         document.body.appendChild(link);
         link.click();
-
         URL.revokeObjectURL(link.href);
         link.remove();
     });
 
-    // =====================================
-    // CLEAR LOGS
-    // =====================================
-
-    openClearModal.addEventListener("click", function () {
-        clearModal.classList.add("show");
-    });
-
-    cancelClear.addEventListener("click", function () {
-        clearModal.classList.remove("show");
-    });
-
-    confirmClear.addEventListener("click", function () {
-        saveAuditLogs([]);
-
-        clearModal.classList.remove("show");
-        renderLogs();
-    });
-
-    clearModal.addEventListener("click", function (event) {
-        if (event.target === clearModal) {
-            clearModal.classList.remove("show");
-        }
-    });
-
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-            clearModal.classList.remove("show");
-        }
-    });
-
-    // =====================================
-    // LOGOUT
-    // =====================================
-
     logoutButton.addEventListener("click", async function () {
-        const confirmLogout = confirm(
-            "Are you sure you want to log out?"
-        );
-
-        if (!confirmLogout) {
+        if (!confirm("Are you sure you want to log out?")) {
             return;
         }
-
-        addAuditLog(
-            "Logout",
-            "Authentication",
-            "Administrator logged out of MedTrack.",
-            currentUser
-        );
 
         await window.medtrackAuth.signOutAndRedirect();
     });
 
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
-
-    renderLogs();
+    await loadAuditLogs();
 });

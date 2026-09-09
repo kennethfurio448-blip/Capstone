@@ -1,0 +1,221 @@
+/* Shared MedTrack application shell.
+   Loaded after each page stylesheet to keep navigation and content stable. */
+
+html {
+    min-width: 320px;
+    min-height: 100%;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    background-color: #f4f6f8;
+}
+
+body {
+    min-width: 320px;
+    min-height: 100vh;
+}
+
+/* Keep the application background stable while authentication is checked. */
+body[hidden] {
+    display: block !important;
+    visibility: hidden;
+}
+
+.page-layout {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 100vh;
+}
+
+.sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1000;
+    box-sizing: border-box;
+    width: 270px;
+    min-width: 270px;
+    max-width: 270px;
+    min-height: 100vh;
+    padding: 24px 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    transition: none !important;
+    animation: none !important;
+}
+
+.sidebar-nav {
+    width: 100%;
+}
+
+.admin-navigation,
+#adminNavigation {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-navigation[hidden],
+#adminNavigation[hidden] {
+    display: none;
+}
+
+.nav-item {
+    box-sizing: border-box;
+}
+
+.nav-item:hover {
+    transform: none;
+}
+
+.nav-item i {
+    width: 21px;
+    min-width: 21px;
+    flex: 0 0 21px;
+}
+
+.main-content {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    min-height: 100vh;
+    margin-left: 270px;
+    padding: 28px;
+    transition: none !important;
+    animation: none !important;
+}
+
+.topbar {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 54px;
+    margin-bottom: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    transition: none !important;
+    animation: none !important;
+}
+
+.topbar > div:first-child {
+    min-width: 0;
+}
+
+.topbar h2 {
+    margin: 0 0 5px;
+    font-size: 27px;
+    line-height: 1.2;
+}
+
+.topbar > div:first-child > p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.topbar-actions {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+}
+
+.user-profile {
+    box-sizing: border-box;
+    min-width: 175px;
+    min-height: 50px;
+}
+
+@media (max-width: 900px) {
+    .sidebar {
+        position: relative;
+        inset: auto;
+        width: 230px;
+        min-width: 230px;
+        max-width: 230px;
+    }
+
+    .main-content {
+        width: calc(100% - 230px);
+        margin-left: 0;
+        padding: 22px;
+    }
+
+    .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .topbar-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 700px) {
+    html {
+        overflow-y: auto;
+        scrollbar-gutter: auto;
+    }
+
+    .page-layout {
+        display: block;
+    }
+
+    .sidebar {
+        position: relative;
+        width: 100%;
+        min-width: 100%;
+        max-width: none;
+        min-height: auto;
+        scrollbar-gutter: auto;
+    }
+
+    .main-content {
+        width: 100%;
+        margin-left: 0;
+        padding: 18px;
+    }
+
+    .topbar-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .user-profile {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media print {
+    html {
+        overflow: visible;
+        background-color: #ffffff;
+    }
+
+    .sidebar,
+    .topbar {
+        display: none !important;
+    }
+
+    .main-content {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+}

@@ -33,6 +33,14 @@ function showMessage(message, type) {
     formMessage.className = `form-message ${type}`;
 }
 
+if (new URLSearchParams(window.location.search).get("reason") === "session-expired") {
+    showMessage(
+        "Your session ended after 30 minutes of inactivity. Please sign in again.",
+        "error"
+    );
+    window.history.replaceState({}, "", window.location.pathname);
+}
+
 // Show or hide password
 togglePasswordButton.addEventListener("click", function () {
     const icon = togglePasswordButton.querySelector("i");
@@ -204,8 +212,9 @@ recoveryVerifyForm.addEventListener("submit", async function (event) {
         recoveryVerifyMessage.className = "form-message error";
         return;
     }
-    if (password.length < 8) {
-        recoveryVerifyMessage.textContent = "Use a password containing at least 8 characters.";
+    const passwordError = window.medtrackAuth.passwordPolicyError(password);
+    if (passwordError) {
+        recoveryVerifyMessage.textContent = passwordError;
         recoveryVerifyMessage.className = "form-message error";
         return;
     }

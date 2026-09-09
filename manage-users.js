@@ -460,7 +460,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         emailInput.disabled = false;
         passwordInput.required = true;
         confirmPasswordInput.required = true;
-        passwordHelp.textContent = "Required for new users. Account creation continues after OTP verification.";
+        passwordHelp.textContent = "Use 12+ characters with uppercase, lowercase, and a number. Account creation continues after OTP verification.";
 
         userModal.classList.add("show");
         fullnameInput.focus();
@@ -525,7 +525,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         emailInput.disabled = false;
         passwordInput.required = false;
         confirmPasswordInput.required = false;
-        passwordHelp.textContent = "Required for new users. Account creation continues after OTP verification.";
+        passwordHelp.textContent = "Use 12+ characters with uppercase, lowercase, and a number. Account creation continues after OTP verification.";
     }
 
     // =====================================
@@ -628,9 +628,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        if (passwordValue && passwordValue.length < 8) {
-            formMessage.textContent =
-                "Password must contain at least 8 characters.";
+        const passwordError = passwordValue
+            ? window.medtrackAuth.passwordPolicyError(passwordValue)
+            : "";
+
+        if (passwordError) {
+            formMessage.textContent = passwordError;
 
             return;
         }

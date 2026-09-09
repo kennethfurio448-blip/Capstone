@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdnjs.cloudflare.com; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob:; connect-src 'self' https://agztgijxasjypmrndvyj.supabase.co wss://agztgijxasjypmrndvyj.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 
     <meta
         name="viewport"
@@ -11,10 +12,14 @@
     <title>System Settings | MedTrack</title>
 
     <link rel="stylesheet" href="settings.css">
+    <link rel="stylesheet" href="app-shell.css">
 
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
     >
 </head>
 
@@ -65,6 +70,11 @@
             <a href="borrow-return.html" class="nav-item">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i>
                 <span>Borrow and Return</span>
+            </a>
+
+            <a href="available-items.html" class="nav-item">
+                <i class="fa-solid fa-box-open"></i>
+                <span>Available Items</span>
             </a>
 
             <a href="emergency-response.html" class="nav-item">
@@ -530,6 +540,7 @@
                                 type="password"
                                 id="currentPassword"
                                 placeholder="Enter current password"
+                                autocomplete="current-password"
                                 required
                             >
 
@@ -544,7 +555,10 @@
                             <input
                                 type="password"
                                 id="newPassword"
-                                placeholder="Enter new password"
+                                placeholder="12+ characters"
+                                autocomplete="new-password"
+                                minlength="12"
+                                maxlength="128"
                                 required
                             >
 
@@ -560,6 +574,9 @@
                                 type="password"
                                 id="confirmNewPassword"
                                 placeholder="Confirm new password"
+                                autocomplete="new-password"
+                                minlength="12"
+                                maxlength="128"
                                 required
                             >
 
@@ -604,9 +621,27 @@
                             <h4>Download Backup</h4>
 
                             <p>
-                                Download the current MedTrack data as
-                                a JSON backup file.
+                                Download an encrypted copy of the current
+                                MedTrack data.
                             </p>
+
+                            <div class="backup-password-fields">
+                                <input
+                                    type="password"
+                                    id="backupPassword"
+                                    placeholder="Backup password (12+ characters)"
+                                    autocomplete="new-password"
+                                    minlength="12"
+                                >
+
+                                <input
+                                    type="password"
+                                    id="confirmBackupPassword"
+                                    placeholder="Confirm backup password"
+                                    autocomplete="new-password"
+                                    minlength="12"
+                                >
+                            </div>
 
                             <button
                                 type="button"
@@ -627,7 +662,7 @@
                             <h4>Restore Backup</h4>
 
                             <p>
-                                Select a valid MedTrack JSON backup file.
+                                Select an encrypted MedTrack backup file.
                             </p>
 
                             <input
@@ -673,9 +708,22 @@
         <h2>Restore MedTrack Backup?</h2>
 
         <p>
-            Existing MedTrack data will be replaced with the selected
-            backup.
+            Enter the backup password. Existing MedTrack data will be
+            replaced only after validation succeeds.
         </p>
+
+        <label class="restore-password-label" for="restorePassword">
+            Backup Password
+        </label>
+
+        <input
+            type="password"
+            id="restorePassword"
+            class="restore-password-input"
+            placeholder="Enter the backup password"
+            autocomplete="current-password"
+            minlength="12"
+        >
 
         <div class="modal-actions">
 
@@ -701,7 +749,7 @@
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" integrity="sha384-JBR+x8blGwjDRO63aHCGiZMD4VNiTR4ZUGA+N6ZKLf3zNt1fK8IBpcgPaMrxqWBp" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="auth/supabase-client.js"></script>
 <script src="auth/supabase-auth.js"></script>
 <script src="auth/supabase-data.js"></script>

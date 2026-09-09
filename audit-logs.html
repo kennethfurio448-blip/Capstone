@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdnjs.cloudflare.com; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob:; connect-src 'self' https://agztgijxasjypmrndvyj.supabase.co wss://agztgijxasjypmrndvyj.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 
     <meta
         name="viewport"
@@ -11,10 +12,14 @@
     <title>Audit Logs | MedTrack</title>
 
     <link rel="stylesheet" href="audit-logs.css">
+    <link rel="stylesheet" href="app-shell.css">
 
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
     >
 </head>
 
@@ -65,6 +70,11 @@
             <a href="borrow-return.html" class="nav-item">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i>
                 <span>Borrow and Return</span>
+            </a>
+
+            <a href="available-items.html" class="nav-item">
+                <i class="fa-solid fa-box-open"></i>
+                <span>Available Items</span>
             </a>
 
             <a href="emergency-response.html" class="nav-item">
@@ -127,15 +137,6 @@
                 >
                     <i class="fa-solid fa-file-export"></i>
                     Export CSV
-                </button>
-
-                <button
-                    type="button"
-                    class="clear-button"
-                    id="openClearModal"
-                >
-                    <i class="fa-solid fa-trash-can"></i>
-                    Clear Logs
                 </button>
 
                 <div class="user-profile">
@@ -334,46 +335,7 @@
 
 </div>
 
-<!-- CLEAR LOGS CONFIRMATION -->
-<div class="modal-overlay" id="clearModal">
-
-    <section class="modal">
-
-        <div class="warning-icon">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-        </div>
-
-        <h2>Clear All Audit Logs?</h2>
-
-        <p>
-            All recorded activities will be permanently removed.
-        </p>
-
-        <div class="modal-actions">
-
-            <button
-                type="button"
-                class="cancel-button"
-                id="cancelClear"
-            >
-                Cancel
-            </button>
-
-            <button
-                type="button"
-                class="confirm-clear-button"
-                id="confirmClear"
-            >
-                Clear Logs
-            </button>
-
-        </div>
-
-    </section>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" integrity="sha384-JBR+x8blGwjDRO63aHCGiZMD4VNiTR4ZUGA+N6ZKLf3zNt1fK8IBpcgPaMrxqWBp" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="auth/supabase-client.js"></script>
 <script src="auth/supabase-auth.js"></script>
 <script src="audit-logs.js"></script>

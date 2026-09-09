@@ -92,6 +92,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const downloadBackup =
         document.getElementById("downloadBackup");
 
+    const backupPassword =
+        document.getElementById("backupPassword");
+
+    const confirmBackupPassword =
+        document.getElementById("confirmBackupPassword");
+
     const restoreFile =
         document.getElementById("restoreFile");
 
@@ -106,6 +112,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const confirmRestore =
         document.getElementById("confirmRestore");
+
+    const restorePassword =
+        document.getElementById("restorePassword");
 
     let selectedBackup = null;
 
@@ -349,11 +358,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         saveSettings(settings);
 
-        addAuditLog(
-            "Updated",
-            "System Settings",
-            "Updated the general system settings."
-        );
+        recordAdminEvent("general_settings_updated");
 
         showMessage(
             "General settings saved successfully.",
@@ -408,11 +413,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         saveSettings(settings);
 
-        addAuditLog(
-            "Updated",
-            "System Settings",
-            "Updated the inventory settings."
-        );
+        recordAdminEvent("inventory_settings_updated");
 
         showMessage(
             "Inventory settings saved successfully.",
@@ -453,11 +454,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             saveSettings(settings);
 
-            addAuditLog(
-                "Updated",
-                "System Settings",
-                "Updated the notification settings."
-            );
+            recordAdminEvent("notification_settings_updated");
 
             showMessage(
                 "Notification settings saved successfully.",
@@ -482,11 +479,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         const confirmPasswordValue =
             confirmNewPassword.value;
 
-        if (newPasswordValue.length < 6) {
-            showMessage(
-                "New password must contain at least 6 characters.",
-                "error"
-            );
+        const passwordError =
+            window.medtrackAuth.passwordPolicyError(newPasswordValue);
+
+        if (passwordError) {
+            showMessage(passwordError, "error");
 
             return;
         }
@@ -541,11 +538,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         securitySection.reset();
 
-        addAuditLog(
-            "Updated",
-            "System Settings",
-            "Changed the Administrator password."
-        );
+        recordAdminEvent("password_changed");
 
         showMessage(
             "Password changed successfully.",
@@ -554,91 +547,362 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // =====================================
-    // DOWNLOAD BACKUP
+    // ENCRYPTED BACKUP AND RESTORE
     // =====================================
 
     const backupKeys = [
-        "medtrackAccounts",
         "medtrackMedicalSupplies",
         "medtrackMedicalEquipment",
         "medtrackMobilityAssets",
         "medtrackBorrowTransactions",
         "medtrackEmergencyRequests",
-        "medtrackAuditLogs",
         "medtrackSettings"
     ];
+    const collectionBackupKeys = backupKeys.filter(function (key) {
+        return key !== "medtrackSettings";
+    });
+    const backupIterations = 250000;
+    const maximumBackupBytes = 25 * 1024 * 1024;
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
 
-    downloadBackup.addEventListener("click", function () {
-        const backup = {
-            backupType: "MedTrack",
-            version: 1,
-            createdAt: new Date().toISOString(),
-            data: {}
-        };
+    function bytesToBase64(bytes) {
+        let binary = "";
+        const chunkSize = 32768;
+
+        for (let index = 0; index < bytes.length; index += chunkSize) {
+            binary += String.fromCharCode(
+                ...bytes.subarray(index, index + chunkSize)
+            );
+        }
+
+        return btoa(binary);
+    }
+
+    function base64ToBytes(value) {
+        if (typeof value !== "string" || value.length > maximumBackupBytes * 2) {
+            throw new Error("Invalid encrypted backup data.");
+        }
+
+        const binary = atob(value);
+        const bytes = new Uint8Array(binary.length);
+
+        for (let index = 0; index < binary.length; index += 1) {
+            bytes[index] = binary.charCodeAt(index);
+        }
+
+        return bytes;
+    }
+
+    async function deriveBackupKey(password, salt, usage) {
+        const keyMaterial = await crypto.subtle.importKey(
+            "raw",
+            encoder.encode(password),
+            "PBKDF2",
+            false,
+            ["deriveKey"]
+        );
+
+        return crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                hash: "SHA-256",
+                salt: salt,
+                iterations: backupIterations
+            },
+            keyMaterial,
+            { name: "AES-GCM", length: 256 },
+            false,
+            [usage]
+        );
+    }
+
+    function collectBackupData() {
+        const data = {};
 
         backupKeys.forEach(function (key) {
-            const storedValue =
-                localStorage.getItem(key);
+            const fallback = key === "medtrackSettings" ? {} : [];
 
-            if (storedValue) {
-                try {
-                    backup.data[key] =
-                        JSON.parse(storedValue);
-                } catch (error) {
-                    backup.data[key] = storedValue;
-                }
+            try {
+                data[key] = JSON.parse(
+                    localStorage.getItem(key) || JSON.stringify(fallback)
+                );
+            } catch (error) {
+                throw new Error(`Unable to read ${key}. Refresh and try again.`);
             }
         });
 
-        const backupFile = new Blob(
-            [JSON.stringify(backup, null, 2)],
-            {
-                type: "application/json"
+        return data;
+    }
+
+    function validateBackupData(backup) {
+        if (
+            !backup ||
+            backup.backupType !== "MedTrack" ||
+            backup.version !== 2 ||
+            !backup.data ||
+            typeof backup.data !== "object" ||
+            Array.isArray(backup.data)
+        ) {
+            throw new Error("The decrypted file is not a valid MedTrack backup.");
+        }
+
+        const suppliedKeys = Object.keys(backup.data);
+
+        if (suppliedKeys.some(function (key) {
+            return !backupKeys.includes(key);
+        })) {
+            throw new Error("The backup contains an unsupported data section.");
+        }
+
+        collectionBackupKeys.forEach(function (key) {
+            const records = backup.data[key];
+
+            if (!Array.isArray(records) || records.length > 50000) {
+                throw new Error(`The ${key} section is invalid or too large.`);
             }
+
+            records.forEach(function (record) {
+                if (
+                    !record ||
+                    typeof record !== "object" ||
+                    Array.isArray(record) ||
+                    typeof record.id !== "string" ||
+                    !record.id.trim() ||
+                    record.id.length > 128
+                ) {
+                    throw new Error(`The ${key} section contains an invalid record.`);
+                }
+            });
+        });
+
+        if (
+            !backup.data.medtrackSettings ||
+            typeof backup.data.medtrackSettings !== "object" ||
+            Array.isArray(backup.data.medtrackSettings)
+        ) {
+            throw new Error("The settings section is invalid.");
+        }
+
+        return backup.data;
+    }
+
+    function toDatabaseBackupData(data) {
+        return {
+            medtrackMedicalSupplies: data.medtrackMedicalSupplies.map(function (item) {
+                return {
+                    id: item.id,
+                    name: item.name,
+                    category: item.category,
+                    quantity: Number(item.quantity),
+                    unit: item.unit,
+                    expiration_date: item.expirationDate || "",
+                    low_stock_level: Number(item.lowStockLevel)
+                };
+            }),
+            medtrackMedicalEquipment: data.medtrackMedicalEquipment.map(function (item) {
+                return {
+                    id: item.id,
+                    name: item.name,
+                    category: item.category,
+                    quantity: Number(item.quantity),
+                    condition: item.condition,
+                    location: item.location,
+                    maintenance_date: item.maintenanceDate || "",
+                    status: item.status
+                };
+            }),
+            medtrackMobilityAssets: data.medtrackMobilityAssets.map(function (item) {
+                return {
+                    id: item.id,
+                    name: item.name,
+                    asset_type: item.type,
+                    plate_number: item.plateNumber || "",
+                    condition: item.condition,
+                    driver: item.driver || "",
+                    location: item.location,
+                    maintenance_date: item.maintenanceDate || "",
+                    status: item.status
+                };
+            }),
+            medtrackBorrowTransactions: data.medtrackBorrowTransactions.map(function (item) {
+                return {
+                    id: item.id,
+                    borrower: item.borrower,
+                    department: item.department,
+                    item_type: item.itemType,
+                    item_name: item.itemName,
+                    quantity: Number(item.quantity),
+                    borrow_date: item.borrowDate,
+                    borrowed_at: item.borrowedAt || `${item.borrowDate}T00:00:00+08:00`,
+                    due_date: item.dueDate,
+                    return_date: item.returnDate || "",
+                    status: item.status,
+                    purpose: item.purpose,
+                    assigned_personnel: item.assignedPersonnel || "",
+                    destination: item.destination || "",
+                    remarks: item.remarks || "",
+                    inventory_item_id: item.inventoryItemId || "",
+                    inventory_adjusted: Boolean(item.inventoryAdjusted),
+                    inventory_returned: Boolean(item.inventoryReturned)
+                };
+            }),
+            medtrackEmergencyRequests: data.medtrackEmergencyRequests.map(function (item) {
+                return {
+                    id: item.id,
+                    request_date: item.date,
+                    request_time: item.time,
+                    request_type: item.type,
+                    priority: item.priority,
+                    location: item.location,
+                    contact_person: item.contactPerson,
+                    contact_number: item.contactNumber,
+                    assigned_team: item.assignedTeam,
+                    status: item.status,
+                    resources: item.resources,
+                    description: item.description,
+                    inventory_usage: item.inventoryUsage || null,
+                    inventory_deducted: Boolean(item.inventoryDeducted),
+                    inventory_deducted_at: item.inventoryDeductedAt || "",
+                    completed_at: item.completedAt || ""
+                };
+            })
+        };
+    }
+
+    async function encryptBackup(backup, password) {
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await deriveBackupKey(password, salt, "encrypt");
+        const ciphertext = await crypto.subtle.encrypt(
+            {
+                name: "AES-GCM",
+                iv: iv,
+                additionalData: encoder.encode("MedTrackBackup:v2")
+            },
+            key,
+            encoder.encode(JSON.stringify(backup))
         );
 
-        const downloadLink =
-            document.createElement("a");
+        return {
+            backupType: "MedTrackEncrypted",
+            version: 2,
+            createdAt: backup.createdAt,
+            kdf: {
+                name: "PBKDF2",
+                hash: "SHA-256",
+                iterations: backupIterations,
+                salt: bytesToBase64(salt)
+            },
+            cipher: {
+                name: "AES-GCM",
+                iv: bytesToBase64(iv)
+            },
+            ciphertext: bytesToBase64(new Uint8Array(ciphertext))
+        };
+    }
 
-        downloadLink.href =
-            URL.createObjectURL(backupFile);
+    async function decryptBackup(envelope, password) {
+        if (
+            !envelope ||
+            envelope.backupType !== "MedTrackEncrypted" ||
+            envelope.version !== 2 ||
+            envelope.kdf?.name !== "PBKDF2" ||
+            envelope.kdf?.hash !== "SHA-256" ||
+            envelope.kdf?.iterations !== backupIterations ||
+            envelope.cipher?.name !== "AES-GCM"
+        ) {
+            throw new Error("This is not a supported encrypted MedTrack backup.");
+        }
 
-        downloadLink.download =
-            `medtrack-backup-${getFileDate()}.json`;
+        const salt = base64ToBytes(envelope.kdf.salt);
+        const iv = base64ToBytes(envelope.cipher.iv);
 
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
+        if (salt.length !== 16 || iv.length !== 12) {
+            throw new Error("The encrypted backup header is invalid.");
+        }
 
-        URL.revokeObjectURL(downloadLink.href);
-        downloadLink.remove();
-
-        addAuditLog(
-            "Created",
-            "System Settings",
-            "Downloaded a MedTrack backup."
+        const key = await deriveBackupKey(password, salt, "decrypt");
+        const plaintext = await crypto.subtle.decrypt(
+            {
+                name: "AES-GCM",
+                iv: iv,
+                additionalData: encoder.encode("MedTrackBackup:v2")
+            },
+            key,
+            base64ToBytes(envelope.ciphertext)
         );
 
-        showMessage(
-            "Backup downloaded successfully.",
-            "success"
-        );
+        return JSON.parse(decoder.decode(plaintext));
+    }
+
+    downloadBackup.addEventListener("click", async function () {
+        const password = backupPassword.value;
+
+        if (password.length < 12) {
+            showMessage("Use a backup password containing at least 12 characters.", "error");
+            backupPassword.focus();
+            return;
+        }
+
+        if (password !== confirmBackupPassword.value) {
+            showMessage("The backup passwords do not match.", "error");
+            confirmBackupPassword.focus();
+            return;
+        }
+
+        downloadBackup.disabled = true;
+
+        try {
+            if (window.medtrackData) {
+                const refreshed = await window.medtrackData.refresh();
+
+                if (!refreshed) {
+                    throw new Error(
+                        "Current data could not be downloaded from Supabase. Refresh and try again."
+                    );
+                }
+            }
+
+            const backup = {
+                backupType: "MedTrack",
+                version: 2,
+                createdAt: new Date().toISOString(),
+                data: collectBackupData()
+            };
+            const encryptedBackup = await encryptBackup(backup, password);
+            const backupFile = new Blob(
+                [JSON.stringify(encryptedBackup, null, 2)],
+                { type: "application/json" }
+            );
+            const downloadLink = document.createElement("a");
+
+            downloadLink.href = URL.createObjectURL(backupFile);
+            downloadLink.download = `medtrack-encrypted-backup-${getFileDate()}.json`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            URL.revokeObjectURL(downloadLink.href);
+            downloadLink.remove();
+            backupPassword.value = "";
+            confirmBackupPassword.value = "";
+
+            recordAdminEvent("encrypted_backup_downloaded");
+            showMessage("Encrypted backup downloaded successfully.", "success");
+        } catch (error) {
+            console.error("Encrypted backup failed:", error);
+            showMessage(error.message || "Unable to create the encrypted backup.", "error");
+        } finally {
+            downloadBackup.disabled = false;
+        }
     });
 
     function getFileDate() {
         const date = new Date();
-
         const year = date.getFullYear();
-        const month =
-            String(date.getMonth() + 1).padStart(2, "0");
-        const day =
-            String(date.getDate()).padStart(2, "0");
-
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
     }
-
-    // =====================================
-    // SELECT BACKUP FILE
-    // =====================================
 
     selectRestoreFile.addEventListener("click", function () {
         restoreFile.click();
@@ -651,96 +915,110 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
+        if (file.size > maximumBackupBytes) {
+            restoreFile.value = "";
+            showMessage("The selected backup is larger than the 25 MB limit.", "error");
+            return;
+        }
+
         const reader = new FileReader();
 
         reader.addEventListener("load", function () {
             try {
-                const backup = JSON.parse(reader.result);
+                const envelope = JSON.parse(reader.result);
 
                 if (
-                    backup.backupType !== "MedTrack" ||
-                    !backup.data ||
-                    typeof backup.data !== "object"
+                    envelope.backupType !== "MedTrackEncrypted" ||
+                    envelope.version !== 2 ||
+                    !envelope.ciphertext
                 ) {
-                    throw new Error("Invalid backup");
+                    throw new Error("Invalid encrypted backup");
                 }
 
-                selectedBackup = backup;
+                selectedBackup = envelope;
+                restorePassword.value = "";
                 restoreModal.classList.add("show");
+                restorePassword.focus();
             } catch (error) {
                 selectedBackup = null;
                 restoreFile.value = "";
-
-                showMessage(
-                    "The selected file is not a valid MedTrack backup.",
-                    "error"
-                );
+                showMessage("Select a valid encrypted MedTrack backup file.", "error");
             }
         });
 
         reader.readAsText(file);
     });
 
-    // =====================================
-    // RESTORE BACKUP
-    // =====================================
-
-    confirmRestore.addEventListener("click", function () {
+    confirmRestore.addEventListener("click", async function () {
         if (!selectedBackup) {
             return;
         }
 
-        backupKeys.forEach(function (key) {
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    selectedBackup.data,
-                    key
-                )
-            ) {
-                localStorage.setItem(
-                    key,
-                    JSON.stringify(selectedBackup.data[key])
-                );
+        if (restorePassword.value.length < 12) {
+            showMessage("Enter the backup password.", "error");
+            restorePassword.focus();
+            return;
+        }
+
+        confirmRestore.disabled = true;
+
+        try {
+            const decryptedBackup = await decryptBackup(
+                selectedBackup,
+                restorePassword.value
+            );
+            const restoredData = validateBackupData(decryptedBackup);
+            const restoreResult = await window.medtrackAuth.client.rpc(
+                "medtrack_restore_encrypted_backup",
+                { p_data: toDatabaseBackupData(restoredData) }
+            );
+
+            if (restoreResult.error) {
+                throw restoreResult.error;
             }
-        });
 
-        restoreModal.classList.remove("show");
-        restoreFile.value = "";
-        selectedBackup = null;
+            localStorage.setItem(
+                "medtrackSettings",
+                JSON.stringify(restoredData.medtrackSettings)
+            );
 
-        loadSettings();
+            if (window.medtrackData) {
+                await window.medtrackData.refresh();
+            }
 
-        addAuditLog(
-            "Updated",
-            "System Settings",
-            "Restored a MedTrack backup."
-        );
-
-        showMessage(
-            "Backup restored successfully.",
-            "success"
-        );
+            closeRestoreModal();
+            loadSettings();
+            recordAdminEvent("encrypted_backup_restored");
+            showMessage("Encrypted backup restored successfully.", "success");
+        } catch (error) {
+            console.error("Encrypted restore failed:", error);
+            showMessage(
+                "Restore failed. Check the password and confirm that the file is a valid MedTrack backup.",
+                "error"
+            );
+        } finally {
+            confirmRestore.disabled = false;
+        }
     });
 
-    cancelRestore.addEventListener("click", function () {
+    function closeRestoreModal() {
         selectedBackup = null;
         restoreFile.value = "";
+        restorePassword.value = "";
         restoreModal.classList.remove("show");
-    });
+    }
+
+    cancelRestore.addEventListener("click", closeRestoreModal);
 
     restoreModal.addEventListener("click", function (event) {
         if (event.target === restoreModal) {
-            selectedBackup = null;
-            restoreFile.value = "";
-            restoreModal.classList.remove("show");
+            closeRestoreModal();
         }
     });
 
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
-            selectedBackup = null;
-            restoreFile.value = "";
-            restoreModal.classList.remove("show");
+            closeRestoreModal();
         }
     });
 
@@ -748,68 +1026,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     // AUDIT LOG
     // =====================================
 
-    function addAuditLog(action, module, details) {
-        const savedLogs =
-            localStorage.getItem("medtrackAuditLogs");
-
-        let logs = [];
-
-        if (savedLogs) {
-            try {
-                logs = JSON.parse(savedLogs);
-
-                if (!Array.isArray(logs)) {
-                    logs = [];
-                }
-            } catch (error) {
-                logs = [];
-            }
-        }
-
-        let highestNumber = 0;
-
-        logs.forEach(function (log) {
-            const number = Number(
-                String(log.id).replace("LOG-", "")
+    async function recordAdminEvent(eventName) {
+        try {
+            const result = await window.medtrackAuth.client.rpc(
+                "medtrack_record_admin_settings_event",
+                { p_event: eventName }
             );
 
-            if (!Number.isNaN(number) && number > highestNumber) {
-                highestNumber = number;
+            if (result.error) {
+                console.error("Unable to record Settings audit event:", result.error);
             }
-        });
-
-        logs.unshift({
-            id:
-                `LOG-${String(highestNumber + 1).padStart(3, "0")}`,
-
-            timestamp:
-                new Date().toISOString(),
-
-            userId:
-                currentUser.id,
-
-            userName:
-                currentUser.fullname ||
-                currentUser.username ||
-                "Administrator",
-
-            role:
-                currentUser.role,
-
-            action:
-                action,
-
-            module:
-                module,
-
-            details:
-                details
-        });
-
-        localStorage.setItem(
-            "medtrackAuditLogs",
-            JSON.stringify(logs)
-        );
+        } catch (error) {
+            console.error("Unable to record Settings audit event:", error);
+        }
     }
 
     // =====================================
@@ -824,12 +1053,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!confirmLogout) {
             return;
         }
-
-        addAuditLog(
-            "Logout",
-            "Authentication",
-            "Administrator logged out of MedTrack."
-        );
 
         await window.medtrackAuth.signOutAndRedirect();
     });

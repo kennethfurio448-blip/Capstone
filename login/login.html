@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdnjs.cloudflare.com; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob:; connect-src 'self' https://agztgijxasjypmrndvyj.supabase.co wss://agztgijxasjypmrndvyj.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Login | MedTrack</title>
@@ -9,7 +10,10 @@
     <link rel="stylesheet" href="login.css">
 
     <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+          integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a"
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer">
 </head>
 
 <body>
@@ -138,14 +142,14 @@
                     <label for="newPassword">New Password</label>
                     <div class="input-box">
                         <i class="fa-solid fa-lock"></i>
-                        <input type="password" id="newPassword" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
+                        <input type="password" id="newPassword" autocomplete="new-password" minlength="12" maxlength="128" placeholder="12+ characters, mixed case and number" required>
                     </div>
                 </div>
                 <div class="input-group">
                     <label for="confirmNewPassword">Confirm New Password</label>
                     <div class="input-box">
                         <i class="fa-solid fa-lock"></i>
-                        <input type="password" id="confirmNewPassword" autocomplete="new-password" minlength="8" placeholder="Repeat new password" required>
+                        <input type="password" id="confirmNewPassword" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Repeat new password" required>
                     </div>
                 </div>
                 <button type="button" class="recovery-resend" id="resendRecoveryCode" disabled>
@@ -157,7 +161,7 @@
         </section>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" integrity="sha384-JBR+x8blGwjDRO63aHCGiZMD4VNiTR4ZUGA+N6ZKLf3zNt1fK8IBpcgPaMrxqWBp" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="../auth/supabase-client.js"></script>
     <script src="../auth/supabase-auth.js"></script>
     <script src="login.js"></script>
