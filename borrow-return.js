@@ -1,149 +1,111 @@
 // =====================================
-// MEDTRACK BORROW AND RETURN
+// MEDTRACK BORROWING STATUS MANAGEMENT
 // =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
     "use strict";
 
-    // =====================================
-    // ELEMENTS
-    // =====================================
-
-    const dashboardLink =
-        document.getElementById("dashboardLink");
-
-    const adminNavigation =
-        document.getElementById("adminNavigation");
-
-    const portalName =
-        document.getElementById("portalName");
-
-    const currentUserName =
-        document.getElementById("currentUserName");
-
-    const currentUserRole =
-        document.getElementById("currentUserRole");
-
-    const logoutButton =
-        document.getElementById("logoutButton");
-
+    const dashboardLink = document.getElementById("dashboardLink");
+    const adminNavigation = document.getElementById("adminNavigation");
+    const portalName = document.getElementById("portalName");
+    const currentUserName = document.getElementById("currentUserName");
+    const currentUserRole = document.getElementById("currentUserRole");
+    const logoutButton = document.getElementById("logoutButton");
     const notificationButton =
         document.getElementById("notificationButton");
-
     const notificationCount =
         document.getElementById("notificationCount");
 
     const totalTransactions =
         document.getElementById("totalTransactions");
-
     const borrowedTransactions =
         document.getElementById("borrowedTransactions");
-
     const returnedTransactions =
         document.getElementById("returnedTransactions");
-
-    const overdueTransactions =
-        document.getElementById("overdueTransactions");
-
-    const transactionTableBody =
-        document.getElementById("transactionTableBody");
-
-    const emptyState =
-        document.getElementById("emptyState");
+    const attentionTransactions =
+        document.getElementById("attentionTransactions");
 
     const transactionSearch =
         document.getElementById("transactionSearch");
-
     const itemTypeFilter =
         document.getElementById("itemTypeFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const transactionTableBody =
+        document.getElementById("transactionTableBody");
+    const emptyState = document.getElementById("emptyState");
 
-    const statusFilter =
-        document.getElementById("statusFilter");
-
-    // Transaction modal
-    const transactionModal =
-        document.getElementById("transactionModal");
-
-    const openAddModalButton =
-        document.getElementById("openAddModal");
-
-    const closeModalButton =
-        document.getElementById("closeModal");
-
-    const cancelButton =
-        document.getElementById("cancelButton");
-
-    const modalTitle =
-        document.getElementById("modalTitle");
-
-    const transactionForm =
-        document.getElementById("transactionForm");
-
-    const editingTransactionId =
-        document.getElementById("editingTransactionId");
-
-    const borrowerName =
-        document.getElementById("borrowerName");
-
-    const borrowerDepartment =
-        document.getElementById("borrowerDepartment");
-
-    const itemType =
-        document.getElementById("itemType");
-
-    const itemName =
-        document.getElementById("itemName");
-
-    const itemQuantity =
-        document.getElementById("itemQuantity");
-
-    const borrowDate =
-        document.getElementById("borrowDate");
-
-    const dueDate =
-        document.getElementById("dueDate");
-
+    const openStatusModalButton =
+        document.getElementById("openStatusModal");
+    const statusModal = document.getElementById("statusModal");
+    const closeStatusModalButton =
+        document.getElementById("closeStatusModal");
+    const cancelStatusButton =
+        document.getElementById("cancelStatus");
+    const statusForm = document.getElementById("statusForm");
+    const statusTransaction =
+        document.getElementById("statusTransaction");
     const transactionStatus =
         document.getElementById("transactionStatus");
+    const statusRecordSummary =
+        document.getElementById("statusRecordSummary");
+    const formMessage = document.getElementById("formMessage");
+    const saveStatusButton =
+        statusForm.querySelector("button[type='submit']");
 
-    const borrowPurpose =
-        document.getElementById("borrowPurpose");
+    const allowedItemTypes = [
+        "Medical Equipment",
+        "Mobility Asset"
+    ];
 
-    const formMessage =
-        document.getElementById("formMessage");
+    const allowedStatuses = [
+        "Borrowed",
+        "Returned",
+        "Missing",
+        "Damaged",
+        "For Repair"
+    ];
 
-    // Return modal
-    const returnModal =
-        document.getElementById("returnModal");
+    const requiredElements = [
+        dashboardLink,
+        adminNavigation,
+        portalName,
+        currentUserName,
+        currentUserRole,
+        logoutButton,
+        notificationButton,
+        notificationCount,
+        totalTransactions,
+        borrowedTransactions,
+        returnedTransactions,
+        attentionTransactions,
+        transactionSearch,
+        itemTypeFilter,
+        statusFilter,
+        transactionTableBody,
+        emptyState,
+        openStatusModalButton,
+        statusModal,
+        closeStatusModalButton,
+        cancelStatusButton,
+        statusForm,
+        statusTransaction,
+        transactionStatus,
+        statusRecordSummary,
+        formMessage,
+        saveStatusButton
+    ];
 
-    const cancelReturn =
-        document.getElementById("cancelReturn");
-
-    const confirmReturn =
-        document.getElementById("confirmReturn");
-
-    // Delete modal
-    const deleteModal =
-        document.getElementById("deleteModal");
-
-    const cancelDelete =
-        document.getElementById("cancelDelete");
-
-    const confirmDelete =
-        document.getElementById("confirmDelete");
-
-    let transactionToReturn = null;
-    let transactionToDelete = null;
-
-    // =====================================
-    // LOGIN AND ROLE CHECK
-    // =====================================
+    if (requiredElements.some(function (element) {
+        return !element;
+    })) {
+        console.error(
+            "Borrowing page is missing one or more required elements."
+        );
+        return;
+    }
 
     const currentUser =
-        await window.medtrackAuth.requireRoles([
-            "admin",
-            "staff"
-        ]);
+        await window.medtrackAuth.requireRoles(["admin", "staff"]);
 
     if (!currentUser) {
         return;
@@ -158,370 +120,22 @@ document.addEventListener("DOMContentLoaded", async function () {
         currentUser.username ||
         "MedTrack User";
 
-    currentUserName.textContent =
-        displayName;
-
-    currentUserRole.textContent =
-        currentUser.role;
+    currentUserName.textContent = displayName;
+    currentUserRole.textContent = currentUser.role;
 
     if (currentUser.role === "admin") {
-        portalName.textContent =
-            "Admin Portal";
-
-        dashboardLink.href =
-            "admin-dashboard.html";
-
-        adminNavigation.style.display =
-            "block";
+        portalName.textContent = "Admin Portal";
+        dashboardLink.href = "admin-dashboard.html";
+        adminNavigation.hidden = false;
     } else {
-        portalName.textContent =
-            "Staff Portal";
-
-        dashboardLink.href =
-            "staff-dashboard.html";
-
-        adminNavigation.style.display =
-            "none";
+        portalName.textContent = "Staff Portal";
+        dashboardLink.href = "staff-dashboard.html";
+        adminNavigation.hidden = true;
     }
 
-    // =====================================
-    // DATE HELPERS
-    // =====================================
-
-    function getTodayDate() {
-        const today = new Date();
-
-        const year =
-            today.getFullYear();
-
-        const month = String(
-            today.getMonth() + 1
-        ).padStart(2, "0");
-
-        const day = String(
-            today.getDate()
-        ).padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
+    function normalizeText(value) {
+        return String(value ?? "").trim();
     }
-
-    function formatDate(dateValue) {
-        if (!dateValue) {
-            return "—";
-        }
-
-        const date =
-            new Date(
-                dateValue + "T00:00:00"
-            );
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return dateValue;
-        }
-
-        return date.toLocaleDateString(
-            "en-US",
-            {
-                month: "short",
-                day: "numeric",
-                year: "numeric"
-            }
-        );
-    }
-
-    // =====================================
-    // DEFAULT TRANSACTIONS
-    // =====================================
-
-    const defaultTransactions = [
-        {
-            id: "TRN-001",
-            borrower: "Juan Dela Cruz",
-            department: "Operations Division",
-            itemType: "Medical Equipment",
-            itemName: "Handheld Radio",
-            quantity: 2,
-            borrowDate: "2026-08-20",
-            dueDate: "2026-09-05",
-            returnDate: "",
-            status: "Borrowed",
-            purpose: "Emergency response operation"
-        },
-        {
-            id: "TRN-002",
-            borrower: "Maria Santos",
-            department: "Warning Division",
-            itemType: "Medical Supply",
-            itemName: "First Aid Kit",
-            quantity: 1,
-            borrowDate: "2026-08-10",
-            dueDate: "2026-08-15",
-            returnDate: "2026-08-14",
-            status: "Returned",
-            purpose: "Community emergency training"
-        },
-        {
-            id: "TRN-003",
-            borrower: "Pedro Reyes",
-            department: "Rescue Team",
-            itemType: "Medical Equipment",
-            itemName: "Portable Oxygen Tank",
-            quantity: 1,
-            borrowDate: "2026-08-15",
-            dueDate: "2026-08-25",
-            returnDate: "",
-            status: "Borrowed",
-            purpose: "Rescue operation support"
-        }
-    ];
-
-    // =====================================
-    // LOCAL STORAGE
-    // =====================================
-
-    function getTransactions() {
-        const savedTransactions =
-            localStorage.getItem(
-                "medtrackBorrowTransactions"
-            );
-
-        if (savedTransactions === null) {
-            const initialTransactions =
-                defaultTransactions.map(
-                    function (transaction) {
-                        return {
-                            ...transaction
-                        };
-                    }
-                );
-
-            localStorage.setItem(
-                "medtrackBorrowTransactions",
-                JSON.stringify(
-                    initialTransactions
-                )
-            );
-
-            return initialTransactions;
-        }
-
-        try {
-            const parsedTransactions =
-                JSON.parse(
-                    savedTransactions
-                );
-
-            return Array.isArray(
-                parsedTransactions
-            )
-                ? parsedTransactions
-                : [];
-        } catch (error) {
-            console.error(
-                "Unable to read transactions:",
-                error
-            );
-
-            return [];
-        }
-    }
-
-    function saveTransactions(
-        transactions
-    ) {
-        localStorage.setItem(
-            "medtrackBorrowTransactions",
-            JSON.stringify(
-                transactions
-            )
-        );
-    }
-
-    // =====================================
-    // RESTORE RETURNED INVENTORY
-    // =====================================
-
-    function restoreBorrowedInventory(
-        transaction
-    ) {
-        /*
-         * Only transactions created through
-         * Available Items have these fields.
-         *
-         * This also prevents a double return
-         * from adding the item twice.
-         */
-        if (
-            !transaction.inventoryAdjusted ||
-            transaction.inventoryReturned ||
-            !transaction.inventoryItemId
-        ) {
-            return false;
-        }
-
-        const storageByType = {
-            "Medical Supply":
-                "medtrackMedicalSupplies",
-
-            "Medical Equipment":
-                "medtrackMedicalEquipment",
-
-            "Mobility Asset":
-                "medtrackMobilityAssets"
-        };
-
-        const storageKey =
-            storageByType[
-                transaction.itemType
-            ];
-
-        if (!storageKey) {
-            return false;
-        }
-
-        let inventoryRecords;
-
-        try {
-            inventoryRecords =
-                JSON.parse(
-                    localStorage.getItem(
-                        storageKey
-                    ) || "[]"
-                );
-        } catch (error) {
-            console.error(
-                "Unable to read inventory:",
-                error
-            );
-
-            return false;
-        }
-
-        if (
-            !Array.isArray(
-                inventoryRecords
-            )
-        ) {
-            return false;
-        }
-
-        const inventoryItem =
-            inventoryRecords.find(
-                function (item) {
-                    return (
-                        String(item.id) ===
-                        String(
-                            transaction
-                                .inventoryItemId
-                        )
-                    );
-                }
-            );
-
-        if (!inventoryItem) {
-            return false;
-        }
-
-        if (
-            transaction.itemType ===
-            "Mobility Asset"
-        ) {
-            inventoryItem.status =
-                "Available";
-        } else {
-            inventoryItem.quantity =
-                (
-                    Number(
-                        inventoryItem.quantity
-                    ) || 0
-                ) +
-                (
-                    Number(
-                        transaction.quantity
-                    ) || 1
-                );
-
-            if (
-                transaction.itemType ===
-                    "Medical Equipment" &&
-                String(
-                    inventoryItem.status
-                ).toLowerCase() ===
-                    "unavailable"
-            ) {
-                inventoryItem.status =
-                    "Available";
-            }
-        }
-
-        localStorage.setItem(
-            storageKey,
-            JSON.stringify(
-                inventoryRecords
-            )
-        );
-
-        transaction.inventoryReturned =
-            true;
-
-        return true;
-    }
-
-    // =====================================
-    // TRANSACTION STATUS
-    // =====================================
-
-    function getTransactionStatus(
-        transaction
-    ) {
-        if (
-            transaction.status ===
-            "Returned"
-        ) {
-            return "Returned";
-        }
-
-        const today = new Date();
-
-        today.setHours(0, 0, 0, 0);
-
-        const returnDeadline =
-            new Date(
-                transaction.dueDate +
-                "T00:00:00"
-            );
-
-        if (
-            !Number.isNaN(
-                returnDeadline.getTime()
-            ) &&
-            returnDeadline < today
-        ) {
-            return "Overdue";
-        }
-
-        return "Borrowed";
-    }
-
-    function getStatusClass(status) {
-        if (status === "Returned") {
-            return "status-returned";
-        }
-
-        if (status === "Overdue") {
-            return "status-overdue";
-        }
-
-        return "status-borrowed";
-    }
-
-    // =====================================
-    // SAFE TEXT
-    // =====================================
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -532,1136 +146,348 @@ document.addEventListener("DOMContentLoaded", async function () {
             .replaceAll("'", "&#039;");
     }
 
-    // =====================================
-    // GENERATE TRANSACTION ID
-    // =====================================
-
-    function generateTransactionId(
-        transactions
-    ) {
-        let highestNumber = 0;
-
-        transactions.forEach(
-            function (transaction) {
-                const match = String(
-                    transaction.id || ""
-                ).match(/^TRN-(\d+)$/i);
-
-                if (match) {
-                    highestNumber =
-                        Math.max(
-                            highestNumber,
-                            Number(match[1])
-                        );
-                }
-            }
-        );
-
-        return `TRN-${String(
-            highestNumber + 1
-        ).padStart(3, "0")}`;
+    function normalizeStatus(value) {
+        const status = normalizeText(value);
+        return allowedStatuses.includes(status)
+            ? status
+            : "Borrowed";
     }
 
-    // =====================================
-    // UPDATE STATISTICS
-    // =====================================
+    function getTransactions() {
+        try {
+            const transactions = JSON.parse(
+                localStorage.getItem(
+                    "medtrackBorrowTransactions"
+                ) || "[]"
+            );
 
-    function updateStatistics(
-        transactions
-    ) {
-        let borrowedCount = 0;
-        let returnedCount = 0;
-        let overdueCount = 0;
-
-        transactions.forEach(
-            function (transaction) {
-                const status =
-                    getTransactionStatus(
-                        transaction
-                    );
-
-                if (status === "Borrowed") {
-                    borrowedCount++;
-                }
-
-                if (status === "Returned") {
-                    returnedCount++;
-                }
-
-                if (status === "Overdue") {
-                    overdueCount++;
-                }
+            if (!Array.isArray(transactions)) {
+                return [];
             }
-        );
 
-        totalTransactions.textContent =
-            transactions.length;
-
-        borrowedTransactions.textContent =
-            borrowedCount;
-
-        returnedTransactions.textContent =
-            returnedCount;
-
-        overdueTransactions.textContent =
-            overdueCount;
-
-        notificationCount.textContent =
-            overdueCount;
-    }
-
-    // =====================================
-    // RENDER TRANSACTIONS
-    // =====================================
-
-    function renderTransactions() {
-        const transactions =
-            getTransactions();
-
-        const searchValue =
-            transactionSearch.value
-                .trim()
-                .toLowerCase();
-
-        const selectedItemType =
-            itemTypeFilter.value;
-
-        const selectedStatus =
-            statusFilter.value;
-
-        const filteredTransactions =
-            transactions.filter(
-                function (transaction) {
-                    const currentStatus =
-                        getTransactionStatus(
-                            transaction
-                        );
-
-                    const searchableText = `
-                        ${transaction.id}
-                        ${transaction.borrower}
-                        ${transaction.department}
-                        ${transaction.itemType}
-                        ${transaction.itemName}
-                        ${transaction.purpose}
-                    `.toLowerCase();
-
-                    const matchesSearch =
-                        searchableText.includes(
-                            searchValue
-                        );
-
-                    const matchesType =
-                        selectedItemType ===
-                            "all" ||
-                        transaction.itemType ===
-                            selectedItemType;
-
-                    const matchesStatus =
-                        selectedStatus ===
-                            "all" ||
-                        currentStatus ===
-                            selectedStatus;
-
+            return transactions
+                .filter(function (transaction) {
                     return (
-                        matchesSearch &&
-                        matchesType &&
-                        matchesStatus
+                        transaction &&
+                        allowedItemTypes.includes(
+                            transaction.itemType
+                        )
                     );
-                }
-            );
+                })
+                .map(function (transaction) {
+                    return {
+                        ...transaction,
+                        status: normalizeStatus(transaction.status)
+                    };
+                });
+        } catch (error) {
+            console.error("Unable to read borrowing records:", error);
+            return [];
+        }
+    }
 
-        transactionTableBody.innerHTML =
-            "";
-
-        if (
-            filteredTransactions.length ===
-            0
-        ) {
-            emptyState.classList.add(
-                "show"
-            );
-        } else {
-            emptyState.classList.remove(
-                "show"
-            );
+    function formatDate(value) {
+        if (!value) {
+            return "\u2014";
         }
 
-        filteredTransactions.forEach(
+        const date = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(date.getTime())) {
+            return normalizeText(value);
+        }
+
+        return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+        });
+    }
+
+    function statusClass(status) {
+        return {
+            "Borrowed": "status-borrowed",
+            "Returned": "status-returned",
+            "Missing": "status-missing",
+            "Damaged": "status-damaged",
+            "For Repair": "status-for-repair"
+        }[status] || "status-borrowed";
+    }
+
+    function updateStatistics(transactions) {
+        const borrowed = transactions.filter(function (transaction) {
+            return transaction.status === "Borrowed";
+        }).length;
+        const returned = transactions.filter(function (transaction) {
+            return transaction.status === "Returned";
+        }).length;
+        const needsAttention = transactions.filter(function (transaction) {
+            return ["Missing", "Damaged", "For Repair"].includes(
+                transaction.status
+            );
+        }).length;
+
+        totalTransactions.textContent = String(transactions.length);
+        borrowedTransactions.textContent = String(borrowed);
+        returnedTransactions.textContent = String(returned);
+        attentionTransactions.textContent = String(needsAttention);
+        notificationCount.textContent = String(needsAttention);
+        notificationCount.hidden = needsAttention === 0;
+
+        notificationButton.setAttribute(
+            "aria-label",
+            needsAttention === 0
+                ? "No borrowing records need attention"
+                : `${needsAttention} borrowing ${
+                    needsAttention === 1 ? "record needs" : "records need"
+                } attention`
+        );
+    }
+
+    function renderTransactions() {
+        const transactions = getTransactions();
+        const searchValue =
+            normalizeText(transactionSearch.value).toLowerCase();
+        const selectedType = itemTypeFilter.value;
+        const selectedStatus = statusFilter.value;
+
+        const filteredTransactions = transactions.filter(
             function (transaction) {
-                const currentStatus =
-                    getTransactionStatus(
-                        transaction
-                    );
+                const searchableText = `
+                    ${transaction.id} ${transaction.borrower}
+                    ${transaction.department} ${transaction.itemType}
+                    ${transaction.itemName} ${transaction.purpose}
+                    ${transaction.status}
+                `.toLowerCase();
 
-                const statusClass =
-                    getStatusClass(
-                        currentStatus
-                    );
-
-                const row =
-                    document.createElement(
-                        "tr"
-                    );
-
-                const returnButton =
-                    currentStatus !==
-                    "Returned"
-                        ? `
-                            <button
-                                type="button"
-                                class="return-button"
-                                data-action="return"
-                                data-id="${escapeHTML(
-                                    transaction.id
-                                )}"
-                                title="Return item"
-                            >
-                                <i class="fa-solid fa-rotate-left"></i>
-                            </button>
-                        `
-                        : "";
-
-                row.innerHTML = `
-                    <td>
-                        <strong>
-                            ${escapeHTML(
-                                transaction.id
-                            )}
-                        </strong>
-                    </td>
-
-                    <td>
-                        <strong>
-                            ${escapeHTML(
-                                transaction.borrower
-                            )}
-                        </strong>
-
-                        <small>
-                            ${escapeHTML(
-                                transaction.department
-                            )}
-                        </small>
-                    </td>
-
-                    <td>
-                        <span class="item-type">
-                            ${escapeHTML(
-                                transaction.itemType
-                            )}
-                        </span>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            transaction.itemName
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            transaction.quantity
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            formatDate(
-                                transaction.borrowDate
-                            )
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            formatDate(
-                                transaction.dueDate
-                            )
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            formatDate(
-                                transaction.returnDate
-                            )
-                        )}
-                    </td>
-
-                    <td>
-                        <span class="status-badge ${statusClass}">
-                            ${escapeHTML(
-                                currentStatus
-                            )}
-                        </span>
-                    </td>
-
-                    <td>
-                        <div class="table-actions">
-                            ${returnButton}
-
-                            <button
-                                type="button"
-                                class="edit-button"
-                                data-action="edit"
-                                data-id="${escapeHTML(
-                                    transaction.id
-                                )}"
-                                title="Edit transaction"
-                            >
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-
-                            <button
-                                type="button"
-                                class="remove-button"
-                                data-action="delete"
-                                data-id="${escapeHTML(
-                                    transaction.id
-                                )}"
-                                title="Delete transaction"
-                            >
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-
-                transactionTableBody
-                    .appendChild(row);
+                return (
+                    searchableText.includes(searchValue) &&
+                    (
+                        selectedType === "all" ||
+                        transaction.itemType === selectedType
+                    ) &&
+                    (
+                        selectedStatus === "all" ||
+                        transaction.status === selectedStatus
+                    )
+                );
             }
         );
 
-        updateStatistics(
-            transactions
-        );
-    }
-
-    // =====================================
-    // OPEN ADD MODAL
-    // =====================================
-
-    function openAddModal() {
-        transactionForm.reset();
-
-        editingTransactionId.value =
-            "";
-
-        modalTitle.textContent =
-            "Add Borrowing Record";
-
-        formMessage.textContent =
-            "";
-
-        borrowerName.value =
-            displayName;
-
-        borrowerDepartment.value =
-            currentUser.role === "admin"
-                ? "Administration"
-                : "Staff";
-
-        borrowDate.value =
-            getTodayDate();
-
-        transactionStatus.value =
-            "Borrowed";
-
-        transactionModal.classList.add(
-            "show"
+        transactionTableBody.innerHTML = "";
+        emptyState.classList.toggle(
+            "show",
+            filteredTransactions.length === 0
         );
 
-        borrowerName.focus();
+        filteredTransactions.forEach(function (transaction) {
+            const row = document.createElement("tr");
+            const status = normalizeStatus(transaction.status);
+
+            row.innerHTML = `
+                <td>${escapeHTML(transaction.id)}</td>
+                <td><strong>${escapeHTML(transaction.borrower)}</strong></td>
+                <td>${escapeHTML(transaction.department)}</td>
+                <td>${escapeHTML(transaction.itemType)}</td>
+                <td>${escapeHTML(transaction.itemName)}</td>
+                <td>${escapeHTML(transaction.quantity)}</td>
+                <td>${escapeHTML(formatDate(transaction.borrowDate))}</td>
+                <td>${escapeHTML(formatDate(transaction.dueDate))}</td>
+                <td>${escapeHTML(formatDate(transaction.returnDate))}</td>
+                <td>
+                    <span class="status-badge ${statusClass(status)}">
+                        ${escapeHTML(status)}
+                    </span>
+                </td>
+                <td>
+                    <button
+                        type="button"
+                        class="edit-button"
+                        data-action="status"
+                        data-id="${escapeHTML(transaction.id)}"
+                        aria-label="Update status for ${escapeHTML(
+                            transaction.itemName
+                        )}"
+                        title="Update status"
+                    >
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </td>
+            `;
+
+            transactionTableBody.appendChild(row);
+        });
+
+        updateStatistics(transactions);
     }
 
-    // =====================================
-    // OPEN EDIT MODAL
-    // =====================================
+    function populateTransactionOptions(selectedId) {
+        const transactions = getTransactions();
 
-    function openEditModal(
-        transactionId
-    ) {
-        const transactions =
-            getTransactions();
+        statusTransaction.innerHTML =
+            '<option value="">Select borrowing record</option>' +
+            transactions.map(function (transaction) {
+                return `
+                    <option value="${escapeHTML(transaction.id)}">
+                        ${escapeHTML(transaction.id)} -
+                        ${escapeHTML(transaction.itemName)} -
+                        ${escapeHTML(transaction.borrower)}
+                    </option>
+                `;
+            }).join("");
 
-        const transaction =
-            transactions.find(
-                function (item) {
-                    return (
-                        item.id ===
-                        transactionId
-                    );
-                }
-            );
+        statusTransaction.value = selectedId || "";
+        saveStatusButton.disabled = transactions.length === 0;
+        updateStatusSummary();
+    }
+
+    function updateStatusSummary() {
+        const transaction = getTransactions().find(function (item) {
+            return item.id === statusTransaction.value;
+        });
 
         if (!transaction) {
+            statusRecordSummary.textContent =
+                "Select a borrowing record to view its details.";
+            transactionStatus.value = "Borrowed";
             return;
         }
 
-        editingTransactionId.value =
-            transaction.id;
-
-        borrowerName.value =
-            transaction.borrower;
-
-        borrowerDepartment.value =
-            transaction.department;
-
-        itemType.value =
-            transaction.itemType;
-
-        itemName.value =
-            transaction.itemName;
-
-        itemQuantity.value =
-            transaction.quantity;
-
-        borrowDate.value =
-            transaction.borrowDate;
-
-        dueDate.value =
-            transaction.dueDate;
-
-        transactionStatus.value =
-            transaction.status;
-
-        borrowPurpose.value =
-            transaction.purpose;
-
-        modalTitle.textContent =
-            "Edit Borrowing Record";
-
-        formMessage.textContent =
-            "";
-
-        transactionModal.classList.add(
-            "show"
-        );
-
-        borrowerName.focus();
+        transactionStatus.value = normalizeStatus(transaction.status);
+        statusRecordSummary.textContent =
+            `${transaction.itemName} (${transaction.itemType}) was ` +
+            `borrowed by ${transaction.borrower}. Current status: ` +
+            `${normalizeStatus(transaction.status)}.`;
     }
 
-    // =====================================
-    // CLOSE TRANSACTION MODAL
-    // =====================================
-
-    function closeTransactionModal() {
-        transactionModal.classList.remove(
-            "show"
-        );
-
-        transactionForm.reset();
-
-        editingTransactionId.value =
-            "";
-
-        formMessage.textContent =
-            "";
+    function openStatusModal(transactionId) {
+        statusForm.reset();
+        formMessage.textContent = "";
+        populateTransactionOptions(transactionId || "");
+        statusModal.classList.add("show");
+        statusTransaction.focus();
     }
 
-    // =====================================
-    // SAVE OR UPDATE TRANSACTION
-    // =====================================
+    function closeStatusModal() {
+        statusModal.classList.remove("show");
+        statusForm.reset();
+        formMessage.textContent = "";
+        statusRecordSummary.textContent =
+            "Select a borrowing record to view its details.";
+    }
 
-    transactionForm.addEventListener(
-        "submit",
-        async function (event) {
-            event.preventDefault();
+    statusForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
 
-            const borrowerValue =
-                borrowerName.value.trim();
+        const transactionId = normalizeText(statusTransaction.value);
+        const newStatus = normalizeText(transactionStatus.value);
 
-            const departmentValue =
-                borrowerDepartment.value
-                    .trim();
+        if (!transactionId || !allowedStatuses.includes(newStatus)) {
+            formMessage.textContent =
+                "Select a borrowing record and a valid status.";
+            return;
+        }
 
-            const itemTypeValue =
-                itemType.value;
+        if (
+            !window.medtrackData ||
+            typeof window.medtrackData.updateBorrowStatus !== "function"
+        ) {
+            formMessage.textContent =
+                "Status updates are unavailable. Apply the latest " +
+                "Supabase migration and refresh the page.";
+            return;
+        }
 
-            const itemNameValue =
-                itemName.value.trim();
+        saveStatusButton.disabled = true;
+        formMessage.textContent = "Updating status...";
 
-            const quantityValue =
-                Number(
-                    itemQuantity.value
-                );
-
-            const borrowDateValue =
-                borrowDate.value;
-
-            const dueDateValue =
-                dueDate.value;
-
-            const statusValue =
-                transactionStatus.value;
-
-            const purposeValue =
-                borrowPurpose.value.trim();
-
-            if (
-                !borrowerValue ||
-                !departmentValue ||
-                !itemTypeValue ||
-                !itemNameValue ||
-                !borrowDateValue ||
-                !dueDateValue ||
-                !statusValue ||
-                !purposeValue
-            ) {
-                formMessage.textContent =
-                    "Please complete all fields.";
-
-                return;
-            }
-
-            if (
-                !Number.isFinite(
-                    quantityValue
-                ) ||
-                quantityValue < 1
-            ) {
-                formMessage.textContent =
-                    "Quantity must be at least 1.";
-
-                return;
-            }
-
-            if (
-                dueDateValue <
-                borrowDateValue
-            ) {
-                formMessage.textContent =
-                    "Due date cannot be earlier than the borrow date.";
-
-                return;
-            }
-
-            let transactions =
-                getTransactions();
-
-            const editId =
-                editingTransactionId.value;
-
-            if (editId) {
-                let transactionIndex =
-                    transactions.findIndex(
-                        function (transaction) {
-                            return (
-                                transaction.id ===
-                                editId
-                            );
-                        }
-                    );
-
-                if (
-                    transactionIndex !== -1
-                ) {
-                    let previousTransaction =
-                        transactions[
-                            transactionIndex
-                        ];
-
-                    let returnDateValue =
-                        previousTransaction
-                            .returnDate ||
-                        "";
-
-                    /*
-                     * If a borrowed item from
-                     * Available Items is changed
-                     * to Returned, restore it.
-                     */
-                    if (
-                        statusValue ===
-                            "Returned" &&
-                        previousTransaction
-                            .status !==
-                            "Returned"
-                    ) {
-                        if (
-                            window.medtrackData &&
-                            typeof window.medtrackData
-                                .returnBorrowedItem ===
-                                "function"
-                        ) {
-                            try {
-                                const returnResult =
-                                    await window.medtrackData
-                                        .returnBorrowedItem(
-                                            previousTransaction.id
-                                        );
-
-                                transactions =
-                                    getTransactions();
-
-                                transactionIndex =
-                                    transactions.findIndex(
-                                        function (transaction) {
-                                            return (
-                                                transaction.id ===
-                                                editId
-                                            );
-                                        }
-                                    );
-
-                                if (transactionIndex === -1) {
-                                    formMessage.textContent =
-                                        "The returned transaction could not be reloaded.";
-
-                                    return;
-                                }
-
-                                previousTransaction =
-                                    transactions[
-                                        transactionIndex
-                                    ];
-
-                                previousTransaction
-                                    .inventoryReturned =
-                                    Boolean(
-                                        returnResult
-                                            .inventoryReturned
-                                    );
-                            } catch (error) {
-                                formMessage.textContent =
-                                    error.message ||
-                                    "Unable to return the borrowed item.";
-
-                                return;
-                            }
-                        } else {
-                            restoreBorrowedInventory(
-                                previousTransaction
-                            );
-                        }
-
-                        returnDateValue =
-                            getTodayDate();
-                    }
-
-                    if (
-                        statusValue ===
-                        "Borrowed"
-                    ) {
-                        returnDateValue =
-                            "";
-                    }
-
-                    transactions[
-                        transactionIndex
-                    ] = {
-                        ...previousTransaction,
-
-                        borrower:
-                            borrowerValue,
-
-                        department:
-                            departmentValue,
-
-                        itemType:
-                            itemTypeValue,
-
-                        itemName:
-                            itemNameValue,
-
-                        quantity:
-                            quantityValue,
-
-                        borrowDate:
-                            borrowDateValue,
-
-                        dueDate:
-                            dueDateValue,
-
-                        returnDate:
-                            returnDateValue,
-
-                        status:
-                            statusValue,
-
-                        purpose:
-                            purposeValue
-                    };
-                }
-            } else {
-                const newTransaction = {
-                    id:
-                        generateTransactionId(
-                            transactions
-                        ),
-
-                    borrower:
-                        borrowerValue,
-
-                    department:
-                        departmentValue,
-
-                    itemType:
-                        itemTypeValue,
-
-                    itemName:
-                        itemNameValue,
-
-                    quantity:
-                        quantityValue,
-
-                    borrowDate:
-                        borrowDateValue,
-
-                    dueDate:
-                        dueDateValue,
-
-                    returnDate:
-                        statusValue ===
-                        "Returned"
-                            ? getTodayDate()
-                            : "",
-
-                    status:
-                        statusValue,
-
-                    purpose:
-                        purposeValue
-                };
-
-                transactions.push(
-                    newTransaction
-                );
-            }
-
-            saveTransactions(
-                transactions
+        try {
+            await window.medtrackData.updateBorrowStatus(
+                transactionId,
+                newStatus
             );
 
-            closeTransactionModal();
+            closeStatusModal();
+            renderTransactions();
+        } catch (error) {
+            console.error("Unable to update borrowing status:", error);
+            formMessage.textContent =
+                error.message ||
+                "Unable to update the borrowing status.";
+        } finally {
+            saveStatusButton.disabled = false;
+        }
+    });
+
+    transactionTableBody.addEventListener("click", function (event) {
+        const button = event.target.closest(
+            "button[data-action='status']"
+        );
+
+        if (button) {
+            openStatusModal(button.dataset.id);
+        }
+    });
+
+    transactionSearch.addEventListener("input", renderTransactions);
+    itemTypeFilter.addEventListener("change", renderTransactions);
+    statusFilter.addEventListener("change", renderTransactions);
+    statusTransaction.addEventListener("change", updateStatusSummary);
+
+    openStatusModalButton.addEventListener("click", function () {
+        openStatusModal("");
+    });
+    closeStatusModalButton.addEventListener("click", closeStatusModal);
+    cancelStatusButton.addEventListener("click", closeStatusModal);
+
+    statusModal.addEventListener("click", function (event) {
+        if (event.target === statusModal) {
+            closeStatusModal();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (
+            event.key === "Escape" &&
+            statusModal.classList.contains("show")
+        ) {
+            closeStatusModal();
+        }
+    });
+
+    notificationButton.addEventListener("click", function () {
+        const needsAttention = getTransactions().filter(
+            function (transaction) {
+                return ["Missing", "Damaged", "For Repair"].includes(
+                    transaction.status
+                );
+            }
+        ).length;
+
+        window.alert(
+            needsAttention === 0
+                ? "No borrowing records currently need attention."
+                : `${needsAttention} borrowing ${
+                    needsAttention === 1 ? "record needs" : "records need"
+                } attention.`
+        );
+    });
+
+    window.addEventListener("storage", function (event) {
+        if (event.key === "medtrackBorrowTransactions") {
             renderTransactions();
         }
-    );
+    });
+    window.addEventListener("medtrack:data-ready", renderTransactions);
+    window.addEventListener("pageshow", renderTransactions);
+    window.addEventListener("focus", renderTransactions);
 
-    // =====================================
-    // TABLE ACTIONS
-    // =====================================
-
-    transactionTableBody.addEventListener(
-        "click",
-        function (event) {
-            const button =
-                event.target.closest(
-                    "button"
-                );
-
-            if (!button) {
-                return;
-            }
-
-            const action =
-                button.dataset.action;
-
-            const transactionId =
-                button.dataset.id;
-
-            if (action === "return") {
-                transactionToReturn =
-                    transactionId;
-
-                returnModal.classList.add(
-                    "show"
-                );
-            }
-
-            if (action === "edit") {
-                openEditModal(
-                    transactionId
-                );
-            }
-
-            if (action === "delete") {
-                transactionToDelete =
-                    transactionId;
-
-                deleteModal.classList.add(
-                    "show"
-                );
-            }
+    logoutButton.addEventListener("click", async function () {
+        if (!window.confirm("Are you sure you want to log out?")) {
+            return;
         }
-    );
 
-    // =====================================
-    // CONFIRM RETURN
-    // =====================================
-
-    confirmReturn.addEventListener(
-        "click",
-        async function () {
-            if (!transactionToReturn) {
-                return;
-            }
-
-            confirmReturn.disabled = true;
-
-            try {
-                if (
-                    window.medtrackData &&
-                    typeof window.medtrackData
-                        .returnBorrowedItem ===
-                        "function"
-                ) {
-                    await window.medtrackData
-                        .returnBorrowedItem(
-                            transactionToReturn
-                        );
-
-                    transactionToReturn = null;
-
-                    returnModal.classList.remove(
-                        "show"
-                    );
-
-                    renderTransactions();
-                    return;
-                }
-
-                const transactions =
-                    getTransactions();
-
-                let transactionIndex =
-                    transactions.findIndex(
-                        function (transaction) {
-                            return (
-                                transaction.id ===
-                                transactionToReturn
-                            );
-                        }
-                    );
-
-                if (
-                    transactionIndex !== -1
-                ) {
-                    const transaction =
-                        transactions[
-                            transactionIndex
-                        ];
-
-                    restoreBorrowedInventory(
-                        transaction
-                    );
-
-                    transaction.status =
-                        "Returned";
-
-                    transaction.returnDate =
-                        getTodayDate();
-                }
-
-                saveTransactions(
-                    transactions
-                );
-
-                transactionToReturn = null;
-
-                returnModal.classList.remove(
-                    "show"
-                );
-
-                renderTransactions();
-            } catch (error) {
-                console.error(
-                    "Unable to return item:",
-                    error
-                );
-
-                window.alert(
-                    error.message ||
-                    "The item could not be returned."
-                );
-            } finally {
-                confirmReturn.disabled = false;
-            }
-        }
-    );
-
-    cancelReturn.addEventListener(
-        "click",
-        function () {
-            transactionToReturn = null;
-
-            returnModal.classList.remove(
-                "show"
-            );
-        }
-    );
-
-    // =====================================
-    // CONFIRM DELETE
-    // =====================================
-
-    confirmDelete.addEventListener(
-        "click",
-        function () {
-            if (!transactionToDelete) {
-                return;
-            }
-
-            const transactions =
-                getTransactions();
-
-            const selectedTransaction =
-                transactions.find(
-                    function (transaction) {
-                        return (
-                            transaction.id ===
-                            transactionToDelete
-                        );
-                    }
-                );
-
-            if (
-                selectedTransaction &&
-                selectedTransaction
-                    .inventoryAdjusted &&
-                selectedTransaction.status !==
-                    "Returned"
-            ) {
-                window.alert(
-                    "Return this item before deleting its transaction."
-                );
-
-                return;
-            }
-
-            const updatedTransactions =
-                transactions.filter(
-                    function (transaction) {
-                        return (
-                            transaction.id !==
-                            transactionToDelete
-                        );
-                    }
-                );
-
-            saveTransactions(
-                updatedTransactions
-            );
-
-            transactionToDelete = null;
-
-            deleteModal.classList.remove(
-                "show"
-            );
-
-            renderTransactions();
-        }
-    );
-
-    cancelDelete.addEventListener(
-        "click",
-        function () {
-            transactionToDelete = null;
-
-            deleteModal.classList.remove(
-                "show"
-            );
-        }
-    );
-
-    // =====================================
-    // SEARCH AND FILTERS
-    // =====================================
-
-    transactionSearch.addEventListener(
-        "input",
-        renderTransactions
-    );
-
-    itemTypeFilter.addEventListener(
-        "change",
-        renderTransactions
-    );
-
-    statusFilter.addEventListener(
-        "change",
-        renderTransactions
-    );
-
-    // =====================================
-    // MODAL BUTTONS
-    // =====================================
-
-    openAddModalButton.addEventListener(
-        "click",
-        openAddModal
-    );
-
-    closeModalButton.addEventListener(
-        "click",
-        closeTransactionModal
-    );
-
-    cancelButton.addEventListener(
-        "click",
-        closeTransactionModal
-    );
-
-    transactionModal.addEventListener(
-        "click",
-        function (event) {
-            if (
-                event.target ===
-                transactionModal
-            ) {
-                closeTransactionModal();
-            }
-        }
-    );
-
-    returnModal.addEventListener(
-        "click",
-        function (event) {
-            if (
-                event.target ===
-                returnModal
-            ) {
-                transactionToReturn =
-                    null;
-
-                returnModal.classList.remove(
-                    "show"
-                );
-            }
-        }
-    );
-
-    deleteModal.addEventListener(
-        "click",
-        function (event) {
-            if (
-                event.target ===
-                deleteModal
-            ) {
-                transactionToDelete =
-                    null;
-
-                deleteModal.classList.remove(
-                    "show"
-                );
-            }
-        }
-    );
-
-    // =====================================
-    // ESCAPE KEY
-    // =====================================
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-            if (event.key !== "Escape") {
-                return;
-            }
-
-            closeTransactionModal();
-
-            transactionToReturn = null;
-            transactionToDelete = null;
-
-            returnModal.classList.remove(
-                "show"
-            );
-
-            deleteModal.classList.remove(
-                "show"
-            );
-        }
-    );
-
-    // =====================================
-    // NOTIFICATIONS
-    // =====================================
-
-    notificationButton.addEventListener(
-        "click",
-        function () {
-            const transactions =
-                getTransactions();
-
-            const overdueItems =
-                transactions.filter(
-                    function (transaction) {
-                        return (
-                            getTransactionStatus(
-                                transaction
-                            ) === "Overdue"
-                        );
-                    }
-                );
-
-            if (
-                overdueItems.length === 0
-            ) {
-                window.alert(
-                    "There are no overdue borrowed items."
-                );
-
-                return;
-            }
-
-            window.alert(
-                `There are ${overdueItems.length} overdue borrowed items.`
-            );
-        }
-    );
-
-    // =====================================
-    // REFRESH AFTER INVENTORY CHANGES
-    // =====================================
-
-    window.addEventListener(
-        "storage",
-        function (event) {
-            if (
-                event.key ===
-                "medtrackBorrowTransactions"
-            ) {
-                renderTransactions();
-            }
-        }
-    );
-
-    window.addEventListener(
-        "pageshow",
-        renderTransactions
-    );
-
-    window.addEventListener(
-        "focus",
-        renderTransactions
-    );
-
-    // =====================================
-    // LOGOUT
-    // =====================================
-
-    logoutButton.addEventListener(
-        "click",
-        async function () {
-            const confirmLogout =
-                window.confirm(
-                    "Are you sure you want to log out?"
-                );
-
-            if (!confirmLogout) {
-                return;
-            }
-
-            await window.medtrackAuth
-                .signOutAndRedirect();
-        }
-    );
-
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
+        await window.medtrackAuth.signOutAndRedirect();
+    });
 
     renderTransactions();
 });

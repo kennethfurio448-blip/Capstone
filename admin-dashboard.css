@@ -345,6 +345,15 @@ a {
     font-weight: bold;
 }
 
+.notification-button span[hidden] {
+    display: none;
+}
+
+#inventoryAlertsSection:focus-visible {
+    outline: 3px solid rgba(183, 28, 28, 0.2);
+    outline-offset: 3px;
+}
+
 /* Admin profile */
 
 .user-profile {

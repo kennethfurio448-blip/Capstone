@@ -78,7 +78,7 @@
             </a>
 
             <!-- ADMIN-ONLY LINKS -->
-            <div id="adminNavigation" class="admin-navigation">
+            <div id="adminNavigation" class="admin-navigation" hidden>
 
                 <p class="menu-label">ADMINISTRATION</p>
 
@@ -208,9 +208,9 @@
                 </div>
 
                 <div>
-                    <p>Maintenance</p>
-                    <h3 id="maintenanceVehicles">0</h3>
-                    <small>Needs servicing</small>
+                    <p>For Repair</p>
+                    <h3 id="forRepairVehicles">0</h3>
+                    <small>Unavailable for use</small>
                 </div>
 
             </article>
@@ -266,9 +266,9 @@
                 <select id="statusFilter">
                     <option value="all">All Status</option>
                     <option value="Available">Available</option>
+                    <option value="Assigned">Assigned</option>
                     <option value="Deployed">Deployed</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Unavailable">Unavailable</option>
+                    <option value="For Repair">For Repair</option>
                 </select>
 
             </div>
@@ -415,10 +415,18 @@
                         <option value="" disabled selected>
                             Select status
                         </option>
-                        <option value="Available">Available</option>
-                        <option value="Deployed">Deployed</option>
-                        <option value="Maintenance">Maintenance</option>
-                        <option value="Unavailable">Unavailable</option>
+                        <option value="Available">
+                            Available
+                        </option>
+                        <option value="Assigned">
+                            Assigned
+                        </option>
+                        <option value="Deployed">
+                            Deployed
+                        </option>
+                        <option value="For Repair">
+                            For Repair
+                        </option>
                     </select>
 
                 </div>

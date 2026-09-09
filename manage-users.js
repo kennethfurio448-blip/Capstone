@@ -85,11 +85,23 @@ document.addEventListener("DOMContentLoaded", async function () {
     const confirmPasswordInput =
         document.getElementById("confirmPassword");
 
+    const passwordHelp =
+        document.getElementById("passwordHelp");
+
     const formMessage =
         document.getElementById("formMessage");
 
     const saveUserButton =
         userForm.querySelector("button[type='submit']");
+
+    const otpModal = document.getElementById("otpModal");
+    const otpForm = document.getElementById("otpForm");
+    const otpCodeInput = document.getElementById("otpCode");
+    const otpDestination = document.getElementById("otpDestination");
+    const otpMessage = document.getElementById("otpMessage");
+    const cancelOtpButton = document.getElementById("cancelOtp");
+    const resendCodeButton = document.getElementById("resendRegistrationCode");
+    const verifyRegistrationButton = document.getElementById("verifyRegistrationButton");
 
     // Delete modal
     const deleteModal =
@@ -103,6 +115,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let userToDelete = null;
     let accounts = [];
+    let pendingRegistration = null;
+    let registrationChallengeId = "";
+    let cooldownTimer = null;
 
     // =====================================
     // CURRENT ADMIN
@@ -172,6 +187,47 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         return result.data || {};
+    }
+
+    async function invokeOtp(action, values) {
+        const result = await window.medtrackSupabase.functions.invoke(
+            "otp-auth",
+            { body: { action: action, ...(values || {}) } }
+        );
+
+        if (result.error) {
+            throw new Error(await getFunctionErrorMessage(result.error));
+        }
+
+        if (result.data && result.data.error) {
+            throw new Error(result.data.error);
+        }
+
+        return result.data || {};
+    }
+
+    function maskEmail(value) {
+        const parts = String(value || "").split("@");
+        if (parts.length !== 2) return "—";
+        return parts[0].slice(0, 2) + "***@" + parts[1];
+    }
+
+    function startCooldown(seconds) {
+        clearInterval(cooldownTimer);
+        let remaining = Number(seconds) || 60;
+        resendCodeButton.disabled = true;
+        resendCodeButton.innerHTML = `Resend Code (<span id="registrationCooldown">${remaining}</span>s)`;
+
+        cooldownTimer = setInterval(function () {
+            remaining -= 1;
+            const display = document.getElementById("registrationCooldown");
+            if (display) display.textContent = Math.max(0, remaining);
+            if (remaining <= 0) {
+                clearInterval(cooldownTimer);
+                resendCodeButton.disabled = false;
+                resendCodeButton.textContent = "Resend Code";
+            }
+        }, 1000);
     }
 
     async function loadAccounts() {
@@ -296,7 +352,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 <td>${escapeHTML(account.username)}</td>
 
-                <td>${escapeHTML(account.email)}</td>
+                <td title="Masked for privacy">${escapeHTML(maskEmail(account.email))}</td>
 
                 <td>
                     <span class="role-badge ${roleClass}">
@@ -401,8 +457,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         passwordInput.disabled = false;
         confirmPasswordInput.disabled = false;
+        emailInput.disabled = false;
         passwordInput.required = true;
         confirmPasswordInput.required = true;
+        passwordHelp.textContent = "Required for new users. Account creation continues after OTP verification.";
 
         userModal.classList.add("show");
         fullnameInput.focus();
@@ -425,16 +483,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         fullnameInput.value = account.fullname;
         usernameInput.value = account.username;
         emailInput.value = account.email;
+        emailInput.disabled = true;
         roleInput.value = account.role;
         accountStatusInput.value = account.status;
 
         passwordInput.value = "";
         confirmPasswordInput.value = "";
 
-        passwordInput.disabled = false;
-        confirmPasswordInput.disabled = false;
+        passwordInput.disabled = true;
+        confirmPasswordInput.disabled = true;
         passwordInput.required = false;
         confirmPasswordInput.required = false;
+        passwordHelp.textContent = "Passwords can only be reset by the account owner through OTP verification on the login page.";
 
         // Current Admin cannot disable or demote their own account
         const isCurrentAccount =
@@ -462,8 +522,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         passwordInput.disabled = false;
         confirmPasswordInput.disabled = false;
+        emailInput.disabled = false;
         passwordInput.required = false;
         confirmPasswordInput.required = false;
+        passwordHelp.textContent = "Required for new users. Account creation continues after OTP verification.";
     }
 
     // =====================================
@@ -515,6 +577,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             formMessage.textContent =
                 "Please complete all required fields.";
 
+            return;
+        }
+
+        if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@gmail\.com$/i.test(emailValue)) {
+            formMessage.textContent = "Please enter a valid Gmail address.";
             return;
         }
 
@@ -596,13 +663,21 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (editId) {
                 values.userId = editId;
                 await invokeAccountAdmin("update", values);
+                await loadAccounts();
+                closeUserModal();
             } else {
                 values.password = passwordValue;
-                await invokeAccountAdmin("create", values);
+                const response = await invokeOtp("request-registration", values);
+                pendingRegistration = values;
+                registrationChallengeId = response.challengeId;
+                otpDestination.textContent = response.maskedDestination;
+                otpCodeInput.value = "";
+                otpMessage.textContent = "";
+                userModal.classList.remove("show");
+                otpModal.classList.add("show");
+                startCooldown(response.resendAfter);
+                otpCodeInput.focus();
             }
-
-            await loadAccounts();
-            closeUserModal();
         } catch (error) {
             formMessage.textContent =
                 error.message ||
@@ -610,6 +685,58 @@ document.addEventListener("DOMContentLoaded", async function () {
         } finally {
             saveUserButton.disabled = false;
         }
+    });
+
+    otpForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const otp = otpCodeInput.value.trim();
+        if (!/^\d{6}$/.test(otp) || !pendingRegistration || !registrationChallengeId) {
+            otpMessage.textContent = "Enter the six-digit verification code.";
+            return;
+        }
+
+        verifyRegistrationButton.disabled = true;
+        otpMessage.textContent = "Verifying code securely...";
+        try {
+            await invokeOtp("verify-registration", {
+                ...pendingRegistration,
+                challengeId: registrationChallengeId,
+                otp: otp
+            });
+            pendingRegistration = null;
+            registrationChallengeId = "";
+            clearInterval(cooldownTimer);
+            otpModal.classList.remove("show");
+            closeUserModal();
+            await loadAccounts();
+        } catch (error) {
+            otpMessage.textContent = error.message || "Unable to verify the code.";
+            otpCodeInput.select();
+        } finally {
+            verifyRegistrationButton.disabled = false;
+            saveUserButton.disabled = false;
+        }
+    });
+
+    resendCodeButton.addEventListener("click", async function () {
+        if (!registrationChallengeId) return;
+        resendCodeButton.disabled = true;
+        otpMessage.textContent = "Sending a new code...";
+        try {
+            const response = await invokeOtp("resend", { challengeId: registrationChallengeId });
+            otpMessage.textContent = `A new code was sent to ${response.maskedDestination}.`;
+            startCooldown(response.resendAfter);
+        } catch (error) {
+            otpMessage.textContent = error.message || "Unable to resend the code.";
+            resendCodeButton.disabled = false;
+        }
+    });
+
+    cancelOtpButton.addEventListener("click", function () {
+        clearInterval(cooldownTimer);
+        otpModal.classList.remove("show");
+        userModal.classList.add("show");
+        saveUserButton.disabled = false;
     });
 
     // =====================================
@@ -756,6 +883,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
+            if (otpModal.classList.contains("show")) {
+                otpModal.classList.remove("show");
+                userModal.classList.add("show");
+                saveUserButton.disabled = false;
+                return;
+            }
             closeUserModal();
 
             userToDelete = null;

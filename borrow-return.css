@@ -180,6 +180,10 @@ a {
     display: block;
 }
 
+.admin-navigation[hidden] {
+    display: none;
+}
+
 /* Logout */
 
 .logout-button {
@@ -304,6 +308,10 @@ a {
 
     font-size: 10px;
     font-weight: bold;
+}
+
+.notification-button span[hidden] {
+    display: none;
 }
 
 .user-profile {
@@ -614,9 +622,19 @@ a {
     background-color: #e8f5e9;
 }
 
-.status-overdue {
+.status-missing {
     color: var(--red);
     background-color: #ffebee;
+}
+
+.status-damaged {
+    color: var(--orange);
+    background-color: #fff3e0;
+}
+
+.status-for-repair {
+    color: #6a1b9a;
+    background-color: #f3e5f5;
 }
 
 /* Table actions */
@@ -1134,4 +1152,19 @@ a {
 
 .borrow-item-button:hover {
     background: #991b1b;
+}
+
+#statusModal .modal {
+    max-width: 560px;
+    text-align: left;
+}
+
+.status-record-summary {
+    padding: 14px;
+    color: #555555;
+    background-color: #f7f7f7;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
 }

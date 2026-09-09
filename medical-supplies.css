@@ -180,6 +180,10 @@ a {
     display: block;
 }
 
+.admin-navigation[hidden] {
+    display: none;
+}
+
 /* Logout */
 
 .logout-button {
@@ -474,7 +478,14 @@ a {
     font-size: 13px;
 }
 
-.add-button {
+.inventory-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.add-button,
+.consume-button {
     min-height: 44px;
     padding: 0 18px;
 
@@ -488,7 +499,14 @@ a {
     transition: 0.25s ease;
 }
 
-.add-button i {
+.consume-button {
+    color: var(--primary);
+    background-color: var(--primary-light);
+    border: 1px solid rgba(183, 28, 28, 0.2);
+}
+
+.add-button i,
+.consume-button i {
     margin-right: 7px;
 }
 
@@ -496,6 +514,12 @@ a {
     background-color: var(--primary-dark);
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(183, 28, 28, 0.25);
+}
+
+.consume-button:hover {
+    color: var(--white);
+    background-color: var(--primary);
+    transform: translateY(-1px);
 }
 
 /* =====================================
@@ -595,6 +619,50 @@ a {
 
 .supply-table tbody tr:hover {
     background-color: #fffafa;
+}
+
+.supply-history-card {
+    margin-top: 24px;
+}
+
+.history-table {
+    min-width: 1000px;
+}
+
+.history-table td strong,
+.history-table td small {
+    display: block;
+}
+
+.history-table td small {
+    margin-top: 4px;
+    color: var(--muted);
+}
+
+.movement-badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.movement-badge.added {
+    color: var(--green);
+    background-color: #e8f5e9;
+}
+
+.movement-badge.consumed {
+    color: var(--red);
+    background-color: var(--primary-light);
+}
+
+.history-message {
+    margin-top: 14px;
+    color: var(--red);
+    font-size: 13px;
+    font-weight: bold;
 }
 
 /* Status badges created by JavaScript */
@@ -830,6 +898,12 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
+.input-group small {
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
 .form-message {
     min-height: 19px;
     margin-top: 14px;
@@ -885,6 +959,14 @@ a {
 
 .save-button:hover {
     background-color: var(--primary-dark);
+}
+
+.save-button:disabled,
+.add-button:disabled,
+.consume-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+    transform: none;
 }
 
 .delete-button {
@@ -1021,7 +1103,14 @@ a {
         flex-direction: column;
     }
 
-    .add-button {
+    .inventory-header-actions {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .add-button,
+    .consume-button {
         width: 100%;
     }
 

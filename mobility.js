@@ -41,8 +41,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const deployedVehicles =
         document.getElementById("deployedVehicles");
 
-    const maintenanceVehicles =
-        document.getElementById("maintenanceVehicles");
+    const forRepairVehicles =
+        document.getElementById("forRepairVehicles");
 
     const vehicleTableBody =
         document.getElementById("vehicleTableBody");
@@ -131,6 +131,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
+    const canManageInventory =
+        currentUser.role === "admin";
+
     if (window.medtrackData) {
         await window.medtrackData.refresh();
     }
@@ -146,12 +149,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (currentUser.role === "admin") {
         portalName.textContent = "Admin Portal";
         dashboardLink.href = "admin-dashboard.html";
-        adminNavigation.style.display = "block";
+        adminNavigation.hidden = false;
     } else {
         portalName.textContent = "Staff Portal";
         dashboardLink.href = "staff-dashboard.html";
-        adminNavigation.style.display = "none";
+        adminNavigation.hidden = true;
     }
+
+    openAddModalButton.hidden = !canManageInventory;
 
     // =====================================
     // DEFAULT MOBILITY ASSETS
@@ -189,7 +194,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             driver: "Mario Reyes",
             location: "Maintenance Area",
             maintenanceDate: "2026-07-20",
-            status: "Maintenance"
+            status: "For Repair"
         },
         {
             id: "MOB-004",
@@ -226,7 +231,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 JSON.parse(savedVehicles);
 
             return Array.isArray(parsedVehicles)
-                ? parsedVehicles
+                ? parsedVehicles.map(function (vehicle) {
+                    return {
+                        ...vehicle,
+                        status: normalizeVehicleStatus(vehicle.status)
+                    };
+                })
                 : [];
         } catch (error) {
             return [];
@@ -251,6 +261,21 @@ document.addEventListener("DOMContentLoaded", async function () {
             .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
+    }
+
+    function normalizeVehicleStatus(status) {
+        if (status === "Maintenance" || status === "Unavailable") {
+            return "For Repair";
+        }
+
+        return [
+            "Available",
+            "Assigned",
+            "Deployed",
+            "For Repair"
+        ].includes(status)
+            ? status
+            : "For Repair";
     }
 
     // =====================================
@@ -298,11 +323,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             return "status-deployed";
         }
 
-        if (status === "Maintenance") {
-            return "status-maintenance";
+        if (status === "Assigned") {
+            return "status-assigned";
         }
 
-        return "status-unavailable";
+        return "status-for-repair";
     }
 
     function getConditionClass(condition) {
@@ -443,6 +468,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </td>
 
                 <td>
+                    ${canManageInventory ? `
                     <div class="table-actions">
 
                         <button
@@ -466,6 +492,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         </button>
 
                     </div>
+                    ` : "\u2014"}
                 </td>
             `;
 
@@ -482,7 +509,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function updateStatistics(vehicles) {
         let availableCount = 0;
         let deployedCount = 0;
-        let maintenanceCount = 0;
+        let forRepairCount = 0;
         let alertsCount = 0;
 
         vehicles.forEach(function (vehicle) {
@@ -494,18 +521,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 deployedCount++;
             }
 
-            if (vehicle.status === "Maintenance") {
-                maintenanceCount++;
-                alertsCount++;
-            }
-
-            if (vehicle.status === "Unavailable") {
+            if (vehicle.status === "For Repair") {
+                forRepairCount++;
                 alertsCount++;
             }
 
             if (
                 isMaintenanceOverdue(vehicle.maintenanceDate) &&
-                vehicle.status !== "Maintenance"
+                vehicle.status !== "For Repair"
             ) {
                 alertsCount++;
             }
@@ -514,7 +537,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         totalVehicles.textContent = vehicles.length;
         availableVehicles.textContent = availableCount;
         deployedVehicles.textContent = deployedCount;
-        maintenanceVehicles.textContent = maintenanceCount;
+        forRepairVehicles.textContent = forRepairCount;
         notificationCount.textContent = alertsCount;
     }
 
@@ -523,6 +546,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     function openAddModal() {
+        if (!canManageInventory) {
+            return;
+        }
+
         vehicleForm.reset();
 
         editingVehicleId.value = "";
@@ -538,6 +565,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     function openEditModal(vehicleId) {
+        if (!canManageInventory) {
+            return;
+        }
+
         const vehicles = getVehicles();
 
         const selectedVehicle =
@@ -597,6 +628,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     vehicleForm.addEventListener("submit", function (event) {
         event.preventDefault();
+
+        if (!canManageInventory) {
+            formMessage.textContent =
+                "Administrator access is required.";
+            return;
+        }
 
         const nameValue =
             vehicleName.value.trim();
@@ -704,7 +741,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     vehicleTableBody.addEventListener("click", function (event) {
         const button = event.target.closest("button");
 
-        if (!button) {
+        if (!button || !canManageInventory) {
             return;
         }
 
@@ -722,6 +759,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     confirmDelete.addEventListener("click", function () {
+        if (!canManageInventory) {
+            return;
+        }
+
         if (!vehicleToDelete) {
             return;
         }
@@ -815,8 +856,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const alerts = vehicles.filter(function (vehicle) {
             return (
-                vehicle.status === "Maintenance" ||
-                vehicle.status === "Unavailable" ||
+                vehicle.status === "For Repair" ||
                 isMaintenanceOverdue(vehicle.maintenanceDate)
             );
         });

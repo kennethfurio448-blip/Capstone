@@ -29,6 +29,38 @@ document.addEventListener("DOMContentLoaded", async function () {
         await window.medtrackData.refresh();
     }
 
+    loadSystemUserTotal();
+
+    async function loadSystemUserTotal() {
+        const userTotal = document.getElementById("userTotal");
+
+        if (!userTotal || !window.medtrackSupabase) {
+            return;
+        }
+
+        try {
+            const result =
+                await window.medtrackSupabase.functions.invoke(
+                    "dynamic-worker",
+                    { body: { action: "list" } }
+                );
+
+            if (result.error || (result.data && result.data.error)) {
+                throw result.error || new Error(result.data.error);
+            }
+
+            const users = Array.isArray(result.data && result.data.users)
+                ? result.data.users
+                : [];
+
+            userTotal.textContent = users.length;
+        } catch (error) {
+            console.error("Unable to load the system user total:", error);
+            userTotal.textContent = "\u2014";
+            userTotal.title = "User total is currently unavailable";
+        }
+    }
+
     // Display Admin name
     const displayName =
         currentUser.fullname ||
@@ -73,7 +105,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Notification button
     if (notificationButton) {
         notificationButton.addEventListener("click", function () {
-            alert("You have 4 inventory notifications.");
+            const alertsSection =
+                document.getElementById("inventoryAlertsSection");
+
+            if (alertsSection) {
+                alertsSection.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+                alertsSection.focus({ preventScroll: true });
+            }
         });
     }
 

@@ -675,7 +675,13 @@ a {
     background-color: #fff3e0;
 }
 
+.report-status.for-repair {
+    color: var(--orange);
+    background-color: #fff3e0;
+}
+
 .report-status.in-use,
+.report-status.assigned,
 .report-status.deployed,
 .report-status.borrowed,
 .report-status.in-progress {
@@ -686,6 +692,8 @@ a {
 .report-status.expired,
 .report-status.out-of-stock,
 .report-status.overdue,
+.report-status.missing,
+.report-status.damaged,
 .report-status.unavailable,
 .report-status.disabled,
 .report-status.cancelled {

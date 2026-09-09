@@ -30,6 +30,65 @@ function normalizeStatus(value: unknown) {
   return String(value || "").trim().toLowerCase();
 }
 
+async function protectLastActiveAdmin(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  userId: string,
+  nextRole: string | null,
+  nextStatus: string | null,
+) {
+  const { data: target, error: targetError } = await supabaseAdmin
+    .from("profiles")
+    .select("role, status")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (targetError) {
+    return errorResponse(
+      `Target profile lookup failed: ${targetError.message}`,
+      500,
+    );
+  }
+
+  if (!target) {
+    return errorResponse("The selected account was not found.", 404);
+  }
+
+  const removesActiveAdmin =
+    normalizeRole(target.role) === "admin" &&
+    normalizeStatus(target.status) === "active" &&
+    (
+      (nextRole !== null && nextRole !== "admin") ||
+      (nextStatus !== null && nextStatus !== "active") ||
+      (nextRole === null && nextStatus === null)
+    );
+
+  if (!removesActiveAdmin) {
+    return null;
+  }
+
+  const { count, error: countError } = await supabaseAdmin
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "admin")
+    .eq("status", "active");
+
+  if (countError) {
+    return errorResponse(
+      `Administrator count failed: ${countError.message}`,
+      500,
+    );
+  }
+
+  if ((count || 0) <= 1) {
+    return errorResponse(
+      "The last active Administrator cannot be disabled, demoted, or deleted.",
+      409,
+    );
+  }
+
+  return null;
+}
+
 export default {
   fetch: withSupabase(
     { auth: "user" },
@@ -134,57 +193,9 @@ export default {
       }
 
       if (action === "create") {
-        const email = String(body.email || "").trim().toLowerCase();
-        const password = String(body.password || "");
-        const fullName = String(body.fullName || "").trim();
-        const username = String(body.username || "").trim();
-        const role = normalizeRole(body.role);
-
-        if (!email || !password || !fullName || !username) {
-          return errorResponse("All account fields are required.");
-        }
-
-        if (!["admin", "staff"].includes(role)) {
-          return errorResponse("Role must be admin or staff.");
-        }
-
-        if (password.length < 8) {
-          return errorResponse(
-            "Password must contain at least 8 characters.",
-          );
-        }
-
-        const { data: authData, error: authError } =
-          await supabaseAdmin.auth.admin.createUser({
-            email,
-            password,
-            email_confirm: true,
-          });
-
-        if (authError || !authData.user) {
-          return errorResponse(
-            authError?.message || "Could not create the Auth user.",
-          );
-        }
-
-        const { error: profileError } = await supabaseAdmin
-          .from("profiles")
-          .insert({
-            id: authData.user.id,
-            full_name: fullName,
-            username,
-            role,
-            status: "active",
-          });
-
-        if (profileError) {
-          await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-          return errorResponse(profileError.message);
-        }
-
-        return Response.json(
-          { message: "Account created successfully." },
-          { status: 201 },
+        return errorResponse(
+          "Account creation requires OTP verification. Use the otp-auth function.",
+          409,
         );
       }
 
@@ -206,6 +217,10 @@ export default {
           return errorResponse("All account fields are required.");
         }
 
+        if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@gmail\.com$/i.test(email)) {
+          return errorResponse("Enter a valid Gmail address.");
+        }
+
         if (!["admin", "staff"].includes(role)) {
           return errorResponse("Role must be admin or staff.");
         }
@@ -214,10 +229,8 @@ export default {
           return errorResponse("Status must be active or disabled.");
         }
 
-        if (password && password.length < 8) {
-          return errorResponse(
-            "Password must contain at least 8 characters.",
-          );
+        if (password) {
+          return errorResponse("Passwords must be reset through OTP verification.");
         }
 
         if (
@@ -230,11 +243,38 @@ export default {
           );
         }
 
+        const lastAdminProtection = await protectLastActiveAdmin(
+          supabaseAdmin,
+          userId,
+          role,
+          status,
+        );
+
+        if (lastAdminProtection) {
+          return lastAdminProtection;
+        }
+
+        const { data: targetAuthData, error: targetAuthError } =
+          await supabaseAdmin.auth.admin.getUserById(userId);
+
+        if (targetAuthError || !targetAuthData.user) {
+          return errorResponse(
+            targetAuthError?.message || "The selected account was not found.",
+            targetAuthError ? 500 : 404,
+          );
+        }
+
+        if (
+          String(targetAuthData.user.email || "").trim().toLowerCase() !== email
+        ) {
+          return errorResponse(
+            "Changing a Gmail address requires OTP verification and is not available from Edit User yet.",
+            409,
+          );
+        }
+
         const authUpdates = {
-          email,
-          email_confirm: true,
           ban_duration: status === "disabled" ? "876000h" : "none",
-          ...(password ? { password } : {}),
         };
 
         const { error: authError } =
@@ -252,6 +292,7 @@ export default {
           .update({
             full_name: fullName,
             username,
+            email,
             role,
             status,
           })
@@ -276,6 +317,17 @@ export default {
             "You cannot disable your own account.",
             403,
           );
+        }
+
+        const lastAdminProtection = await protectLastActiveAdmin(
+          supabaseAdmin,
+          userId,
+          null,
+          status,
+        );
+
+        if (lastAdminProtection) {
+          return lastAdminProtection;
         }
 
         const { error: authError } =
@@ -305,6 +357,17 @@ export default {
             "You cannot delete your own account.",
             403,
           );
+        }
+
+        const lastAdminProtection = await protectLastActiveAdmin(
+          supabaseAdmin,
+          userId,
+          null,
+          null,
+        );
+
+        if (lastAdminProtection) {
+          return lastAdminProtection;
         }
 
         const { error: authError } =

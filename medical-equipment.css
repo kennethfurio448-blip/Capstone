@@ -179,6 +179,10 @@ a {
     display: block;
 }
 
+.admin-navigation[hidden] {
+    display: none;
+}
+
 /* Logout */
 
 .logout-button {

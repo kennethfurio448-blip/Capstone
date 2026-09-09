@@ -131,6 +131,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
+    const canManageInventory =
+        currentUser.role === "admin";
+
     if (window.medtrackData) {
         await window.medtrackData.refresh();
     }
@@ -146,12 +149,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (currentUser.role === "admin") {
         portalName.textContent = "Admin Portal";
         dashboardLink.href = "admin-dashboard.html";
-        adminNavigation.style.display = "block";
+        adminNavigation.hidden = false;
     } else {
         portalName.textContent = "Staff Portal";
         dashboardLink.href = "staff-dashboard.html";
-        adminNavigation.style.display = "none";
+        adminNavigation.hidden = true;
     }
+
+    openAddModalButton.hidden = !canManageInventory;
 
     // =====================================
     // DEFAULT EQUIPMENT
@@ -544,6 +549,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </td>
 
                 <td>
+                    ${canManageInventory ? `
                     <div class="table-actions">
                         <button
                             type="button"
@@ -567,6 +573,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
+                    ` : "\u2014"}
                 </td>
             `;
 
@@ -638,6 +645,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     function openAddModal() {
+        if (!canManageInventory) {
+            return;
+        }
+
         equipmentForm.reset();
 
         editingEquipmentId.value = "";
@@ -656,6 +667,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     function openEditModal(equipmentId) {
+        if (!canManageInventory) {
+            return;
+        }
+
         const normalizedEquipmentId =
             normalizeId(equipmentId);
 
@@ -740,6 +755,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         "submit",
         function (event) {
             event.preventDefault();
+
+            if (!canManageInventory) {
+                formMessage.textContent =
+                    "Administrator access is required.";
+                return;
+            }
 
             const nameValue =
                 equipmentName.value.trim();
@@ -863,7 +884,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (
                 !button ||
-                !equipmentTableBody.contains(button)
+                !equipmentTableBody.contains(button) ||
+                !canManageInventory
             ) {
                 return;
             }
@@ -899,6 +921,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     confirmDelete.addEventListener(
         "click",
         function () {
+            if (!canManageInventory) {
+                return;
+            }
+
             const deleteId =
                 normalizeId(equipmentToDelete);
 

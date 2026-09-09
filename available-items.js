@@ -247,7 +247,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             driver: "Mario Reyes",
             location: "Maintenance Area",
             maintenanceDate: "2026-07-20",
-            status: "Maintenance"
+            status: "For Repair"
         },
         {
             id: "MOB-004",
@@ -773,21 +773,31 @@ document.addEventListener("DOMContentLoaded", async function () {
                             </td>
 
                             <td>
-                                <button
-                                    type="button"
-                                    class="borrow-item-button"
-                                    data-id="${escapeHTML(
-                                        item.id
-                                    )}"
-                                    data-name="${escapeHTML(
-                                        item.name
-                                    )}"
-                                    data-type="${escapeHTML(
-                                        item.type
-                                    )}"
-                                >
-                                    Borrow
-                                </button>
+                                ${
+                                    item.type === "Medical Supply"
+                                        ? `
+                                            <span class="consumption-only">
+                                                Emergency use only
+                                            </span>
+                                        `
+                                        : `
+                                            <button
+                                                type="button"
+                                                class="borrow-item-button"
+                                                data-id="${escapeHTML(
+                                                    item.id
+                                                )}"
+                                                data-name="${escapeHTML(
+                                                    item.name
+                                                )}"
+                                                data-type="${escapeHTML(
+                                                    item.type
+                                                )}"
+                                            >
+                                                Borrow
+                                            </button>
+                                        `
+                                }
                             </td>
                         </tr>
                     `;
@@ -983,6 +993,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                         borrowButton.dataset.type
                     )
             };
+
+            if (
+                ![
+                    "Medical Equipment",
+                    "Mobility Asset"
+                ].includes(selectedItem.type)
+            ) {
+                window.alert(
+                    "Medical supplies must be recorded through " +
+                    "Consumed Supplies during an emergency response."
+                );
+                return;
+            }
 
             borrowButton.disabled = true;
 

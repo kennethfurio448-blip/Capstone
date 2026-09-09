@@ -642,6 +642,17 @@ a {
     background-color: var(--primary-dark);
 }
 
+.consumption-only {
+    display: inline-block;
+    padding: 7px 10px;
+    color: var(--muted);
+    background-color: #f3f4f6;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
 /* =====================================
    EMPTY STATE
 ===================================== */

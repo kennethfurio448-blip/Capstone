@@ -74,7 +74,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Notification button
     if (notificationButton) {
         notificationButton.addEventListener("click", function () {
-            alert("You have 4 inventory items requiring action.");
+            const alertsSection =
+                document.getElementById("inventoryAlertsSection");
+
+            if (alertsSection) {
+                alertsSection.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+                alertsSection.focus({ preventScroll: true });
+            }
         });
     }
 

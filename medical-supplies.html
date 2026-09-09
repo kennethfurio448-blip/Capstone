@@ -82,7 +82,7 @@
             </a>
 
             <!-- Only visible to Admin -->
-            <div id="adminNavigation" class="admin-navigation">
+            <div id="adminNavigation" class="admin-navigation" hidden>
 
                 <p class="menu-label">ADMINISTRATION</p>
 
@@ -231,14 +231,25 @@
                     <p>View and manage medical supplies.</p>
                 </div>
 
-                <button
-                    type="button"
-                    class="add-button"
-                    id="openAddModal"
-                >
-                    <i class="fa-solid fa-plus"></i>
-                    Add Supply
-                </button>
+                <div class="inventory-header-actions">
+                    <button
+                        type="button"
+                        class="consume-button"
+                        id="openConsumeModal"
+                    >
+                        <i class="fa-solid fa-kit-medical"></i>
+                        Record Consumed Supplies
+                    </button>
+
+                    <button
+                        type="button"
+                        class="add-button"
+                        id="openAddModal"
+                    >
+                        <i class="fa-solid fa-plus"></i>
+                        Add Supply
+                    </button>
+                </div>
 
             </div>
 
@@ -309,6 +320,44 @@
                     <p>Add a supply or change the filters.</p>
                 </div>
 
+            </div>
+
+        </section>
+
+        <!-- SUPPLY TRANSACTION HISTORY -->
+        <section class="inventory-card supply-history-card">
+
+            <div class="inventory-header">
+                <div>
+                    <h3>Supply Activity</h3>
+                    <p>
+                        Medical supplies added to inventory and consumed
+                        during emergency responses.
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="supply-table history-table">
+                    <thead>
+                        <tr>
+                            <th>Activity</th>
+                            <th>Medical Supply</th>
+                            <th>Quantity</th>
+                            <th>Emergency Response</th>
+                            <th>Date and Time</th>
+                            <th>Remaining Stock</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="supplyHistoryBody">
+                        <tr>
+                            <td colspan="6">Loading supply activity...</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p class="history-message" id="historyMessage"></p>
             </div>
 
         </section>
@@ -464,6 +513,92 @@
 
     </section>
 
+</div>
+
+<!-- CONSUMED SUPPLIES MODAL -->
+<div class="modal-overlay" id="consumeModal">
+
+    <section class="modal" role="dialog" aria-modal="true"
+             aria-labelledby="consumeModalTitle">
+
+        <div class="modal-header">
+            <div>
+                <h2 id="consumeModalTitle">Record Consumed Supplies</h2>
+                <p>Link used medical supplies to an emergency response.</p>
+            </div>
+
+            <button
+                type="button"
+                class="close-button"
+                id="closeConsumeModal"
+                aria-label="Close consumed supplies form"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="consumeForm">
+            <div class="form-grid">
+                <div class="input-group full-width">
+                    <label for="consumeEmergency">
+                        Emergency Response
+                    </label>
+                    <select id="consumeEmergency" required>
+                        <option value="">Select emergency response</option>
+                    </select>
+                </div>
+
+                <div class="input-group full-width">
+                    <label for="consumeSupply">Medical Supply</label>
+                    <select id="consumeSupply" required>
+                        <option value="">Select medical supply</option>
+                    </select>
+                    <small id="consumeAvailability">
+                        Select a supply to view available stock.
+                    </small>
+                </div>
+
+                <div class="input-group">
+                    <label for="consumeQuantity">Quantity Consumed</label>
+                    <input
+                        type="number"
+                        id="consumeQuantity"
+                        min="1"
+                        step="1"
+                        value="1"
+                        required
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label for="consumedAt">Date and Time</label>
+                    <input
+                        type="datetime-local"
+                        id="consumedAt"
+                        required
+                    >
+                </div>
+            </div>
+
+            <p class="form-message" id="consumeFormMessage"></p>
+
+            <div class="modal-actions">
+                <button
+                    type="button"
+                    class="cancel-button"
+                    id="cancelConsume"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="save-button">
+                    <i class="fa-solid fa-minus"></i>
+                    Record and Deduct
+                </button>
+            </div>
+        </form>
+
+    </section>
 </div>
 
 <!-- DELETE CONFIRMATION MODAL -->

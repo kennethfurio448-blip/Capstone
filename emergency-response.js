@@ -180,6 +180,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
+    const canDeleteEmergency =
+        currentUser.role === "admin";
+
     if (window.medtrackData) {
         await window.medtrackData.refresh();
     }
@@ -195,11 +198,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (currentUser.role === "admin") {
         portalName.textContent = "Admin Portal";
         dashboardLink.href = "admin-dashboard.html";
-        adminNavigation.style.display = "block";
+        adminNavigation.hidden = false;
     } else {
         portalName.textContent = "Staff Portal";
         dashboardLink.href = "staff-dashboard.html";
-        adminNavigation.style.display = "none";
+        adminNavigation.hidden = true;
     }
 
     // =====================================
@@ -821,7 +824,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     async function deductInventory(
         usage,
-        operationKey
+        operationKey,
+        emergencyLabel
     ) {
         if (!usage) {
             return { ok: true };
@@ -837,6 +841,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     .useInventoryItem({
                         operationKey:
                             operationKey,
+                        emergencyRequestId:
+                            operationKey,
+                        emergencyLabel:
+                            emergencyLabel,
                         itemType:
                             usage.itemType,
                         itemId:
@@ -956,7 +964,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const result =
             await deductInventory(
                 request.inventoryUsage,
-                request.id
+                request.id,
+                `${request.id} - ${request.type} - ` +
+                    request.location
             );
 
         if (result.ok) {
@@ -1164,6 +1174,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                                 <i class="fa-solid fa-pen"></i>
                             </button>
 
+                            ${canDeleteEmergency ? `
                             <button
                                 type="button"
                                 class="remove-button"
@@ -1175,6 +1186,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             >
                                 <i class="fa-solid fa-trash"></i>
                             </button>
+                            ` : ""}
 
                         </div>
                     </td>
@@ -1733,6 +1745,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             if (action === "delete") {
+                if (!canDeleteEmergency) {
+                    return;
+                }
+
                 requestToDelete =
                     requestId;
 
@@ -1828,6 +1844,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     confirmDelete.addEventListener(
         "click",
         function () {
+            if (!canDeleteEmergency) {
+                return;
+            }
+
             if (!requestToDelete) {
                 return;
             }

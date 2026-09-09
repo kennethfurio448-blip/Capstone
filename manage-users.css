@@ -1021,3 +1021,11 @@ button:disabled {
         width: 100%;
     }
 }
+
+.verification-icon { width: 65px; height: 65px; margin: 0 auto 17px; display: grid; place-items: center; border-radius: 50%; color: var(--primary); background: #ffebee; font-size: 25px; }
+.otp-modal { max-width: 440px; }
+.otp-label { display: block; margin: 20px 0 8px; color: #444; font-size: 13px; font-weight: bold; text-align: left; }
+.otp-input { width: 100%; height: 54px; border: 1px solid var(--border); border-radius: 9px; outline: none; text-align: center; font-size: 25px; font-weight: bold; letter-spacing: 8px; }
+.otp-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1); }
+.resend-button { border: 0; color: var(--primary); background: transparent; font-size: 13px; font-weight: bold; cursor: pointer; }
+.resend-button:disabled { color: #999; cursor: not-allowed; }

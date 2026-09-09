@@ -78,7 +78,7 @@
             </a>
 
             <!-- ADMIN-ONLY LINKS -->
-            <div id="adminNavigation" class="admin-navigation">
+            <div id="adminNavigation" class="admin-navigation" hidden>
 
                 <p class="menu-label">ADMINISTRATION</p>
 
@@ -125,7 +125,7 @@
 
             <div>
                 <h2>Borrow and Return</h2>
-                <p>Track borrowed and returned inventory items.</p>
+                <p>Track medical equipment and mobility borrowing status.</p>
             </div>
 
             <div class="topbar-actions">
@@ -208,9 +208,9 @@
                 </div>
 
                 <div>
-                    <p>Overdue</p>
-                    <h3 id="overdueTransactions">0</h3>
-                    <small>Past the return date</small>
+                    <p>Needs Attention</p>
+                    <h3 id="attentionTransactions">0</h3>
+                    <small>Missing, damaged, or for repair</small>
                 </div>
 
             </article>
@@ -224,16 +224,19 @@
 
                 <div>
                     <h3>Borrowing Records</h3>
-                    <p>View and manage borrowing transactions.</p>
+                    <p>
+                        Borrow equipment from Available Items, then manage
+                        its status here.
+                    </p>
                 </div>
 
                 <button
                     type="button"
                     class="add-button"
-                    id="openAddModal"
+                    id="openStatusModal"
                 >
-                    <i class="fa-solid fa-plus"></i>
-                    New Borrowing
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    Update Status
                 </button>
 
             </div>
@@ -255,23 +258,21 @@
 
                 <select id="itemTypeFilter">
                     <option value="all">All Item Types</option>
-                    <option value="Medical Supply">
-                        Medical Supply
-                    </option>
                     <option value="Medical Equipment">
                         Medical Equipment
                     </option>
                     <option value="Mobility Asset">
                         Mobility Asset
                     </option>
-                    <option value="Other">Other</option>
                 </select>
 
                 <select id="statusFilter">
                     <option value="all">All Status</option>
                     <option value="Borrowed">Borrowed</option>
                     <option value="Returned">Returned</option>
-                    <option value="Overdue">Overdue</option>
+                    <option value="Missing">Missing</option>
+                    <option value="Damaged">Damaged</option>
+                    <option value="For Repair">For Repair</option>
                 </select>
 
             </div>
@@ -306,7 +307,7 @@
                 <div class="empty-state" id="emptyState">
                     <i class="fa-solid fa-clipboard"></i>
                     <h3>No borrowing records found</h3>
-                    <p>Create a transaction or change the filters.</p>
+                    <p>Borrow an equipment or mobility item first.</p>
                 </div>
 
             </div>
@@ -317,157 +318,57 @@
 
 </div>
 
-<!-- ADD/EDIT BORROWING MODAL -->
-<div class="modal-overlay" id="transactionModal">
+<!-- UPDATE BORROWING STATUS MODAL -->
+<div class="modal-overlay" id="statusModal">
 
-    <section class="modal">
+    <section class="modal action-modal" role="dialog" aria-modal="true"
+             aria-labelledby="statusModalTitle">
 
         <div class="modal-header">
 
             <div>
-                <h2 id="modalTitle">New Borrowing Transaction</h2>
-                <p>Enter the borrowing information.</p>
+                <h2 id="statusModalTitle">Update Borrowing Status</h2>
+                <p>Choose a record and set its current condition.</p>
             </div>
 
             <button
                 type="button"
                 class="close-button"
-                id="closeModal"
+                id="closeStatusModal"
+                aria-label="Close status dialog"
             >
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
         </div>
 
-        <form id="transactionForm">
-
-            <input type="hidden" id="editingTransactionId">
+        <form id="statusForm">
 
             <div class="form-grid">
 
-                <div class="input-group">
-
-                    <label for="borrowerName">Borrower Name</label>
-
-                    <input
-                        type="text"
-                        id="borrowerName"
-                        placeholder="Enter borrower name"
-                        required
-                    >
-
-                </div>
-
-                <div class="input-group">
-
-                    <label for="borrowerDepartment">
-                        Department or Office
-                    </label>
-
-                    <input
-                        type="text"
-                        id="borrowerDepartment"
-                        placeholder="Enter department"
-                        required
-                    >
-
-                </div>
-
-                <div class="input-group">
-
-                    <label for="itemType">Item Type</label>
-
-                    <select id="itemType" required>
-                        <option value="" disabled selected>
-                            Select item type
-                        </option>
-                        <option value="Medical Supply">
-                            Medical Supply
-                        </option>
-                        <option value="Medical Equipment">
-                            Medical Equipment
-                        </option>
-                        <option value="Mobility Asset">
-                            Mobility Asset
-                        </option>
-                        <option value="Other">Other</option>
+                <div class="input-group full-width">
+                    <label for="statusTransaction">Borrowing Record</label>
+                    <select id="statusTransaction" required>
+                        <option value="">Select borrowing record</option>
                     </select>
-
-                </div>
-
-                <div class="input-group">
-
-                    <label for="itemName">Item Name</label>
-
-                    <input
-                        type="text"
-                        id="itemName"
-                        placeholder="Enter item name"
-                        required
-                    >
-
-                </div>
-
-                <div class="input-group">
-
-                    <label for="itemQuantity">Quantity</label>
-
-                    <input
-                        type="number"
-                        id="itemQuantity"
-                        min="1"
-                        value="1"
-                        required
-                    >
-
-                </div>
-
-                <div class="input-group">
-
-                    <label for="borrowDate">Borrow Date</label>
-
-                    <input
-                        type="date"
-                        id="borrowDate"
-                        required
-                    >
-
-                </div>
-
-                <div class="input-group">
-
-                    <label for="dueDate">Due Date</label>
-
-                    <input
-                        type="date"
-                        id="dueDate"
-                        required
-                    >
-
-                </div>
-
-                <div class="input-group">
-
-                    <label for="transactionStatus">Status</label>
-
-                    <select id="transactionStatus" required>
-                        <option value="Borrowed">Borrowed</option>
-                        <option value="Returned">Returned</option>
-                    </select>
-
                 </div>
 
                 <div class="input-group full-width">
+                    <label for="transactionStatus">New Status</label>
+                    <select id="transactionStatus" required>
+                        <option value="Borrowed">Borrowed</option>
+                        <option value="Returned">Returned</option>
+                        <option value="Missing">Missing</option>
+                        <option value="Damaged">Damaged</option>
+                        <option value="For Repair">For Repair</option>
+                    </select>
+                </div>
 
-                    <label for="borrowPurpose">Purpose</label>
-
-                    <textarea
-                        id="borrowPurpose"
-                        rows="4"
-                        placeholder="Enter the purpose of borrowing"
-                        required
-                    ></textarea>
-
+                <div class="input-group full-width">
+                    <div class="status-record-summary"
+                         id="statusRecordSummary">
+                        Select a borrowing record to view its details.
+                    </div>
                 </div>
 
             </div>
@@ -479,97 +380,19 @@
                 <button
                     type="button"
                     class="cancel-button"
-                    id="cancelButton"
+                    id="cancelStatus"
                 >
                     Cancel
                 </button>
 
                 <button type="submit" class="save-button">
                     <i class="fa-solid fa-floppy-disk"></i>
-                    Save Transaction
+                    Update Status
                 </button>
 
             </div>
 
         </form>
-
-    </section>
-
-</div>
-
-<!-- RETURN CONFIRMATION MODAL -->
-<div class="modal-overlay" id="returnModal">
-
-    <section class="modal action-modal">
-
-        <div class="return-icon">
-            <i class="fa-solid fa-rotate-left"></i>
-        </div>
-
-        <h2>Mark Item as Returned?</h2>
-
-        <p>
-            The current date will be recorded as the return date.
-        </p>
-
-        <div class="modal-actions">
-
-            <button
-                type="button"
-                class="cancel-button"
-                id="cancelReturn"
-            >
-                Cancel
-            </button>
-
-            <button
-                type="button"
-                class="return-button"
-                id="confirmReturn"
-            >
-                Confirm Return
-            </button>
-
-        </div>
-
-    </section>
-
-</div>
-
-<!-- DELETE CONFIRMATION MODAL -->
-<div class="modal-overlay" id="deleteModal">
-
-    <section class="modal action-modal">
-
-        <div class="delete-icon">
-            <i class="fa-solid fa-trash-can"></i>
-        </div>
-
-        <h2>Delete Transaction?</h2>
-
-        <p>
-            This borrowing record will be permanently removed.
-        </p>
-
-        <div class="modal-actions">
-
-            <button
-                type="button"
-                class="cancel-button"
-                id="cancelDelete"
-            >
-                Cancel
-            </button>
-
-            <button
-                type="button"
-                class="delete-button"
-                id="confirmDelete"
-            >
-                Delete
-            </button>
-
-        </div>
 
     </section>
 

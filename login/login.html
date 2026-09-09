@@ -81,7 +81,7 @@
                         Remember me
                     </label>
 
-                    <a href="#" class="forgot-password">
+                    <a href="#" class="forgot-password" id="forgotPasswordLink">
                         Forgot password?
                     </a>
                 </div>
@@ -102,6 +102,60 @@
         </section>
 
     </main>
+
+    <div class="recovery-overlay" id="recoveryModal" aria-hidden="true">
+        <section class="recovery-modal" role="dialog" aria-modal="true" aria-labelledby="recoveryTitle">
+            <button type="button" class="recovery-close" id="closeRecovery" aria-label="Close password recovery">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="recovery-icon"><i class="fa-solid fa-key"></i></div>
+            <h2 id="recoveryTitle">Reset Password</h2>
+
+            <form id="recoveryRequestForm">
+                <p>Enter your registered Gmail address to receive a verification code.</p>
+                <div class="input-group">
+                    <label for="recoveryEmail">Registered Gmail Address</label>
+                    <div class="input-box">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="recoveryEmail" placeholder="name@gmail.com" autocomplete="email" required>
+                    </div>
+                </div>
+                <p class="form-message" id="recoveryRequestMessage"></p>
+                <button type="submit" class="login-button" id="sendRecoveryCode">Send Verification Code</button>
+            </form>
+
+            <form id="recoveryVerifyForm" hidden>
+                <p>Enter the code sent to <strong id="recoveryDestination"></strong>. It expires in 10 minutes.</p>
+                <div class="input-group">
+                    <label for="recoveryOtp">Verification Code</label>
+                    <div class="input-box">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <input type="text" id="recoveryOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="newPassword">New Password</label>
+                    <div class="input-box">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="newPassword" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="confirmNewPassword">Confirm New Password</label>
+                    <div class="input-box">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="confirmNewPassword" autocomplete="new-password" minlength="8" placeholder="Repeat new password" required>
+                    </div>
+                </div>
+                <button type="button" class="recovery-resend" id="resendRecoveryCode" disabled>
+                    Resend Code (<span id="recoveryCooldown">60</span>s)
+                </button>
+                <p class="form-message" id="recoveryVerifyMessage"></p>
+                <button type="submit" class="login-button" id="resetPasswordButton">Verify &amp; Reset Password</button>
+            </form>
+        </section>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../auth/supabase-client.js"></script>

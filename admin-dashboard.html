@@ -117,9 +117,11 @@
                     <input type="search" placeholder="Search dashboard...">
                 </div>
 
-                <button type="button" class="notification-button">
+                <button type="button"
+                        class="notification-button"
+                        aria-label="View inventory alerts">
                     <i class="fa-solid fa-bell"></i>
-                    <span>4</span>
+                    <span id="notificationCount" hidden>0</span>
                 </button>
 
                 <div class="user-profile">
@@ -193,7 +195,7 @@
 
                 <div>
                     <p>System Users</p>
-                    <h3 id="userTotal"></h3>
+                    <h3 id="userTotal" aria-live="polite">&mdash;</h3>
                     <small>Admin and staff accounts</small>
                 </div>
             </article>
@@ -268,7 +270,9 @@
             </article>
 
             <!-- Admin alerts -->
-            <article class="dashboard-card">
+            <article class="dashboard-card"
+                     id="inventoryAlertsSection"
+                     tabindex="-1">
 
                 <div class="card-heading">
                     <div>

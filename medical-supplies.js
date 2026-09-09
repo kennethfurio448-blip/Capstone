@@ -49,6 +49,46 @@ document.addEventListener("DOMContentLoaded", async function () {
     const statusFilter =
         document.getElementById("statusFilter");
 
+    const supplyHistoryBody =
+        document.getElementById("supplyHistoryBody");
+
+    const historyMessage =
+        document.getElementById("historyMessage");
+
+    // Consumed supplies modal
+    const consumeModal =
+        document.getElementById("consumeModal");
+
+    const openConsumeModalButton =
+        document.getElementById("openConsumeModal");
+
+    const closeConsumeModalButton =
+        document.getElementById("closeConsumeModal");
+
+    const cancelConsumeButton =
+        document.getElementById("cancelConsume");
+
+    const consumeForm =
+        document.getElementById("consumeForm");
+
+    const consumeEmergency =
+        document.getElementById("consumeEmergency");
+
+    const consumeSupply =
+        document.getElementById("consumeSupply");
+
+    const consumeQuantity =
+        document.getElementById("consumeQuantity");
+
+    const consumedAt =
+        document.getElementById("consumedAt");
+
+    const consumeAvailability =
+        document.getElementById("consumeAvailability");
+
+    const consumeFormMessage =
+        document.getElementById("consumeFormMessage");
+
     // Supply modal
     const supplyModal =
         document.getElementById("supplyModal");
@@ -92,6 +132,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const formMessage =
         document.getElementById("formMessage");
 
+    const saveSupplyButton =
+        supplyForm.querySelector("button[type='submit']");
+
     // Delete modal
     const deleteModal =
         document.getElementById("deleteModal");
@@ -103,6 +146,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("confirmDelete");
 
     let supplyToDelete = null;
+    let supplyTransactions = [];
 
     // =====================================
     // CHECK REQUIRED ELEMENTS
@@ -126,6 +170,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         supplySearch,
         categoryFilter,
         statusFilter,
+        supplyHistoryBody,
+        historyMessage,
+        consumeModal,
+        openConsumeModalButton,
+        closeConsumeModalButton,
+        cancelConsumeButton,
+        consumeForm,
+        consumeEmergency,
+        consumeSupply,
+        consumeQuantity,
+        consumedAt,
+        consumeAvailability,
+        consumeFormMessage,
         supplyModal,
         openAddModalButton,
         closeModalButton,
@@ -140,6 +197,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         expirationDate,
         lowStockLevel,
         formMessage,
+        saveSupplyButton,
         deleteModal,
         cancelDelete,
         confirmDelete
@@ -177,6 +235,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
+    const canManageInventory =
+        currentUser.role === "admin";
+
     if (window.medtrackData) {
         await window.medtrackData.refresh();
     }
@@ -199,6 +260,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         dashboardLink.href = "staff-dashboard.html";
         adminNavigation.hidden = true;
     }
+
+    openAddModalButton.hidden = !canManageInventory;
 
     // =====================================
     // DEFAULT MEDICAL SUPPLIES
@@ -407,6 +470,234 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
+    function formatDateTime(dateValue) {
+        const date = new Date(dateValue);
+
+        if (Number.isNaN(date.getTime())) {
+            return "\u2014";
+        }
+
+        return date.toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
+        });
+    }
+
+    function getLocalDateTimeValue() {
+        const now = new Date();
+        const offset = now.getTimezoneOffset() * 60000;
+
+        return new Date(now.getTime() - offset)
+            .toISOString()
+            .slice(0, 16);
+    }
+
+    function generateOperationKey(prefix) {
+        const uniquePart =
+            window.crypto &&
+            typeof window.crypto.randomUUID === "function"
+                ? window.crypto.randomUUID()
+                : `${Date.now()}-${Math.random()
+                    .toString(16)
+                    .slice(2)}`;
+
+        return `${prefix}:${uniquePart}`;
+    }
+
+    async function loadSupplyTransactions() {
+        historyMessage.textContent = "";
+
+        if (
+            !window.medtrackData ||
+            typeof window.medtrackData
+                .loadSupplyTransactions !== "function"
+        ) {
+            supplyTransactions = [];
+            historyMessage.textContent =
+                "Supply activity is currently unavailable.";
+            renderSupplyTransactions();
+            return;
+        }
+
+        try {
+            supplyTransactions =
+                await window.medtrackData
+                    .loadSupplyTransactions();
+            openAddModalButton.disabled = false;
+            openConsumeModalButton.disabled = false;
+            renderSupplyTransactions();
+        } catch (error) {
+            console.error(
+                "Unable to load supply activity:",
+                error
+            );
+            supplyTransactions = [];
+            const databaseUpdateMissing =
+                /schema cache|medical_supply_transactions|could not find/i
+                    .test(error.message || "");
+
+            historyMessage.textContent = databaseUpdateMissing
+                ? "Database setup required: apply the latest Supabase " +
+                    "migration to enable supply additions and consumption."
+                : "Unable to load supply activity. Please refresh and " +
+                    "try again.";
+
+            openAddModalButton.disabled = databaseUpdateMissing;
+            openConsumeModalButton.disabled = databaseUpdateMissing;
+            renderSupplyTransactions();
+        }
+    }
+
+    function renderSupplyTransactions() {
+        if (supplyTransactions.length === 0) {
+            supplyHistoryBody.innerHTML = `
+                <tr>
+                    <td colspan="6">No supply activity recorded yet.</td>
+                </tr>
+            `;
+            return;
+        }
+
+        supplyHistoryBody.innerHTML = supplyTransactions
+            .map(function (transaction) {
+                const consumed =
+                    transaction.type === "consumed";
+
+                return `
+                    <tr>
+                        <td>
+                            <span class="movement-badge ${
+                                consumed ? "consumed" : "added"
+                            }">
+                                ${consumed ? "Consumed" : "Added"}
+                            </span>
+                        </td>
+                        <td>
+                            <strong>${escapeHTML(
+                                transaction.supplyName
+                            )}</strong>
+                            <small>${escapeHTML(
+                                transaction.supplyId
+                            )}</small>
+                        </td>
+                        <td>
+                            ${escapeHTML(transaction.quantity)}
+                            ${escapeHTML(transaction.unit)}
+                        </td>
+                        <td>${escapeHTML(
+                            transaction.emergencyLabel
+                        )}</td>
+                        <td>${escapeHTML(
+                            formatDateTime(transaction.occurredAt)
+                        )}</td>
+                        <td>
+                            <strong>${escapeHTML(
+                                transaction.remainingStock
+                            )}</strong>
+                            ${escapeHTML(transaction.unit)}
+                        </td>
+                    </tr>
+                `;
+            })
+            .join("");
+    }
+
+    function getEmergencyResponses() {
+        try {
+            const records = JSON.parse(
+                localStorage.getItem(
+                    "medtrackEmergencyRequests"
+                ) || "[]"
+            );
+
+            return Array.isArray(records) ? records : [];
+        } catch (error) {
+            console.error(
+                "Unable to read emergency responses:",
+                error
+            );
+            return [];
+        }
+    }
+
+    function populateConsumptionOptions() {
+        const supplies = getSupplies()
+            .filter(function (supply) {
+                return Number(supply.quantity) > 0;
+            });
+
+        const emergencies = getEmergencyResponses()
+            .sort(function (first, second) {
+                return String(second.date || "")
+                    .localeCompare(String(first.date || ""));
+            });
+
+        consumeSupply.innerHTML =
+            '<option value="">Select medical supply</option>' +
+            supplies.map(function (supply) {
+                return `
+                    <option value="${escapeHTML(supply.id)}">
+                        ${escapeHTML(supply.name)}
+                        (${escapeHTML(supply.quantity)}
+                        ${escapeHTML(supply.unit)} available)
+                    </option>
+                `;
+            }).join("");
+
+        consumeEmergency.innerHTML =
+            '<option value="">Select emergency response</option>' +
+            emergencies.map(function (request) {
+                return `
+                    <option value="${escapeHTML(request.id)}">
+                        ${escapeHTML(request.id)} -
+                        ${escapeHTML(request.type)} -
+                        ${escapeHTML(request.location)}
+                    </option>
+                `;
+            }).join("");
+    }
+
+    function updateConsumptionAvailability() {
+        const selectedId = normalizeId(consumeSupply.value);
+        const supply = getSupplies().find(function (item) {
+            return normalizeId(item.id) === selectedId;
+        });
+
+        if (!supply) {
+            consumeAvailability.textContent =
+                "Select a supply to view available stock.";
+            consumeQuantity.removeAttribute("max");
+            return;
+        }
+
+        const availableQuantity = Number(supply.quantity) || 0;
+        consumeQuantity.max = String(availableQuantity);
+        consumeAvailability.textContent =
+            `${availableQuantity} ${supply.unit} currently available.`;
+    }
+
+    function openConsumeModal() {
+        consumeForm.reset();
+        populateConsumptionOptions();
+        consumedAt.value = getLocalDateTimeValue();
+        consumeQuantity.value = "1";
+        consumeFormMessage.textContent = "";
+        updateConsumptionAvailability();
+        consumeModal.classList.add("show");
+        consumeEmergency.focus();
+    }
+
+    function closeConsumeModal() {
+        consumeModal.classList.remove("show");
+        consumeForm.reset();
+        consumeFormMessage.textContent = "";
+        consumeAvailability.textContent =
+            "Select a supply to view available stock.";
+    }
+
     // =====================================
     // GENERATE SUPPLY ID
     // =====================================
@@ -603,6 +894,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </td>
 
                 <td>
+                    ${canManageInventory ? `
                     <div class="table-actions">
                         <button
                             type="button"
@@ -626,6 +918,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
+                    ` : "\u2014"}
                 </td>
             `;
 
@@ -640,9 +933,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     function openAddModal() {
+        if (!canManageInventory) {
+            return;
+        }
+
         supplyForm.reset();
 
         editingSupplyId.value = "";
+        supplyQuantity.min = "1";
         lowStockLevel.value = "10";
         modalTitle.textContent =
             "Add Medical Supply";
@@ -658,6 +956,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     function openEditModal(supplyId) {
+        if (!canManageInventory) {
+            return;
+        }
+
         const normalizedSupplyId =
             normalizeId(supplyId);
 
@@ -687,6 +989,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         supplyQuantity.value =
             Number(supply.quantity) || 0;
+
+        supplyQuantity.min = String(
+            Number(supply.quantity) || 0
+        );
 
         supplyUnit.value =
             normalizeText(supply.unit);
@@ -724,8 +1030,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     supplyForm.addEventListener(
         "submit",
-        function (event) {
+        async function (event) {
             event.preventDefault();
+
+            if (!canManageInventory) {
+                formMessage.textContent =
+                    "Administrator access is required.";
+                return;
+            }
 
             const nameValue =
                 normalizeText(supplyName.value);
@@ -782,6 +1094,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             const editId =
                 normalizeId(editingSupplyId.value);
 
+            let supplyId = editId;
+
+            if (!editId && quantityValue < 1) {
+                formMessage.textContent =
+                    "A new supply must start with at least 1 item.";
+                return;
+            }
+
             if (editId) {
                 const supplyIndex =
                     supplies.findIndex(
@@ -800,21 +1120,37 @@ document.addEventListener("DOMContentLoaded", async function () {
                     return;
                 }
 
-                supplies[supplyIndex] = {
-                    ...supplies[supplyIndex],
-                    id: normalizeId(
-                        supplies[supplyIndex].id
-                    ),
-                    name: nameValue,
-                    category: categoryValue,
-                    quantity: quantityValue,
-                    unit: unitValue,
-                    expirationDate: expirationValue,
-                    lowStockLevel: lowStockValue
-                };
+                const currentQuantity =
+                    Number(supplies[supplyIndex].quantity) || 0;
+
+                if (quantityValue < currentQuantity) {
+                    formMessage.textContent =
+                        "Use Record Consumed Supplies to reduce stock.";
+                    return;
+                }
             } else {
-                supplies.push({
-                    id: generateSupplyId(supplies),
+                supplyId = generateSupplyId(supplies);
+            }
+
+            if (
+                !window.medtrackData ||
+                typeof window.medtrackData
+                    .saveMedicalSupply !== "function"
+            ) {
+                formMessage.textContent =
+                    "Supply saving is unavailable. Apply the latest " +
+                    "Supabase migration and refresh the page.";
+                return;
+            }
+
+            saveSupplyButton.disabled = true;
+            formMessage.textContent = "Saving supply...";
+
+            try {
+                await window.medtrackData.saveMedicalSupply({
+                    operationKey:
+                        generateOperationKey("SUPPLY-ADD"),
+                    id: supplyId,
                     name: nameValue,
                     category: categoryValue,
                     quantity: quantityValue,
@@ -822,17 +1158,132 @@ document.addEventListener("DOMContentLoaded", async function () {
                     expirationDate: expirationValue,
                     lowStockLevel: lowStockValue
                 });
-            }
 
-            if (!saveSupplies(supplies)) {
+                closeSupplyModal();
+                renderSupplies();
+                await loadSupplyTransactions();
+            } catch (error) {
+                console.error("Unable to save supply:", error);
                 formMessage.textContent =
-                    "Unable to save the supply.";
+                    error.message || "Unable to save the supply.";
+            } finally {
+                saveSupplyButton.disabled = false;
+            }
+        }
+    );
 
+    // =====================================
+    // RECORD CONSUMED SUPPLIES
+    // =====================================
+
+    consumeForm.addEventListener(
+        "submit",
+        async function (event) {
+            event.preventDefault();
+
+            const emergencyId =
+                normalizeId(consumeEmergency.value);
+
+            const supplyId =
+                normalizeId(consumeSupply.value);
+
+            const quantity =
+                Number(consumeQuantity.value);
+
+            const consumptionDate =
+                new Date(consumedAt.value);
+
+            const supply = getSupplies().find(function (item) {
+                return normalizeId(item.id) === supplyId;
+            });
+
+            const emergency =
+                getEmergencyResponses().find(function (request) {
+                    return normalizeId(request.id) === emergencyId;
+                });
+
+            if (!emergencyId || !supplyId || !consumedAt.value) {
+                consumeFormMessage.textContent =
+                    "Select an emergency, a supply, and the date and time.";
                 return;
             }
 
-            closeSupplyModal();
-            renderSupplies();
+            if (!Number.isInteger(quantity) || quantity < 1) {
+                consumeFormMessage.textContent =
+                    "Quantity consumed must be a whole number of at least 1.";
+                return;
+            }
+
+            if (!supply) {
+                consumeFormMessage.textContent =
+                    "The selected supply could not be found.";
+                return;
+            }
+
+            if (!emergency) {
+                consumeFormMessage.textContent =
+                    "The selected emergency response could not be found.";
+                return;
+            }
+
+            if (quantity > (Number(supply.quantity) || 0)) {
+                consumeFormMessage.textContent =
+                    `Only ${Number(supply.quantity) || 0} ` +
+                    `${supply.unit} are currently available.`;
+                return;
+            }
+
+            if (Number.isNaN(consumptionDate.getTime())) {
+                consumeFormMessage.textContent =
+                    "Enter a valid consumption date and time.";
+                return;
+            }
+
+            if (
+                !window.medtrackData ||
+                typeof window.medtrackData
+                    .consumeMedicalSupply !== "function"
+            ) {
+                consumeFormMessage.textContent =
+                    "Supply consumption is unavailable. Apply the latest " +
+                    "Supabase migration and refresh the page.";
+                return;
+            }
+
+            const submitButton =
+                consumeForm.querySelector("button[type='submit']");
+
+            submitButton.disabled = true;
+            consumeFormMessage.textContent =
+                "Recording consumption...";
+
+            try {
+                await window.medtrackData.consumeMedicalSupply({
+                    operationKey:
+                        generateOperationKey("SUPPLY-CONSUME"),
+                    supplyId: supplyId,
+                    emergencyRequestId: emergencyId,
+                    emergencyLabel:
+                        `${emergency.id} - ${emergency.type} - ` +
+                        emergency.location,
+                    quantity: quantity,
+                    consumedAt: consumptionDate.toISOString()
+                });
+
+                closeConsumeModal();
+                renderSupplies();
+                await loadSupplyTransactions();
+            } catch (error) {
+                console.error(
+                    "Unable to record consumed supplies:",
+                    error
+                );
+                consumeFormMessage.textContent =
+                    error.message ||
+                    "Unable to record the consumed supplies.";
+            } finally {
+                submitButton.disabled = false;
+            }
         }
     );
 
@@ -850,7 +1301,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (
                 !button ||
-                !supplyTableBody.contains(button)
+                !supplyTableBody.contains(button) ||
+                !canManageInventory
             ) {
                 return;
             }
@@ -884,6 +1336,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     confirmDelete.addEventListener(
         "click",
         function () {
+            if (!canManageInventory) {
+                return;
+            }
+
             const deleteId =
                 normalizeId(supplyToDelete);
 
@@ -966,6 +1422,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderSupplies
     );
 
+    consumeSupply.addEventListener(
+        "change",
+        updateConsumptionAvailability
+    );
+
     // =====================================
     // MODAL BUTTONS
     // =====================================
@@ -973,6 +1434,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     openAddModalButton.addEventListener(
         "click",
         openAddModal
+    );
+
+    openConsumeModalButton.addEventListener(
+        "click",
+        openConsumeModal
     );
 
     closeModalButton.addEventListener(
@@ -983,6 +1449,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     cancelButton.addEventListener(
         "click",
         closeSupplyModal
+    );
+
+    closeConsumeModalButton.addEventListener(
+        "click",
+        closeConsumeModal
+    );
+
+    cancelConsumeButton.addEventListener(
+        "click",
+        closeConsumeModal
     );
 
     supplyModal.addEventListener(
@@ -1004,6 +1480,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
+    consumeModal.addEventListener(
+        "click",
+        function (event) {
+            if (event.target === consumeModal) {
+                closeConsumeModal();
+            }
+        }
+    );
+
     // =====================================
     // KEYBOARD SUPPORT
     // =====================================
@@ -1017,6 +1502,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (supplyModal.classList.contains("show")) {
                 closeSupplyModal();
+            }
+
+            if (consumeModal.classList.contains("show")) {
+                closeConsumeModal();
             }
 
             if (deleteModal.classList.contains("show")) {
@@ -1070,6 +1559,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
+    window.addEventListener(
+        "medtrack:data-ready",
+        function () {
+            renderSupplies();
+        }
+    );
+
+    window.addEventListener(
+        "focus",
+        loadSupplyTransactions
+    );
+
     // =====================================
     // LOGOUT
     // =====================================
@@ -1096,4 +1597,5 @@ document.addEventListener("DOMContentLoaded", async function () {
     // =====================================
 
     renderSupplies();
+    await loadSupplyTransactions();
 });

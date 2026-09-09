@@ -196,6 +196,10 @@ a {
     display: block;
 }
 
+.admin-navigation[hidden] {
+    display: none;
+}
+
 /* =====================================
    LOGOUT
 ===================================== */

@@ -1,0 +1,3 @@
+[functions.otp-auth]
+verify_jwt = false
+

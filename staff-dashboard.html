@@ -90,9 +90,11 @@
                     <input type="search" placeholder="Search inventory...">
                 </div>
 
-                <button type="button" class="notification-button">
+                <button type="button"
+                        class="notification-button"
+                        aria-label="View inventory alerts">
                     <i class="fa-solid fa-bell"></i>
-                    <span>4</span>
+                    <span id="notificationCount" hidden>0</span>
                 </button>
 
                 <div class="user-profile">
@@ -130,7 +132,7 @@
 
                 <div>
                     <p>Medical Supplies</p>
-                    <h3>120</h3>
+                    <h3 id="supplyTotal">0</h3>
                     <small>Total supply categories</small>
                 </div>
             </article>
@@ -142,7 +144,7 @@
 
                 <div>
                     <p>Medical Equipment</p>
-                    <h3>19</h3>
+                    <h3 id="equipmentTotal">0</h3>
                     <small>Registered equipment</small>
                 </div>
             </article>
@@ -154,7 +156,7 @@
 
                 <div>
                     <p>Available Mobility</p>
-                    <h3>4</h3>
+                    <h3 id="availableMobilityTotal">0</h3>
                     <small>Ready for deployment</small>
                 </div>
             </article>
@@ -166,7 +168,7 @@
 
                 <div>
                     <p>Low-Stock Items</p>
-                    <h3>7</h3>
+                    <h3 id="lowStockTotal">0</h3>
                     <small>Needs restocking</small>
                 </div>
             </article>
@@ -212,7 +214,9 @@
             </article>
 
             <!-- Staff alerts -->
-            <article class="dashboard-card">
+            <article class="dashboard-card"
+                     id="inventoryAlertsSection"
+                     tabindex="-1">
 
                 <div class="card-heading">
                     <div>
@@ -221,56 +225,8 @@
                     </div>
                 </div>
 
-                <div class="alert-item">
-                    <div class="alert-icon danger">
-                        <i class="fa-solid fa-arrow-trend-down"></i>
-                    </div>
-
-                    <div>
-                        <strong>Low Stock</strong>
-                        <p>First Aid Kits</p>
-                    </div>
-
-                    <span class="alert-status danger-text">4 left</span>
-                </div>
-
-                <div class="alert-item">
-                    <div class="alert-icon danger">
-                        <i class="fa-solid fa-calendar-xmark"></i>
-                    </div>
-
-                    <div>
-                        <strong>Expired Item</strong>
-                        <p>Medical Gloves</p>
-                    </div>
-
-                    <span class="alert-status danger-text">Expired</span>
-                </div>
-
-                <div class="alert-item">
-                    <div class="alert-icon warning">
-                        <i class="fa-solid fa-screwdriver-wrench"></i>
-                    </div>
-
-                    <div>
-                        <strong>Maintenance Due</strong>
-                        <p>Portable Generator</p>
-                    </div>
-
-                    <span class="alert-status warning-text">Overdue</span>
-                </div>
-
-                <div class="alert-item">
-                    <div class="alert-icon information">
-                        <i class="fa-solid fa-clock"></i>
-                    </div>
-
-                    <div>
-                        <strong>Return Due</strong>
-                        <p>Handheld Radio</p>
-                    </div>
-
-                    <span class="alert-status information-text">Today</span>
+                <div id="inventoryAlerts">
+                    <p>Loading inventory alerts...</p>
                 </div>
 
             </article>
@@ -295,30 +251,13 @@
                             <th>Activity</th>
                             <th>Item</th>
                             <th>Status</th>
-                            <th>Time</th>
+                            <th>Date</th>
                         </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody id="recentActivityBody">
                         <tr>
-                            <td>Borrowing processed</td>
-                            <td>Handheld Radio</td>
-                            <td><span class="status borrowed">Borrowed</span></td>
-                            <td>9:30 AM</td>
-                        </tr>
-
-                        <tr>
-                            <td>Inventory updated</td>
-                            <td>First Aid Kit</td>
-                            <td><span class="status updated">Updated</span></td>
-                            <td>10:15 AM</td>
-                        </tr>
-
-                        <tr>
-                            <td>Equipment checked</td>
-                            <td>Portable Generator</td>
-                            <td><span class="status pending">Maintenance</span></td>
-                            <td>11:00 AM</td>
+                            <td colspan="4">Loading recent activity...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -335,6 +274,7 @@
 <script src="auth/supabase-client.js"></script>
 <script src="auth/supabase-auth.js"></script>
 <script src="auth/supabase-data.js"></script>
+<script src="analytics.js"></script>
 <script src="staff-dashboard.js"></script>
 
 </body>

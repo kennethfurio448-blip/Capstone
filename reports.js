@@ -128,7 +128,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     function getBorrowing() {
-        return getStoredArray("medtrackBorrowTransactions");
+        return getStoredArray("medtrackBorrowTransactions")
+            .filter(function (transaction) {
+                return [
+                    "Medical Equipment",
+                    "Mobility Asset"
+                ].includes(transaction.itemType);
+            });
     }
 
     function getEmergencyRequests() {
@@ -248,17 +254,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     function getBorrowingStatus(transaction) {
-        if (transaction.status === "Returned") {
-            return "Returned";
+        const storedStatus = String(transaction.status || "");
+
+        if ([
+            "Borrowed",
+            "Returned",
+            "Missing",
+            "Damaged",
+            "For Repair"
+        ].includes(storedStatus)) {
+            return storedStatus;
         }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const due =
-            new Date(transaction.dueDate + "T00:00:00");
-
-        return due < today ? "Overdue" : "Borrowed";
+        return "Borrowed";
     }
 
     function getStatusClass(status) {

@@ -391,6 +391,36 @@
             error
         );
 
+        let notice = document.getElementById(
+            "medtrackDataErrorNotice"
+        );
+
+        if (!notice) {
+            notice = document.createElement("div");
+            notice.id = "medtrackDataErrorNotice";
+            notice.setAttribute("role", "alert");
+            notice.style.cssText = [
+                "position:fixed",
+                "top:16px",
+                "left:50%",
+                "transform:translateX(-50%)",
+                "z-index:10000",
+                "max-width:min(560px,calc(100% - 32px))",
+                "padding:12px 16px",
+                "border-radius:10px",
+                "background:#991b1b",
+                "color:#fff",
+                "box-shadow:0 8px 24px rgba(0,0,0,.22)",
+                "font:600 14px/1.4 system-ui,sans-serif"
+            ].join(";");
+            document.body.appendChild(notice);
+        }
+
+        notice.textContent =
+            "Some changes could not be saved to the database. " +
+            "Refresh the page and try again. If the problem continues, " +
+            "contact an Administrator.";
+
         window.dispatchEvent(
             new CustomEvent("medtrack:data-error", {
                 detail: {
@@ -521,7 +551,26 @@
         );
 
         if (result.error) {
-            throw new Error(result.error.message);
+            const missingDatabaseFeature =
+                [
+                    "medtrack_save_medical_supply",
+                    "medtrack_consume_medical_supply",
+                    "medtrack_update_borrow_status"
+                ].includes(functionName) &&
+                (
+                    result.error.code === "PGRST202" ||
+                    /schema cache|could not find the function/i.test(
+                        result.error.message || ""
+                    )
+                );
+
+            throw new Error(
+                missingDatabaseFeature
+                    ? "The required database update has not " +
+                        "been installed yet. Ask an administrator to " +
+                        "apply the latest Supabase migration."
+                    : result.error.message
+            );
         }
 
         await Promise.all(
@@ -559,10 +608,36 @@
         );
     }
 
+    async function updateBorrowStatus(transactionId, status) {
+        return runInventoryOperation(
+            "medtrack_update_borrow_status",
+            {
+                p_transaction_id: transactionId,
+                p_status: status
+            },
+            [
+                "medtrackBorrowTransactions",
+                "medtrackMedicalEquipment",
+                "medtrackMobilityAssets"
+            ]
+        );
+    }
+
     async function useInventoryItem(details) {
+        if (details.itemType === "Medical Supply") {
+            return consumeMedicalSupply({
+                operationKey: details.operationKey,
+                supplyId: details.itemId,
+                emergencyRequestId:
+                    details.emergencyRequestId ||
+                    details.operationKey,
+                emergencyLabel: details.emergencyLabel,
+                quantity: details.quantity,
+                consumedAt: new Date().toISOString()
+            });
+        }
+
         const storageByType = {
-            "Medical Supply":
-                "medtrackMedicalSupplies",
             "Medical Equipment":
                 "medtrackMedicalEquipment",
             "Mobility Asset":
@@ -585,6 +660,74 @@
         );
     }
 
+    async function saveMedicalSupply(details) {
+        return runInventoryOperation(
+            "medtrack_save_medical_supply",
+            {
+                p_operation_key: details.operationKey,
+                p_supply_id: details.id,
+                p_name: details.name,
+                p_category: details.category,
+                p_quantity: details.quantity,
+                p_unit: details.unit,
+                p_expiration_date: details.expirationDate,
+                p_low_stock_level: details.lowStockLevel
+            },
+            ["medtrackMedicalSupplies"]
+        );
+    }
+
+    async function consumeMedicalSupply(details) {
+        return runInventoryOperation(
+            "medtrack_consume_medical_supply",
+            {
+                p_operation_key: details.operationKey,
+                p_supply_id: details.supplyId,
+                p_emergency_request_id:
+                    details.emergencyRequestId,
+                p_quantity: details.quantity,
+                p_consumed_at:
+                    details.consumedAt ||
+                    new Date().toISOString(),
+                p_emergency_label:
+                    details.emergencyLabel || null
+            },
+            ["medtrackMedicalSupplies"]
+        );
+    }
+
+    async function loadSupplyTransactions() {
+        const result = await client
+            .from("medical_supply_transactions")
+            .select(
+                "id, transaction_type, supply_id, supply_name, " +
+                "unit, quantity, emergency_request_id, " +
+                "emergency_label, occurred_at, remaining_stock"
+            )
+            .order("occurred_at", { ascending: false });
+
+        if (result.error) {
+            throw new Error(result.error.message);
+        }
+
+        return (result.data || []).map(function (record) {
+            return {
+                id: record.id,
+                type: record.transaction_type,
+                supplyId: record.supply_id,
+                supplyName: record.supply_name,
+                unit: record.unit,
+                quantity: record.quantity,
+                emergencyRequestId:
+                    record.emergency_request_id || "",
+                emergencyLabel:
+                    record.emergency_label || "Inventory addition",
+                occurredAt: record.occurred_at,
+                remainingStock: record.remaining_stock
+            };
+        });
+    }
+
     const ready = refresh();
 
     window.medtrackData = {
@@ -593,7 +736,11 @@
         pushAll: pushAll,
         borrowItem: borrowItem,
         returnBorrowedItem: returnBorrowedItem,
-        useInventoryItem: useInventoryItem
+        updateBorrowStatus: updateBorrowStatus,
+        useInventoryItem: useInventoryItem,
+        saveMedicalSupply: saveMedicalSupply,
+        consumeMedicalSupply: consumeMedicalSupply,
+        loadSupplyTransactions: loadSupplyTransactions
     };
 
     window.addEventListener("focus", function () {
