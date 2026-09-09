@@ -680,6 +680,169 @@ a {
 }
 
 /* =====================================
+   BORROWING FORM MODAL
+===================================== */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    padding: 20px;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(15, 23, 42, 0.62);
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal {
+    width: 100%;
+    max-width: 760px;
+    max-height: 92vh;
+    padding: 26px;
+    overflow-y: auto;
+    background-color: var(--white);
+    border-radius: 15px;
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+    margin-bottom: 5px;
+    font-size: 22px;
+}
+
+.modal-header p {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.close-button {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    color: #64748b;
+    background-color: #f1f5f9;
+    border: none;
+    border-radius: 9px;
+    font-size: 18px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.input-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.input-group label {
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.input-group label span,
+.input-group small {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea {
+    width: 100%;
+    padding: 12px 13px;
+    color: var(--text);
+    background-color: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    outline: none;
+    font: inherit;
+}
+
+.input-group textarea {
+    resize: vertical;
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+    background-color: var(--white);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
+}
+
+.input-group input:disabled {
+    color: #64748b;
+    background-color: #f1f5f9;
+}
+
+.form-message {
+    min-height: 20px;
+    margin-top: 15px;
+    color: var(--red);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.modal-actions {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 11px;
+}
+
+.cancel-button,
+.save-button {
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.cancel-button {
+    color: #475569;
+    background-color: #f8fafc;
+    border: 1px solid var(--border);
+}
+
+.save-button {
+    color: var(--white);
+    background-color: var(--primary);
+    border: none;
+}
+
+.save-button:disabled,
+.borrow-item-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* =====================================
    RESPONSIVE DESIGN
 ===================================== */
 
@@ -735,5 +898,32 @@ a {
 
     .borrow-page-link {
         justify-content: center;
+    }
+
+    .modal-overlay {
+        padding: 10px;
+        align-items: flex-start;
+    }
+
+    .modal {
+        margin-top: 10px;
+        padding: 20px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .input-group.full-width {
+        grid-column: auto;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .cancel-button,
+    .save-button {
+        width: 100%;
     }
 }

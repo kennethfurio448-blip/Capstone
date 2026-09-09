@@ -203,6 +203,26 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
+    function formatBorrowedDate(transaction) {
+        if (!transaction.borrowedAt) {
+            return formatDate(transaction.borrowDate);
+        }
+
+        const date = new Date(transaction.borrowedAt);
+
+        if (Number.isNaN(date.getTime())) {
+            return formatDate(transaction.borrowDate);
+        }
+
+        return date.toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
+        });
+    }
+
     function statusClass(status) {
         return {
             "Borrowed": "status-borrowed",
@@ -290,7 +310,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${escapeHTML(transaction.itemType)}</td>
                 <td>${escapeHTML(transaction.itemName)}</td>
                 <td>${escapeHTML(transaction.quantity)}</td>
-                <td>${escapeHTML(formatDate(transaction.borrowDate))}</td>
+                <td>${escapeHTML(formatBorrowedDate(transaction))}</td>
                 <td>${escapeHTML(formatDate(transaction.dueDate))}</td>
                 <td>${escapeHTML(formatDate(transaction.returnDate))}</td>
                 <td>

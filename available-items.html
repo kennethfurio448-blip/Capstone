@@ -234,6 +234,108 @@
         </main>
     </div>
 
+    <!-- BORROWING DETAILS MODAL -->
+    <div class="modal-overlay" id="borrowModal" aria-hidden="true">
+        <section
+            class="modal borrow-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="borrowModalTitle"
+        >
+            <div class="modal-header">
+                <div>
+                    <h2 id="borrowModalTitle">Borrow Item</h2>
+                    <p>Complete the borrowing details before submitting.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="close-button"
+                    id="closeBorrowModal"
+                    aria-label="Close borrowing form"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="borrowForm">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="borrowerName">Borrower's Full Name</label>
+                        <input id="borrowerName" type="text" required maxlength="120">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="borrowDepartment">Department or Unit</label>
+                        <input id="borrowDepartment" type="text" required maxlength="120">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="borrowItemType">Item Category</label>
+                        <select id="borrowItemType" required>
+                            <option value="">Select category</option>
+                            <option value="Medical Equipment">Medical Equipment</option>
+                            <option value="Mobility Asset">Mobility</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="borrowItemId">Specific Item</label>
+                        <select id="borrowItemId" required>
+                            <option value="">Select an available item</option>
+                        </select>
+                        <small id="borrowAvailability">Select an item to see its availability.</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="borrowQuantity">Quantity</label>
+                        <input id="borrowQuantity" type="number" min="1" step="1" value="1" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="borrowedAt">Date and Time Borrowed</label>
+                        <input id="borrowedAt" type="datetime-local" required>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label for="borrowPurpose">Purpose of Borrowing</label>
+                        <textarea id="borrowPurpose" rows="3" required maxlength="500"></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="expectedReturnDate">Expected Return Date</label>
+                        <input id="expectedReturnDate" type="date" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="assignedPersonnel">Assigned Personnel or Driver <span>(if applicable)</span></label>
+                        <input id="assignedPersonnel" type="text" maxlength="120">
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label for="borrowDestination">Destination or Location</label>
+                        <input id="borrowDestination" type="text" required maxlength="200">
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label for="borrowRemarks">Remarks <span>(optional)</span></label>
+                        <textarea id="borrowRemarks" rows="3" maxlength="500"></textarea>
+                    </div>
+                </div>
+
+                <p class="form-message" id="borrowFormMessage" role="alert"></p>
+
+                <div class="modal-actions">
+                    <button type="button" class="cancel-button" id="cancelBorrow">Cancel</button>
+                    <button type="submit" class="save-button" id="submitBorrow">
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                        Submit Borrowing
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth/supabase-client.js"></script>
     <script src="auth/supabase-auth.js"></script>

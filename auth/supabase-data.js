@@ -154,10 +154,14 @@
                     item_name: text(item.itemName, "Unnamed item"),
                     quantity: Math.max(1, number(item.quantity, 1)),
                     borrow_date: nullable(item.borrowDate),
+                    borrowed_at: nullable(item.borrowedAt),
                     due_date: nullable(item.dueDate),
                     return_date: nullable(item.returnDate),
                     status: text(item.status, "Borrowed"),
                     purpose: text(item.purpose, "Inventory transaction"),
+                    assigned_personnel: nullable(item.assignedPersonnel),
+                    destination: nullable(item.destination),
+                    remarks: nullable(item.remarks),
                     inventory_item_id: nullable(item.inventoryItemId),
                     inventory_adjusted: Boolean(item.inventoryAdjusted),
                     inventory_returned: Boolean(item.inventoryReturned),
@@ -174,10 +178,14 @@
                     itemName: item.item_name,
                     quantity: item.quantity,
                     borrowDate: item.borrow_date,
+                    borrowedAt: item.borrowed_at || "",
                     dueDate: item.due_date,
                     returnDate: item.return_date || "",
                     status: item.status,
                     purpose: item.purpose,
+                    assignedPersonnel: item.assigned_personnel || "",
+                    destination: item.destination || "",
+                    remarks: item.remarks || "",
                     inventoryItemId: item.inventory_item_id || "",
                     inventoryAdjusted: item.inventory_adjusted,
                     inventoryReturned: item.inventory_returned
@@ -590,11 +598,15 @@
             {
                 p_item_type: details.itemType,
                 p_item_id: details.itemId,
+                p_quantity: details.quantity,
                 p_borrower: details.borrower,
                 p_department: details.department,
-                p_borrow_date: details.borrowDate,
+                p_borrowed_at: details.borrowedAt,
                 p_due_date: details.dueDate,
-                p_purpose: details.purpose
+                p_purpose: details.purpose,
+                p_assigned_personnel: details.assignedPersonnel || null,
+                p_destination: details.destination,
+                p_remarks: details.remarks || null
             }
         );
     }

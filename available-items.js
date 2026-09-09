@@ -70,6 +70,62 @@ document.addEventListener("DOMContentLoaded", async function () {
     const totalAvailableCount =
         document.getElementById("totalAvailableCount");
 
+    const borrowModal = document.getElementById("borrowModal");
+    const closeBorrowModalButton =
+        document.getElementById("closeBorrowModal");
+    const cancelBorrowButton =
+        document.getElementById("cancelBorrow");
+    const borrowForm = document.getElementById("borrowForm");
+    const borrowerName = document.getElementById("borrowerName");
+    const borrowDepartment =
+        document.getElementById("borrowDepartment");
+    const borrowItemType = document.getElementById("borrowItemType");
+    const borrowItemId = document.getElementById("borrowItemId");
+    const borrowAvailability =
+        document.getElementById("borrowAvailability");
+    const borrowQuantity = document.getElementById("borrowQuantity");
+    const borrowPurpose = document.getElementById("borrowPurpose");
+    const borrowedAt = document.getElementById("borrowedAt");
+    const expectedReturnDate =
+        document.getElementById("expectedReturnDate");
+    const assignedPersonnel =
+        document.getElementById("assignedPersonnel");
+    const borrowDestination =
+        document.getElementById("borrowDestination");
+    const borrowRemarks = document.getElementById("borrowRemarks");
+    const borrowFormMessage =
+        document.getElementById("borrowFormMessage");
+    const submitBorrowButton =
+        document.getElementById("submitBorrow");
+
+    const borrowingElements = [
+        borrowModal,
+        closeBorrowModalButton,
+        cancelBorrowButton,
+        borrowForm,
+        borrowerName,
+        borrowDepartment,
+        borrowItemType,
+        borrowItemId,
+        borrowAvailability,
+        borrowQuantity,
+        borrowPurpose,
+        borrowedAt,
+        expectedReturnDate,
+        assignedPersonnel,
+        borrowDestination,
+        borrowRemarks,
+        borrowFormMessage,
+        submitBorrowButton
+    ];
+
+    if (borrowingElements.some(function (element) {
+        return !element;
+    })) {
+        console.error("The borrowing form is missing required elements.");
+        return;
+    }
+
     // =====================================
     // CURRENT USER
     // =====================================
@@ -368,6 +424,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         ).padStart(2, "0");
 
         return `${year}-${month}-${day}`;
+    }
+
+    function getLocalDateTimeString(date) {
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+
+        return `${getLocalDateString(date)}T${hours}:${minutes}`;
     }
 
     function getDueDate() {
@@ -957,198 +1020,264 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // =====================================
-    // AUTOMATIC BORROW BUTTON
+    // BORROWING DETAILS FORM
     // =====================================
 
-    availableItemsBody.addEventListener(
-        "click",
-        async function (event) {
-            const borrowButton =
-                event.target.closest(
-                    ".borrow-item-button"
-                );
-
-            if (
-                !borrowButton ||
-                !availableItemsBody.contains(
-                    borrowButton
-                )
-            ) {
-                return;
-            }
-
-            const selectedItem = {
-                id:
-                    normalizeText(
-                        borrowButton.dataset.id
-                    ),
-
-                name:
-                    normalizeText(
-                        borrowButton.dataset.name
-                    ),
-
-                type:
-                    normalizeText(
-                        borrowButton.dataset.type
-                    )
-            };
-
-            if (
-                ![
-                    "Medical Equipment",
-                    "Mobility Asset"
-                ].includes(selectedItem.type)
-            ) {
-                window.alert(
-                    "Medical supplies must be recorded through " +
-                    "Consumed Supplies during an emergency response."
-                );
-                return;
-            }
-
-            borrowButton.disabled = true;
-
-            try {
-                if (
-                    window.medtrackData &&
-                    typeof window.medtrackData
-                        .borrowItem === "function"
-                ) {
-                    const newTransaction =
-                        await window.medtrackData
-                            .borrowItem({
-                                itemType:
-                                    selectedItem.type,
-                                itemId:
-                                    selectedItem.id,
-                                borrower:
-                                    displayName,
-                                department:
-                                    currentUser.role ===
-                                    "admin"
-                                        ? "Administration"
-                                        : "Staff",
-                                borrowDate:
-                                    getLocalDateString(
-                                        new Date()
-                                    ),
-                                dueDate:
-                                    getDueDate(),
-                                purpose:
-                                    "Borrowed from Available Items"
-                            });
-
-                    refreshAvailableItems();
-
-                    window.alert(
-                        `${selectedItem.name} was borrowed successfully.\n` +
-                        `Transaction ID: ${newTransaction.id}`
-                    );
-
-                    return;
-                }
-
-                const borrowed =
-                    deductBorrowedItem(
-                        selectedItem
-                    );
-
-                if (!borrowed) {
-                    window.alert(
-                        "This item is no longer available."
-                    );
-
-                    refreshAvailableItems();
-                    return;
-                }
-
-                const transactions =
-                    getStoredArray(
-                        transactionStorageKey,
-                        []
-                    );
-
-                const newTransaction = {
-                    id:
-                        generateTransactionId(
-                            transactions
-                        ),
-
-                    borrower:
-                        displayName,
-
-                    department:
-                        currentUser.role ===
-                        "admin"
-                            ? "Administration"
-                            : "Staff",
-
-                    itemType:
-                        selectedItem.type,
-
-                    itemName:
-                        selectedItem.name,
-
-                    quantity: 1,
-
-                    borrowDate:
-                        getLocalDateString(
-                            new Date()
-                        ),
-
-                    dueDate:
-                        getDueDate(),
-
-                    returnDate: "",
-
-                    status:
-                        "Borrowed",
-
-                    purpose:
-                        "Borrowed from Available Items",
-
-                    inventoryItemId:
-                        selectedItem.id,
-
-                    inventoryAdjusted:
-                        true,
-
-                    inventoryReturned:
-                        false
-                };
-
-                transactions.push(
-                    newTransaction
-                );
-
-                saveStoredArray(
-                    transactionStorageKey,
-                    transactions
-                );
-
-                refreshAvailableItems();
-
-                window.alert(
-                    `${selectedItem.name} was borrowed successfully.\n` +
-                    `Transaction ID: ${newTransaction.id}`
-                );
-            } catch (error) {
-                console.error(
-                    "Unable to borrow item:",
-                    error
-                );
-
-                window.alert(
-                    error.message ||
-                    "The item could not be borrowed. Please try again."
-                );
-            } finally {
-                borrowButton.disabled =
-                    false;
-            }
+    function getBorrowableItems(itemType) {
+        if (itemType === "Medical Equipment") {
+            return getAvailableEquipment();
         }
-    );
+
+        if (itemType === "Mobility Asset") {
+            return getAvailableMobility();
+        }
+
+        return [];
+    }
+
+    function getSelectedBorrowItem() {
+        return getBorrowableItems(borrowItemType.value).find(
+            function (item) {
+                return item.id === borrowItemId.value;
+            }
+        ) || null;
+    }
+
+    function updateBorrowAvailability() {
+        const selectedItem = getSelectedBorrowItem();
+
+        if (!selectedItem) {
+            borrowAvailability.textContent =
+                "Select an available item.";
+            borrowQuantity.max = "1";
+            borrowQuantity.disabled = false;
+            return;
+        }
+
+        const availableQuantity = Number(selectedItem.quantity) || 0;
+        const isMobility = selectedItem.type === "Mobility Asset";
+
+        borrowQuantity.max = String(availableQuantity);
+        borrowQuantity.disabled = isMobility;
+
+        if (isMobility) {
+            borrowQuantity.value = "1";
+        } else if (
+            Number(borrowQuantity.value) < 1 ||
+            Number(borrowQuantity.value) > availableQuantity
+        ) {
+            borrowQuantity.value = "1";
+        }
+
+        borrowAvailability.textContent =
+            `${availableQuantity} currently available.`;
+
+        if (isMobility && !normalizeText(assignedPersonnel.value)) {
+            const mobilityRecord = getStoredArray(
+                inventoryKeys.mobility,
+                defaultMobility
+            ).find(function (asset) {
+                return normalizeText(asset.id) === selectedItem.id;
+            });
+
+            assignedPersonnel.value = mobilityRecord
+                ? normalizeText(mobilityRecord.driver)
+                : "";
+        }
+    }
+
+    function populateBorrowItemOptions(selectedId) {
+        const items = getBorrowableItems(borrowItemType.value);
+
+        borrowItemId.innerHTML =
+            '<option value="">Select an available item</option>' +
+            items.map(function (item) {
+                return `<option value="${escapeHTML(item.id)}">` +
+                    `${escapeHTML(item.name)} ` +
+                    `(${escapeHTML(item.quantity)} available)</option>`;
+            }).join("");
+
+        borrowItemId.value = selectedId || "";
+        updateBorrowAvailability();
+    }
+
+    function closeBorrowModal() {
+        borrowModal.classList.remove("show");
+        borrowModal.setAttribute("aria-hidden", "true");
+        borrowForm.reset();
+        borrowQuantity.disabled = false;
+        borrowFormMessage.textContent = "";
+    }
+
+    function openBorrowModal(selectedItem) {
+        borrowForm.reset();
+        borrowFormMessage.textContent = "";
+        borrowerName.value = displayName;
+        borrowDepartment.value = currentUser.role === "admin"
+            ? "Administration"
+            : "Staff";
+        borrowedAt.value = getLocalDateTimeString(new Date());
+        expectedReturnDate.value = getDueDate();
+        expectedReturnDate.min = getLocalDateString(new Date());
+        borrowItemType.value = selectedItem.type;
+        populateBorrowItemOptions(selectedItem.id);
+        borrowModal.classList.add("show");
+        borrowModal.setAttribute("aria-hidden", "false");
+        borrowerName.focus();
+    }
+
+    borrowItemType.addEventListener("change", function () {
+        assignedPersonnel.value = "";
+        populateBorrowItemOptions("");
+    });
+
+    borrowItemId.addEventListener("change", function () {
+        assignedPersonnel.value = "";
+        updateBorrowAvailability();
+    });
+
+    availableItemsBody.addEventListener("click", function (event) {
+        const borrowButton = event.target.closest(".borrow-item-button");
+
+        if (!borrowButton || !availableItemsBody.contains(borrowButton)) {
+            return;
+        }
+
+        const selectedItem = {
+            id: normalizeText(borrowButton.dataset.id),
+            name: normalizeText(borrowButton.dataset.name),
+            type: normalizeText(borrowButton.dataset.type)
+        };
+
+        if (!["Medical Equipment", "Mobility Asset"].includes(
+            selectedItem.type
+        )) {
+            return;
+        }
+
+        openBorrowModal(selectedItem);
+    });
+
+    borrowForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        borrowFormMessage.textContent = "";
+
+        if (!borrowForm.checkValidity()) {
+            borrowForm.reportValidity();
+            borrowFormMessage.textContent =
+                "Complete all required borrowing information.";
+            return;
+        }
+
+        const selectedItem = getSelectedBorrowItem();
+        const quantity = Number(borrowQuantity.value);
+        const borrowDateTime = new Date(borrowedAt.value);
+        const dueDate = new Date(`${expectedReturnDate.value}T23:59:59`);
+
+        if (!selectedItem) {
+            borrowFormMessage.textContent =
+                "The selected item is no longer available.";
+            populateBorrowItemOptions("");
+            return;
+        }
+
+        if (
+            !Number.isInteger(quantity) ||
+            quantity < 1 ||
+            quantity > Number(selectedItem.quantity)
+        ) {
+            borrowFormMessage.textContent =
+                `Quantity must be between 1 and ${selectedItem.quantity}.`;
+            return;
+        }
+
+        if (selectedItem.type === "Mobility Asset" && quantity !== 1) {
+            borrowFormMessage.textContent =
+                "Only one mobility asset can be recorded per transaction.";
+            return;
+        }
+
+        if (
+            Number.isNaN(borrowDateTime.getTime()) ||
+            Number.isNaN(dueDate.getTime()) ||
+            dueDate < borrowDateTime
+        ) {
+            borrowFormMessage.textContent =
+                "Expected return date cannot be earlier than the borrowing date.";
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Confirm borrowing ${quantity} ${selectedItem.name}?\n` +
+            `Borrower: ${normalizeText(borrowerName.value)}\n` +
+            `Expected return: ${expectedReturnDate.value}`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        if (
+            !window.medtrackData ||
+            typeof window.medtrackData.borrowItem !== "function"
+        ) {
+            borrowFormMessage.textContent =
+                "Secure borrowing is unavailable. Apply the latest " +
+                "Supabase migration and refresh the page.";
+            return;
+        }
+
+        submitBorrowButton.disabled = true;
+        borrowFormMessage.textContent = "Recording borrowing...";
+
+        try {
+            const newTransaction = await window.medtrackData.borrowItem({
+                itemType: selectedItem.type,
+                itemId: selectedItem.id,
+                quantity: quantity,
+                borrower: normalizeText(borrowerName.value),
+                department: normalizeText(borrowDepartment.value),
+                borrowedAt: borrowDateTime.toISOString(),
+                dueDate: expectedReturnDate.value,
+                purpose: normalizeText(borrowPurpose.value),
+                assignedPersonnel: normalizeText(assignedPersonnel.value),
+                destination: normalizeText(borrowDestination.value),
+                remarks: normalizeText(borrowRemarks.value)
+            });
+
+            closeBorrowModal();
+            refreshAvailableItems();
+
+            window.alert(
+                `${selectedItem.name} was borrowed successfully.\n` +
+                `Transaction ID: ${newTransaction.id}`
+            );
+        } catch (error) {
+            console.error("Unable to borrow item:", error);
+            borrowFormMessage.textContent = error.message ||
+                "The item could not be borrowed. Please try again.";
+            await window.medtrackData.refresh();
+            populateBorrowItemOptions(selectedItem.id);
+            refreshAvailableItems();
+        } finally {
+            submitBorrowButton.disabled = false;
+        }
+    });
+
+    closeBorrowModalButton.addEventListener("click", closeBorrowModal);
+    cancelBorrowButton.addEventListener("click", closeBorrowModal);
+
+    borrowModal.addEventListener("click", function (event) {
+        if (event.target === borrowModal) {
+            closeBorrowModal();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && borrowModal.classList.contains("show")) {
+            closeBorrowModal();
+        }
+    });
 
     // =====================================
     // SEARCH AND FILTER
