@@ -116,6 +116,7 @@ const vercelConfigPath = join(root, "vercel.json");
 const otpFunctionPath = join(root, "supabase", "functions", "otp-auth", "index.ts");
 const accountFunctionPath = join(root, "supabase", "functions", "dynamic-worker", "index.ts");
 const authGuardPath = join(root, "auth", "supabase-auth.js");
+const settingsScriptPath = join(root, "settings.js");
 
 try {
   const vercelConfig = JSON.parse(readFileSync(vercelConfigPath, "utf8"));
@@ -196,6 +197,16 @@ try {
   }
 } catch (error) {
   failures.push(`supabase-auth: unable to inspect session cleanup controls (${error.message})`);
+}
+
+try {
+  const settingsScript = readFileSync(settingsScriptPath, "utf8");
+
+  if (!/signOut\s*\(\s*\{\s*scope:\s*["']others["']\s*\}/s.test(settingsScript)) {
+    failures.push("settings: password changes must terminate other active sessions");
+  }
+} catch (error) {
+  failures.push(`settings: unable to inspect password session controls (${error.message})`);
 }
 
 if (failures.length > 0) {

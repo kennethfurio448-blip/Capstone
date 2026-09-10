@@ -494,6 +494,25 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
+        const sessionCleanup =
+            await window.medtrackAuth.client.auth.signOut({
+                scope: "others"
+            });
+
+        if (sessionCleanup.error) {
+            console.error(
+                "Unable to terminate other sessions after password change:",
+                sessionCleanup.error
+            );
+
+            showMessage(
+                "Password changed, but other sessions could not be ended. Sign out and sign in again.",
+                "error"
+            );
+
+            return;
+        }
+
         securitySection.reset();
 
         recordAdminEvent("password_changed");
