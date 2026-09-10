@@ -114,6 +114,7 @@ for (const file of files.filter((path) => extname(path) === ".html")) {
 
 const vercelConfigPath = join(root, "vercel.json");
 const otpFunctionPath = join(root, "supabase", "functions", "otp-auth", "index.ts");
+const accountFunctionPath = join(root, "supabase", "functions", "dynamic-worker", "index.ts");
 
 try {
   const vercelConfig = JSON.parse(readFileSync(vercelConfigPath, "utf8"));
@@ -163,6 +164,23 @@ try {
   }
 } catch (error) {
   failures.push(`otp-auth: unable to inspect server verification controls (${error.message})`);
+}
+
+try {
+  const accountFunction = readFileSync(accountFunctionPath, "utf8");
+
+  if (!accountFunction.includes('npm:@supabase/server@1.6.0')) {
+    failures.push("dynamic-worker: @supabase/server must use approved version 1.6.0");
+  }
+  if (
+    !accountFunction.includes("MAX_REQUEST_BYTES") ||
+    !accountFunction.includes("USERNAME_PATTERN") ||
+    !accountFunction.includes("UUID_PATTERN")
+  ) {
+    failures.push("dynamic-worker: server-side account request validation is incomplete");
+  }
+} catch (error) {
+  failures.push(`dynamic-worker: unable to inspect account security controls (${error.message})`);
 }
 
 if (failures.length > 0) {

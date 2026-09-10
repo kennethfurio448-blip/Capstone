@@ -551,9 +551,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        if (usernameValue.length < 4) {
+        if (!/^[a-z0-9._ -]{4,32}$/i.test(usernameValue)) {
             formMessage.textContent =
-                "Username must contain at least 4 characters.";
+                "Username must contain 4 to 32 letters, numbers, spaces, periods, underscores, or hyphens.";
 
             return;
         }

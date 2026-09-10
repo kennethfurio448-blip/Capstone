@@ -1,5 +1,10 @@
-import { withSupabase } from "npm:@supabase/server@^1";
+import { withSupabase } from "npm:@supabase/server@1.6.0";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
+
+const MAX_REQUEST_BYTES = 64 * 1024;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const GMAIL_PATTERN = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@gmail\.com$/i;
+const USERNAME_PATTERN = /^[a-z0-9._ -]{4,32}$/i;
 
 function createAdminClient() {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -124,6 +129,15 @@ export default {
   fetch: withSupabase(
     { auth: "user" },
     async (request, context) => {
+      if (request.method !== "POST") {
+        return errorResponse("Method not allowed.", 405);
+      }
+
+      const contentType = request.headers.get("Content-Type") || "";
+      if (!contentType.toLowerCase().includes("application/json")) {
+        return errorResponse("Content-Type must be application/json.", 415);
+      }
+
       const supabaseAdmin = createAdminClient();
 
       if (!supabaseAdmin) {
@@ -164,7 +178,15 @@ export default {
       let body: Record<string, unknown>;
 
       try {
-        body = await request.json();
+        const requestText = await request.text();
+        if (new TextEncoder().encode(requestText).byteLength > MAX_REQUEST_BYTES) {
+          return errorResponse("Request body is too large.", 413);
+        }
+        const parsedBody = JSON.parse(requestText);
+        if (!parsedBody || typeof parsedBody !== "object" || Array.isArray(parsedBody)) {
+          return errorResponse("Invalid request body.");
+        }
+        body = parsedBody as Record<string, unknown>;
       } catch {
         return errorResponse("Invalid request body.");
       }
@@ -229,8 +251,8 @@ export default {
 
       const userId = String(body.userId || "").trim();
 
-      if (!userId) {
-        return errorResponse("A user ID is required.");
+      if (!UUID_PATTERN.test(userId)) {
+        return errorResponse("A valid user ID is required.");
       }
 
       if (action === "update") {
@@ -241,11 +263,15 @@ export default {
         const role = normalizeRole(body.role);
         const status = normalizeStatus(body.status);
 
-        if (!email || !fullName || !username) {
-          return errorResponse("All account fields are required.");
+        if (fullName.length < 2 || fullName.length > 100) {
+          return errorResponse("Full name must contain 2 to 100 characters.");
         }
 
-        if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@gmail\.com$/i.test(email)) {
+        if (!USERNAME_PATTERN.test(username)) {
+          return errorResponse("Username must contain 4 to 32 letters, numbers, spaces, periods, underscores, or hyphens.");
+        }
+
+        if (email.length > 254 || !GMAIL_PATTERN.test(email)) {
           return errorResponse("Enter a valid Gmail address.");
         }
 
