@@ -113,6 +113,7 @@ for (const file of files.filter((path) => extname(path) === ".html")) {
 }
 
 const vercelConfigPath = join(root, "vercel.json");
+const otpFunctionPath = join(root, "supabase", "functions", "otp-auth", "index.ts");
 
 try {
   const vercelConfig = JSON.parse(readFileSync(vercelConfigPath, "utf8"));
@@ -129,6 +130,39 @@ try {
   }
 } catch (error) {
   failures.push(`vercel.json: invalid or missing deployment configuration (${error.message})`);
+}
+
+try {
+  const otpFunction = readFileSync(otpFunctionPath, "utf8");
+  const registrationStart = otpFunction.indexOf('if (action === "verify-registration")');
+  const registrationEnd = otpFunction.indexOf('if (action === "request-password-reset")');
+  const resetStart = otpFunction.indexOf('if (action === "reset-password")');
+  const resetEnd = otpFunction.indexOf('if (action === "resend")');
+  const registrationBlock = otpFunction.slice(registrationStart, registrationEnd);
+  const resetBlock = otpFunction.slice(resetStart, resetEnd);
+
+  if (
+    registrationStart < 0 ||
+    registrationEnd < 0 ||
+    registrationBlock.indexOf("validateEmail(email)") > registrationBlock.indexOf("verifyChallenge(") ||
+    registrationBlock.indexOf("validatePassword(password)") > registrationBlock.indexOf("verifyChallenge(")
+  ) {
+    failures.push("otp-auth: registration data must be validated before consuming an OTP");
+  }
+
+  if (
+    resetStart < 0 ||
+    resetEnd < 0 ||
+    resetBlock.indexOf("validatePassword(password)") > resetBlock.indexOf("verifyChallenge(")
+  ) {
+    failures.push("otp-auth: reset password must be validated before consuming an OTP");
+  }
+
+  if (!otpFunction.includes("p_destination: destination")) {
+    failures.push("otp-auth: registration OTP must be bound to its verified Gmail destination");
+  }
+} catch (error) {
+  failures.push(`otp-auth: unable to inspect server verification controls (${error.message})`);
 }
 
 if (failures.length > 0) {

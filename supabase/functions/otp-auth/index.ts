@@ -310,6 +310,7 @@ async function verifyChallenge(
   otp: string,
   purpose: string,
   requester: string | null = null,
+  destination: string | null = null,
 ) {
   const candidate = /^\d{6}$/.test(otp)
     ? await otpHash(challengeId, otp)
@@ -319,6 +320,7 @@ async function verifyChallenge(
     p_purpose: purpose,
     p_candidate_hash: candidate,
     p_requester: requester,
+    p_destination: destination,
   });
   if (error) throw error;
   if (data?.status === "verified") return data.challenge;
@@ -328,6 +330,7 @@ async function verifyChallenge(
   }
   if (data?.status === "locked") throw new Error("Too many incorrect attempts. Request a new code.");
   if (data?.status === "forbidden") throw new Error("This verification request belongs to another administrator.");
+  if (data?.status === "destination_mismatch") throw new Error("The verified Gmail address was changed.");
   if (data?.status === "used") throw new Error("This verification code was already used.");
   throw new Error("This verification code has expired. Request a new code.");
 }
@@ -370,9 +373,6 @@ Deno.serve(async (request) => {
     if (action === "verify-registration") {
       const requestedBy = await requireAdmin(request, supabase);
       const challengeId = String(body.challengeId || "");
-      await enforceRateLimit(supabase, action, `client:${address}`, 30, 900, 900);
-      await enforceRateLimit(supabase, action, `challenge:${challengeId}`, 8, 900, 900);
-      const challenge = await verifyChallenge(supabase, challengeId, String(body.otp || ""), "registration", requestedBy);
       const email = cleanEmail(body.email);
       const password = String(body.password || "");
       const fullName = String(body.fullName || "").trim();
@@ -386,7 +386,16 @@ Deno.serve(async (request) => {
         !/^[a-z0-9._-]{4,32}$/i.test(username) ||
         !["admin", "staff"].includes(role)
       ) throw new Error("The account information is invalid.");
-      if (email !== challenge.destination) throw new Error("The verified Gmail address was changed.");
+      await enforceRateLimit(supabase, action, `client:${address}`, 30, 900, 900);
+      await enforceRateLimit(supabase, action, `challenge:${challengeId}`, 8, 900, 900);
+      const challenge = await verifyChallenge(
+        supabase,
+        challengeId,
+        String(body.otp || ""),
+        "registration",
+        requestedBy,
+        email,
+      );
 
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email, password, email_confirm: true,
@@ -431,11 +440,11 @@ Deno.serve(async (request) => {
 
     if (action === "reset-password") {
       const challengeId = String(body.challengeId || "");
+      const password = String(body.password || "");
+      validatePassword(password);
       await enforceRateLimit(supabase, action, `client:${address}`, 30, 900, 900);
       await enforceRateLimit(supabase, action, `challenge:${challengeId}`, 8, 900, 900);
       const challenge = await verifyChallenge(supabase, challengeId, String(body.otp || ""), "password_reset");
-      const password = String(body.password || "");
-      validatePassword(password);
       if (!challenge.target_user_id) throw new Error("This verification request is no longer available.");
       const { error } = await supabase.auth.admin.updateUserById(challenge.target_user_id, { password });
       if (error) throw error;
