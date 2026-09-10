@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const dateFilter = document.getElementById("dateFilter");
     const refreshLogs = document.getElementById("refreshLogs");
     const exportLogs = document.getElementById("exportLogs");
+    const CSV_FORMULA_PATTERN = /^[\t\r\n ]*[=+\-@]/;
 
     const currentUser = await window.medtrackAuth.requireRoles(["admin"]);
 
@@ -200,7 +201,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     function escapeCSV(value) {
-        return `"${String(value ?? "").replaceAll('"', '""')}"`;
+        let text = String(value ?? "");
+
+        if (CSV_FORMULA_PATTERN.test(text)) {
+            text = `'${text}`;
+        }
+
+        return `"${text.replaceAll('"', '""')}"`;
     }
 
     logSearch.addEventListener("input", renderLogs);

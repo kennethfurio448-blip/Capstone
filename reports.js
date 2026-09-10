@@ -44,6 +44,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const reportMessage =
         document.getElementById("reportMessage");
 
+    const CSV_FORMULA_PATTERN = /^[\t\r\n ]*[=+\-@]/;
+
     const reportTitle =
         document.getElementById("reportTitle");
 
@@ -600,7 +602,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     function escapeCSV(value) {
-        const text = String(value ?? "");
+        let text = String(value ?? "");
+
+        if (CSV_FORMULA_PATTERN.test(text)) {
+            text = `'${text}`;
+        }
 
         return `"${text.replaceAll('"', '""')}"`;
     }

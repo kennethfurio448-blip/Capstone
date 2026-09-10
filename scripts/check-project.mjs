@@ -117,6 +117,7 @@ const otpFunctionPath = join(root, "supabase", "functions", "otp-auth", "index.t
 const accountFunctionPath = join(root, "supabase", "functions", "dynamic-worker", "index.ts");
 const authGuardPath = join(root, "auth", "supabase-auth.js");
 const settingsScriptPath = join(root, "settings.js");
+const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
 
 try {
   const vercelConfig = JSON.parse(readFileSync(vercelConfigPath, "utf8"));
@@ -207,6 +208,18 @@ try {
   }
 } catch (error) {
   failures.push(`settings: unable to inspect password session controls (${error.message})`);
+}
+
+for (const csvExportPath of csvExportPaths) {
+  try {
+    const csvExportScript = readFileSync(csvExportPath, "utf8");
+
+    if (!csvExportScript.includes("CSV_FORMULA_PATTERN")) {
+      failures.push(`${relative(root, csvExportPath)}: CSV formula injection protection is missing`);
+    }
+  } catch (error) {
+    failures.push(`${relative(root, csvExportPath)}: unable to inspect CSV protection (${error.message})`);
+  }
 }
 
 if (failures.length > 0) {
