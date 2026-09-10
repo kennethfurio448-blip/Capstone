@@ -1,6 +1,3 @@
--- Server-side OTP challenges and required account contact information.
--- This table is intentionally inaccessible to browser roles. Edge Functions use
--- the service-role key and only return masked destinations.
 
 alter table public.profiles
     add column if not exists email text,
@@ -42,8 +39,6 @@ alter table public.otp_challenges enable row level security;
 revoke all on table public.otp_challenges from anon, authenticated;
 grant select, insert, update, delete on table public.otp_challenges to service_role;
 
--- Locks one challenge row while checking it so parallel requests cannot bypass
--- the attempt limit or successfully reuse the same code.
 create or replace function public.medtrack_verify_otp_challenge(
     p_id uuid,
     p_purpose text,

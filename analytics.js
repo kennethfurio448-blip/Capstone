@@ -1,6 +1,3 @@
-// =====================================
-// MEDTRACK DATA ANALYTICS
-// =====================================
 
 document.addEventListener("DOMContentLoaded", function () {
     function getStoredData(key) {

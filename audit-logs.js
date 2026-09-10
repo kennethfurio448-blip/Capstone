@@ -1,7 +1,3 @@
-// =====================================
-// MEDTRACK SERVER AUDIT LOGS
-// ADMIN ONLY
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
     "use strict";

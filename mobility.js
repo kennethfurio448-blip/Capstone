@@ -1,12 +1,6 @@
-// =====================================
-// MEDTRACK MOBILITY ASSETS
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
 
-    // =====================================
-    // ELEMENTS
-    // =====================================
 
     const dashboardLink =
         document.getElementById("dashboardLink");
@@ -59,7 +53,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const statusFilter =
         document.getElementById("statusFilter");
 
-    // Vehicle modal
     const vehicleModal =
         document.getElementById("vehicleModal");
 
@@ -108,7 +101,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const formMessage =
         document.getElementById("formMessage");
 
-    // Delete modal
     const deleteModal =
         document.getElementById("deleteModal");
 
@@ -120,9 +112,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let vehicleToDelete = null;
 
-    // =====================================
-    // LOGIN AND ROLE CHECK
-    // =====================================
 
     const currentUser =
         await window.medtrackAuth.requireRoles(["admin", "staff"]);
@@ -158,9 +147,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     openAddModalButton.hidden = !canManageInventory;
 
-    // =====================================
-    // DEFAULT MOBILITY ASSETS
-    // =====================================
 
     const defaultVehicles = [
         {
@@ -209,9 +195,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     ];
 
-    // =====================================
-    // LOCAL STORAGE
-    // =====================================
 
     function getVehicles() {
         const savedVehicles =
@@ -250,9 +233,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    // =====================================
-    // SAFE TEXT
-    // =====================================
 
     function escapeHTML(value) {
         return String(value)
@@ -278,9 +258,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             : "For Repair";
     }
 
-    // =====================================
-    // DATE FUNCTIONS
-    // =====================================
 
     function formatDate(dateValue) {
         if (!dateValue) {
@@ -310,9 +287,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return scheduledDate < today;
     }
 
-    // =====================================
-    // CSS CLASSES
-    // =====================================
 
     function getStatusClass(status) {
         if (status === "Available") {
@@ -346,9 +320,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return "condition-damaged";
     }
 
-    // =====================================
-    // GENERATE VEHICLE ID
-    // =====================================
 
     function generateVehicleId(vehicles) {
         let highestNumber = 0;
@@ -366,9 +337,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return `MOB-${String(highestNumber + 1).padStart(3, "0")}`;
     }
 
-    // =====================================
-    // RENDER VEHICLES
-    // =====================================
 
     function renderVehicles() {
         const vehicles = getVehicles();
@@ -502,9 +470,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updateStatistics(vehicles);
     }
 
-    // =====================================
-    // UPDATE STATISTICS
-    // =====================================
 
     function updateStatistics(vehicles) {
         let availableCount = 0;
@@ -541,9 +506,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         notificationCount.textContent = alertsCount;
     }
 
-    // =====================================
-    // OPEN ADD MODAL
-    // =====================================
 
     function openAddModal() {
         if (!canManageInventory) {
@@ -560,9 +522,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         vehicleName.focus();
     }
 
-    // =====================================
-    // OPEN EDIT MODAL
-    // =====================================
 
     function openEditModal(vehicleId) {
         if (!canManageInventory) {
@@ -622,9 +581,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         formMessage.textContent = "";
     }
 
-    // =====================================
-    // SAVE OR UPDATE VEHICLE
-    // =====================================
 
     vehicleForm.addEventListener("submit", function (event) {
         event.preventDefault();
@@ -678,7 +634,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const vehicles = getVehicles();
         const editId = editingVehicleId.value;
 
-        // Check duplicate plate number
         const duplicatePlate = vehicles.some(function (vehicle) {
             return (
                 vehicle.plateNumber.toLowerCase() ===
@@ -734,9 +689,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderVehicles();
     });
 
-    // =====================================
-    // EDIT AND DELETE ACTIONS
-    // =====================================
 
     vehicleTableBody.addEventListener("click", function (event) {
         const button = event.target.closest("button");
@@ -787,9 +739,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         deleteModal.classList.remove("show");
     });
 
-    // =====================================
-    // SEARCH AND FILTERS
-    // =====================================
 
     vehicleSearch.addEventListener(
         "input",
@@ -806,9 +755,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderVehicles
     );
 
-    // =====================================
-    // MODAL BUTTONS
-    // =====================================
 
     openAddModalButton.addEventListener(
         "click",
@@ -847,9 +793,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // =====================================
-    // NOTIFICATIONS
-    // =====================================
 
     notificationButton.addEventListener("click", function () {
         const vehicles = getVehicles();
@@ -871,9 +814,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     });
 
-    // =====================================
-    // LOGOUT
-    // =====================================
 
     logoutButton.addEventListener("click", async function () {
         const confirmLogout = confirm(
@@ -887,9 +827,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         await window.medtrackAuth.signOutAndRedirect();
     });
 
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
 
     renderVehicles();
 });

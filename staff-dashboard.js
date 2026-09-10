@@ -1,6 +1,3 @@
-// =====================================
-// MEDTRACK STAFF DASHBOARD
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
     const currentUserName =
@@ -29,7 +26,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         await window.medtrackData.refresh();
     }
 
-    // Display Staff name
     const displayName =
         currentUser.fullname ||
         currentUser.username ||
@@ -43,7 +39,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         welcomeName.textContent = displayName;
     }
 
-    // Staff inventory search
     if (searchInput) {
         searchInput.addEventListener("input", function () {
             const searchValue =
@@ -71,7 +66,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // Notification button
     if (notificationButton) {
         notificationButton.addEventListener("click", function () {
             const alertsSection =
@@ -87,7 +81,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // Logout Staff
     if (logoutButton) {
         logoutButton.addEventListener("click", async function () {
             const confirmLogout = confirm(

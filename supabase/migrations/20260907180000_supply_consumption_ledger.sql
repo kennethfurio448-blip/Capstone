@@ -1,5 +1,3 @@
--- Medical supply additions and emergency consumption ledger.
--- Stock changes and their audit records are committed atomically.
 
 create table if not exists public.medical_supply_transactions (
     id bigint generated always as identity primary key,
@@ -373,7 +371,6 @@ grant execute on function public.medtrack_consume_medical_supply(
 ) to authenticated;
 
 
--- Represent stock that predates this ledger as an opening addition.
 insert into public.medical_supply_transactions (
     operation_key,
     transaction_type,
@@ -403,5 +400,4 @@ from public.medical_supplies
 where quantity > 0
 on conflict (operation_key) do nothing;
 
--- Make the new table and RPC signatures visible to PostgREST immediately.
 notify pgrst, 'reload schema';

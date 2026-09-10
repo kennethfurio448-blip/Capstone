@@ -1,5 +1,3 @@
--- Atomic OTP abuse protection. Keys are HMAC hashes created by the Edge
--- Function, so raw email addresses and client network addresses are not stored.
 
 create table if not exists public.otp_rate_limits (
     key_hash text not null,

@@ -1,6 +1,3 @@
-/* =====================================
-   MEDTRACK AUDIT LOGS
-===================================== */
 
 * {
     margin: 0;
@@ -48,9 +45,6 @@ a {
     text-decoration: none;
 }
 
-/* =====================================
-   PAGE LAYOUT
-===================================== */
 
 .page-layout {
     display: flex;
@@ -58,9 +52,6 @@ a {
     min-height: 100vh;
 }
 
-/* =====================================
-   ADMIN SIDEBAR
-===================================== */
 
 .sidebar {
     position: fixed;
@@ -176,7 +167,6 @@ a {
     color: var(--white);
 }
 
-/* Logout */
 
 .logout-button {
     width: 100%;
@@ -213,7 +203,6 @@ a {
     color: var(--white);
 }
 
-/* Sidebar scrollbar */
 
 .sidebar::-webkit-scrollbar {
     width: 6px;
@@ -228,9 +217,6 @@ a {
     border-radius: 10px;
 }
 
-/* =====================================
-   MAIN CONTENT
-===================================== */
 
 .main-content {
     width: calc(100% - 270px);
@@ -239,9 +225,6 @@ a {
     padding: 28px;
 }
 
-/* =====================================
-   TOP BAR
-===================================== */
 
 .topbar {
     margin-bottom: 26px;
@@ -306,7 +289,6 @@ a {
     border-color: var(--red);
 }
 
-/* Admin profile */
 
 .user-profile {
     min-width: 165px;
@@ -355,9 +337,6 @@ a {
     font-size: 11px;
 }
 
-/* =====================================
-   STATISTIC CARDS
-===================================== */
 
 .statistics-grid {
     margin-bottom: 25px;
@@ -437,9 +416,6 @@ a {
     background-color: #fff8e1;
 }
 
-/* =====================================
-   LOGS CARD
-===================================== */
 
 .logs-card {
     padding: 24px;
@@ -493,9 +469,6 @@ a {
     border-color: var(--blue);
 }
 
-/* =====================================
-   SEARCH AND FILTERS
-===================================== */
 
 .logs-tools {
     margin-bottom: 20px;
@@ -555,9 +528,6 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
-/* =====================================
-   LOG TABLE
-===================================== */
 
 .table-wrapper {
     width: 100%;
@@ -597,7 +567,6 @@ a {
     background-color: #fffafa;
 }
 
-/* Role badges */
 
 .role-badge,
 .action-badge {
@@ -620,7 +589,6 @@ a {
     background-color: #e3f2fd;
 }
 
-/* Action badges */
 
 .action-login,
 .action-logout {
@@ -645,7 +613,6 @@ a {
     background-color: #ffebee;
 }
 
-/* Empty logs */
 
 .empty-state {
     display: none;
@@ -674,9 +641,6 @@ a {
     font-size: 13px;
 }
 
-/* =====================================
-   CLEAR LOGS MODAL
-===================================== */
 
 .modal-overlay {
     position: fixed;
@@ -789,9 +753,6 @@ a {
     background-color: #a91515;
 }
 
-/* =====================================
-   RESPONSIVE DESIGN
-===================================== */
 
 @media (max-width: 1200px) {
     .statistics-grid {

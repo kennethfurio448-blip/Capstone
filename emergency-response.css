@@ -1,6 +1,3 @@
-/* =====================================
-   MEDTRACK EMERGENCY RESPONSE
-===================================== */
 
 * {
     margin: 0;
@@ -53,9 +50,6 @@ a {
     text-decoration: none;
 }
 
-/* =====================================
-   PAGE LAYOUT
-===================================== */
 
 .page-layout {
     display: flex;
@@ -63,9 +57,6 @@ a {
     min-height: 100vh;
 }
 
-/* =====================================
-   SIDEBAR
-===================================== */
 
 .sidebar {
     position: fixed;
@@ -87,9 +78,6 @@ a {
     overflow-y: auto;
 }
 
-/* =====================================
-   BRAND
-===================================== */
 
 .brand {
     padding: 0 10px 22px;
@@ -126,9 +114,6 @@ a {
     font-size: 12px;
 }
 
-/* =====================================
-   SIDEBAR NAVIGATION
-===================================== */
 
 .menu-label {
     margin: 25px 12px 10px;
@@ -200,9 +185,6 @@ a {
     display: none;
 }
 
-/* =====================================
-   LOGOUT
-===================================== */
 
 .logout-button {
     width: 100%;
@@ -243,9 +225,6 @@ a {
     color: var(--white);
 }
 
-/* =====================================
-   SIDEBAR SCROLLBAR
-===================================== */
 
 .sidebar::-webkit-scrollbar {
     width: 6px;
@@ -260,9 +239,6 @@ a {
     border-radius: 10px;
 }
 
-/* =====================================
-   MAIN CONTENT
-===================================== */
 
 .main-content {
     width: calc(100% - 270px);
@@ -271,9 +247,6 @@ a {
     padding: 28px;
 }
 
-/* =====================================
-   TOP BAR
-===================================== */
 
 .topbar {
     margin-bottom: 26px;
@@ -300,9 +273,6 @@ a {
     gap: 14px;
 }
 
-/* =====================================
-   NOTIFICATION
-===================================== */
 
 .notification-button {
     position: relative;
@@ -340,9 +310,6 @@ a {
     font-weight: bold;
 }
 
-/* =====================================
-   USER PROFILE
-===================================== */
 
 .user-profile {
     min-width: 165px;
@@ -393,9 +360,6 @@ a {
     text-transform: capitalize;
 }
 
-/* =====================================
-   STATISTIC CARDS
-===================================== */
 
 .statistics-grid {
     margin-bottom: 25px;
@@ -475,9 +439,6 @@ a {
     background-color: #e8f5e9;
 }
 
-/* =====================================
-   RESPONSE RECORDS
-===================================== */
 
 .response-card {
     padding: 24px;
@@ -531,9 +492,6 @@ a {
     box-shadow: 0 6px 16px rgba(183, 28, 28, 0.25);
 }
 
-/* =====================================
-   SEARCH AND FILTERS
-===================================== */
 
 .response-tools {
     margin-bottom: 20px;
@@ -591,9 +549,6 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
-/* =====================================
-   RESPONSE TABLE
-===================================== */
 
 .table-wrapper {
     width: 100%;
@@ -633,9 +588,6 @@ a {
     background-color: #fffafa;
 }
 
-/* =====================================
-   STATUS AND PRIORITY BADGES
-===================================== */
 
 .status-badge,
 .priority-badge {
@@ -688,9 +640,6 @@ a {
     background-color: #e8f5e9;
 }
 
-/* =====================================
-   TABLE ACTIONS
-===================================== */
 
 .table-actions {
     display: flex;
@@ -752,9 +701,6 @@ a {
     background-color: var(--red);
 }
 
-/* =====================================
-   EMPTY STATE
-===================================== */
 
 .empty-state {
     display: none;
@@ -783,9 +729,6 @@ a {
     font-size: 13px;
 }
 
-/* =====================================
-   MODALS
-===================================== */
 
 .modal-overlay {
     position: fixed;
@@ -871,9 +814,6 @@ a {
     background-color: var(--primary);
 }
 
-/* =====================================
-   RESPONSE FORM
-===================================== */
 
 .form-grid {
     display: grid;
@@ -940,7 +880,6 @@ a {
     cursor: not-allowed;
 }
 
-/* New inventory availability text */
 
 .field-help {
     margin-top: 6px;
@@ -960,9 +899,6 @@ a {
     font-weight: bold;
 }
 
-/* =====================================
-   MODAL BUTTONS
-===================================== */
 
 .modal-actions {
     margin-top: 22px;
@@ -1032,9 +968,6 @@ a {
     background-color: #a91515;
 }
 
-/* =====================================
-   CONFIRMATION MODALS
-===================================== */
 
 .action-modal {
     max-width: 430px;
@@ -1080,9 +1013,6 @@ a {
     justify-content: center;
 }
 
-/* =====================================
-   RESPONSIVE DESIGN
-===================================== */
 
 @media (max-width: 1200px) {
     .statistics-grid {

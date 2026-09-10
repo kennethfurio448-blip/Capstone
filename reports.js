@@ -1,13 +1,6 @@
-// =====================================
-// MEDTRACK REPORTS
-// ADMIN ONLY
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
 
-    // =====================================
-    // ELEMENTS
-    // =====================================
 
     const currentUserName =
         document.getElementById("currentUserName");
@@ -73,9 +66,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     let currentReportRows = [];
     let currentReportName = "medtrack-report";
 
-    // =====================================
-    // ADMIN ACCESS CHECK
-    // =====================================
 
     const currentUser =
         await window.medtrackAuth.requireRoles(["admin"]);
@@ -93,9 +83,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         currentUser.username ||
         "Administrator";
 
-    // =====================================
-    // STORAGE HELPERS
-    // =====================================
 
     function getStoredArray(key) {
         const value = localStorage.getItem(key);
@@ -145,9 +132,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return getStoredArray("medtrackAccounts");
     }
 
-    // =====================================
-    // SUMMARY COUNTS
-    // =====================================
 
     function updateSummaryCards() {
         suppliesCount.textContent = getSupplies().length;
@@ -156,9 +140,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         borrowingCount.textContent = getBorrowing().length;
     }
 
-    // =====================================
-    // DATE HELPERS
-    // =====================================
 
     function formatDate(dateValue) {
         if (!dateValue) {
@@ -223,9 +204,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return true;
     }
 
-    // =====================================
-    // STATUS HELPERS
-    // =====================================
 
     function getSupplyStatus(supply) {
         const today = new Date();
@@ -275,9 +253,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             .replaceAll(" ", "-");
     }
 
-    // =====================================
-    // SAFE TEXT
-    // =====================================
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -288,9 +263,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             .replaceAll("'", "&#039;");
     }
 
-    // =====================================
-    // BUILD REPORT INFORMATION
-    // =====================================
 
     function getReportInformation(type) {
         if (type === "supplies") {
@@ -527,9 +499,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    // =====================================
-    // GENERATE REPORT
-    // =====================================
 
     function generateReport() {
         reportMessage.textContent = "";
@@ -569,9 +538,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    // =====================================
-    // RENDER REPORT TABLE
-    // =====================================
 
     function renderReportTable(
         headers,
@@ -632,9 +598,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // =====================================
-    // EXPORT CSV
-    // =====================================
 
     function escapeCSV(value) {
         const text = String(value ?? "");
@@ -702,9 +665,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return `${year}-${month}-${day}`;
     }
 
-    // =====================================
-    // BUTTON EVENTS
-    // =====================================
 
     generateReportButton.addEventListener(
         "click",
@@ -731,9 +691,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         reportMessage.textContent = "";
     });
 
-    // =====================================
-    // LOGOUT
-    // =====================================
 
     logoutButton.addEventListener("click", async function () {
         const confirmLogout = confirm(
@@ -747,9 +704,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         await window.medtrackAuth.signOutAndRedirect();
     });
 
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
 
     updateSummaryCards();
     generateReport();

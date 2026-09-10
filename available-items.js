@@ -1,14 +1,7 @@
-// =====================================
-// MEDTRACK AVAILABLE ITEMS
-// ADMIN AND STAFF
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
     "use strict";
 
-    // =====================================
-    // AUTHENTICATION
-    // =====================================
 
     const currentUser =
         await window.medtrackAuth.requireRoles([
@@ -24,9 +17,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         await window.medtrackData.refresh();
     }
 
-    // =====================================
-    // HTML ELEMENTS
-    // =====================================
 
     const dashboardLink =
         document.getElementById("dashboardLink");
@@ -126,9 +116,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
-    // =====================================
-    // CURRENT USER
-    // =====================================
 
     const displayName =
         currentUser.fullname ||
@@ -159,9 +146,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         adminNavigation.hidden = true;
     }
 
-    // =====================================
-    // STORAGE KEYS
-    // =====================================
 
     const inventoryKeys = {
         supplies:
@@ -177,9 +161,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const transactionStorageKey =
         "medtrackBorrowTransactions";
 
-    // =====================================
-    // DEFAULT MEDICAL SUPPLIES
-    // =====================================
 
     const defaultSupplies = [
         {
@@ -220,9 +201,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     ];
 
-    // =====================================
-    // DEFAULT MEDICAL EQUIPMENT
-    // =====================================
 
     const defaultEquipment = [
         {
@@ -267,9 +245,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     ];
 
-    // =====================================
-    // DEFAULT MOBILITY ASSETS
-    // =====================================
 
     const defaultMobility = [
         {
@@ -318,9 +293,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     ];
 
-    // =====================================
-    // STORAGE FUNCTIONS
-    // =====================================
 
     function cloneRecords(records) {
         return records.map(function (record) {
@@ -336,8 +308,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const savedData =
                 localStorage.getItem(storageKey);
 
-            // Only add defaults when the key
-            // has never existed.
             if (savedData === null) {
                 const initialRecords =
                     cloneRecords(defaultRecords);
@@ -377,9 +347,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    // =====================================
-    // TEXT FUNCTIONS
-    // =====================================
 
     function normalizeText(value) {
         return String(value ?? "").trim();
@@ -399,9 +366,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             .replaceAll("'", "&#039;");
     }
 
-    // =====================================
-    // DATE FUNCTIONS
-    // =====================================
 
     function getToday() {
         const today = new Date();
@@ -436,7 +400,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     function getDueDate() {
         const dueDate = new Date();
 
-        // Borrowing duration is seven days.
         dueDate.setDate(
             dueDate.getDate() + 7
         );
@@ -495,9 +458,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    // =====================================
-    // AVAILABLE MEDICAL SUPPLIES
-    // =====================================
 
     function getAvailableSupplies() {
         const supplies =
@@ -556,9 +516,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
     }
 
-    // =====================================
-    // AVAILABLE MEDICAL EQUIPMENT
-    // =====================================
 
     function getAvailableEquipment() {
         const equipment =
@@ -629,9 +586,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
     }
 
-    // =====================================
-    // AVAILABLE MOBILITY ASSETS
-    // =====================================
 
     function getAvailableMobility() {
         const mobilityAssets =
@@ -704,9 +658,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
     }
 
-    // =====================================
-    // COMBINE AVAILABLE ITEMS
-    // =====================================
 
     function getAllAvailableItems() {
         return [
@@ -716,9 +667,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         ];
     }
 
-    // =====================================
-    // UPDATE SUMMARY CARDS
-    // =====================================
 
     function updateSummaryCards() {
         const supplies =
@@ -745,9 +693,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             mobility.length;
     }
 
-    // =====================================
-    // DISPLAY AVAILABLE ITEMS
-    // =====================================
 
     function displayAvailableItems() {
         const searchValue =
@@ -878,9 +823,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         displayAvailableItems();
     }
 
-    // =====================================
-    // TRANSACTION ID
-    // =====================================
 
     function generateTransactionId(
         transactions
@@ -908,9 +850,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         ).padStart(3, "0")}`;
     }
 
-    // =====================================
-    // DEDUCT BORROWED ITEM
-    // =====================================
 
     function deductBorrowedItem(
         selectedItem
@@ -1019,9 +958,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return true;
     }
 
-    // =====================================
-    // BORROWING DETAILS FORM
-    // =====================================
 
     function getBorrowableItems(itemType) {
         if (itemType === "Medical Equipment") {
@@ -1279,9 +1215,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // =====================================
-    // SEARCH AND FILTER
-    // =====================================
 
     availableItemSearch.addEventListener(
         "input",
@@ -1293,9 +1226,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         displayAvailableItems
     );
 
-    // =====================================
-    // AUTOMATIC INVENTORY REFRESH
-    // =====================================
 
     window.addEventListener(
         "storage",
@@ -1325,9 +1255,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         refreshAvailableItems
     );
 
-    // =====================================
-    // LOGOUT
-    // =====================================
 
     logoutButton.addEventListener(
         "click",
@@ -1346,9 +1273,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
 
     refreshAvailableItems();
 });

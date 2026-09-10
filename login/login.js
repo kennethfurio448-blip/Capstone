@@ -1,6 +1,3 @@
-// =====================================
-// MEDTRACK LOGIN
-// =====================================
 
 const loginForm = document.getElementById("loginForm");
 const formMessage = document.getElementById("formMessage");
@@ -27,7 +24,6 @@ const resetPasswordButton = document.getElementById("resetPasswordButton");
 let recoveryChallengeId = "";
 let recoveryCooldownTimer = null;
 
-// Show message
 function showMessage(message, type) {
     formMessage.textContent = message;
     formMessage.className = `form-message ${type}`;
@@ -41,7 +37,6 @@ if (new URLSearchParams(window.location.search).get("reason") === "session-expir
     window.history.replaceState({}, "", window.location.pathname);
 }
 
-// Show or hide password
 togglePasswordButton.addEventListener("click", function () {
     const icon = togglePasswordButton.querySelector("i");
 
@@ -58,7 +53,6 @@ togglePasswordButton.addEventListener("click", function () {
     }
 });
 
-// Login form
 loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -70,7 +64,6 @@ loginForm.addEventListener("submit", async function (event) {
     const rememberMe = rememberMeInput.checked;
     const submitButton = loginForm.querySelector("button[type='submit']");
 
-    // Check empty fields
     if (!email || !password) {
         showMessage(
             "Please enter your email and password.",
@@ -158,7 +151,6 @@ function closeRecovery() {
     recoveryChallengeId = "";
 }
 
-// Forgot password and OTP reset flow
 forgotPasswordLink.addEventListener("click", function (event) {
     event.preventDefault();
     recoveryEmailInput.value = emailInput.value.trim().toLowerCase();

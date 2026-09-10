@@ -1,6 +1,3 @@
-/* =====================================
-   MEDTRACK ADMIN DASHBOARD
-===================================== */
 
 * {
     margin: 0;
@@ -42,9 +39,6 @@ a {
     text-decoration: none;
 }
 
-/* =====================================
-   PAGE LAYOUT
-===================================== */
 
 .page-layout {
     display: flex;
@@ -52,9 +46,6 @@ a {
     min-height: 100vh;
 }
 
-/* =====================================
-   ADMIN SIDEBAR
-===================================== */
 
 .sidebar {
     position: fixed;
@@ -178,7 +169,6 @@ a {
     border-left-color: var(--primary);
 }
 
-/* Logout button */
 
 .logout-button {
     width: 100%;
@@ -216,7 +206,6 @@ a {
     color: var(--white);
 }
 
-/* Sidebar scrollbar */
 
 .sidebar::-webkit-scrollbar {
     width: 6px;
@@ -231,9 +220,6 @@ a {
     border-radius: 10px;
 }
 
-/* =====================================
-   MAIN CONTENT
-===================================== */
 
 .main-content {
     width: calc(100% - 270px);
@@ -242,9 +228,6 @@ a {
     padding: 28px;
 }
 
-/* =====================================
-   TOP BAR
-===================================== */
 
 .topbar {
     margin-bottom: 26px;
@@ -271,7 +254,6 @@ a {
     gap: 14px;
 }
 
-/* Search */
 
 .search-box {
     position: relative;
@@ -306,7 +288,6 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
-/* Notification */
 
 .notification-button {
     position: relative;
@@ -354,7 +335,6 @@ a {
     outline-offset: 3px;
 }
 
-/* Admin profile */
 
 .user-profile {
     min-width: 165px;
@@ -403,9 +383,6 @@ a {
     font-size: 11px;
 }
 
-/* =====================================
-   ADMIN WELCOME BANNER
-===================================== */
 
 .welcome-banner {
     position: relative;
@@ -473,9 +450,6 @@ a {
     font-size: 75px;
 }
 
-/* =====================================
-   STATISTIC CARDS
-===================================== */
 
 .statistics-grid {
     margin-bottom: 25px;
@@ -555,9 +529,6 @@ a {
     background-color: #e8f5e9;
 }
 
-/* =====================================
-   DASHBOARD GRID AND CARDS
-===================================== */
 
 .dashboard-grid {
     margin-bottom: 25px;
@@ -612,9 +583,6 @@ a {
     outline: none;
 }
 
-/* =====================================
-   INVENTORY OVERVIEW
-===================================== */
 
 .inventory-item {
     margin-bottom: 22px;
@@ -669,9 +637,6 @@ a {
     background-color: var(--green);
 }
 
-/* =====================================
-   ADMIN ALERTS
-===================================== */
 
 .alert-item {
     min-height: 65px;
@@ -754,9 +719,6 @@ a {
     background-color: #e3f2fd;
 }
 
-/* =====================================
-   ADMINISTRATIVE CONTROLS
-===================================== */
 
 .admin-actions {
     margin-bottom: 25px;
@@ -807,9 +769,6 @@ a {
     color: var(--white);
 }
 
-/* =====================================
-   RESPONSIVE DESIGN
-===================================== */
 
 @media (max-width: 1200px) {
     .statistics-grid {

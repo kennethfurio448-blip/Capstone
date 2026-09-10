@@ -1,11 +1,8 @@
--- Equipment and mobility borrowing status workflow.
--- Medical supplies are consumed through the emergency supply ledger instead.
 
 update public.borrow_transactions
 set status = 'Borrowed'
 where status = 'Overdue';
 
--- Replace legacy mobility statuses with the current status options.
 update public.mobility_assets
 set status = 'For Repair',
     updated_at = now()
@@ -196,8 +193,6 @@ begin
             'Medical supplies cannot be managed as borrowed items.';
     end if;
 
-    -- Older records may contain a missing or outdated inventory ID.
-    -- Prefer the stored ID, then repair the link by matching the item name.
     case v_transaction.item_type
         when 'Medical Equipment' then
             select equipment.id

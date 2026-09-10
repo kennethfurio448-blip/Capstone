@@ -27,7 +27,6 @@
 
 <div class="page-layout">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
 
         <div class="brand">
@@ -47,7 +46,6 @@
 
         <nav class="sidebar-nav">
 
-            <!-- JavaScript changes this link based on the role -->
             <a href="#" class="nav-item" id="dashboardLink">
                 <i class="fa-solid fa-table-columns"></i>
                 <span>Dashboard</span>
@@ -86,7 +84,6 @@
                 <span>Emergency Response</span>
             </a>
 
-            <!-- Only visible to Admin -->
             <div id="adminNavigation" class="admin-navigation" hidden>
 
                 <p class="menu-label">ADMINISTRATION</p>
@@ -126,10 +123,8 @@
 
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main class="main-content">
 
-        <!-- TOP BAR -->
         <header class="topbar">
 
             <div>
@@ -165,7 +160,6 @@
 
         </header>
 
-        <!-- SUMMARY CARDS -->
         <section class="statistics-grid">
 
             <article class="stat-card red">
@@ -226,7 +220,6 @@
 
         </section>
 
-        <!-- SUPPLY INVENTORY -->
         <section class="inventory-card">
 
             <div class="inventory-header">
@@ -258,7 +251,6 @@
 
             </div>
 
-            <!-- SEARCH AND FILTERS -->
             <div class="inventory-tools">
 
                 <div class="search-box">
@@ -295,7 +287,6 @@
 
             </div>
 
-            <!-- TABLE -->
             <div class="table-wrapper">
 
                 <table class="supply-table">
@@ -314,7 +305,6 @@
                     </thead>
 
                     <tbody id="supplyTableBody">
-                        <!-- JavaScript inserts supplies here -->
                     </tbody>
 
                 </table>
@@ -329,7 +319,6 @@
 
         </section>
 
-        <!-- SUPPLY TRANSACTION HISTORY -->
         <section class="inventory-card supply-history-card">
 
             <div class="inventory-header">
@@ -371,7 +360,6 @@
 
 </div>
 
-<!-- ADD/EDIT SUPPLY MODAL -->
 <div class="modal-overlay" id="supplyModal">
 
     <section class="modal">
@@ -520,7 +508,6 @@
 
 </div>
 
-<!-- CONSUMED SUPPLIES MODAL -->
 <div class="modal-overlay" id="consumeModal">
 
     <section class="modal" role="dialog" aria-modal="true"
@@ -606,7 +593,6 @@
     </section>
 </div>
 
-<!-- DELETE CONFIRMATION MODAL -->
 <div class="modal-overlay" id="deleteModal">
 
     <section class="modal delete-modal">

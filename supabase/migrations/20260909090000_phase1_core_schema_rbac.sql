@@ -1,6 +1,3 @@
--- Phase 1: establish the canonical core schema and enforce role-based access.
--- This migration is intentionally idempotent so it can safely strengthen an
--- existing MedTrack database while also documenting the required base tables.
 
 create table if not exists public.profiles (
     id uuid primary key references auth.users(id) on delete cascade,
@@ -87,14 +84,11 @@ create table if not exists public.emergency_requests (
     updated_at timestamptz not null default now()
 );
 
--- Add fields that may be missing from older manually-created databases.
 alter table public.profiles
     add column if not exists email text,
     add column if not exists created_at timestamptz not null default now(),
     add column if not exists updated_at timestamptz not null default now();
 
--- New writes must satisfy these checks. NOT VALID avoids silently rewriting or
--- deleting legacy data; existing rows can be cleaned and validated separately.
 do $$
 begin
     if not exists (
@@ -310,8 +304,6 @@ alter table public.mobility_assets enable row level security;
 alter table public.borrow_transactions enable row level security;
 alter table public.emergency_requests enable row level security;
 
--- Remove existing browser-role policies on the core tables so permissive legacy
--- policies cannot accidentally override the canonical rules below.
 do $$
 declare
     policy_record record;
@@ -436,8 +428,6 @@ grant select, insert, update, delete on table public.mobility_assets to service_
 grant select, insert, update, delete on table public.borrow_transactions to service_role;
 grant select, insert, update, delete on table public.emergency_requests to service_role;
 
--- Adding or editing inventory master data is an Administrator operation.
--- Staff retain access to the separate consumption RPC used by emergency work.
 create or replace function public.medtrack_save_medical_supply(
     p_operation_key text,
     p_supply_id text,

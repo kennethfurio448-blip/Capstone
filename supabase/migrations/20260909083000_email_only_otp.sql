@@ -1,5 +1,3 @@
--- MedTrack now uses Gmail OTP exclusively. Remove all persisted phone and SMS
--- fields introduced by the earlier dual-channel OTP migration.
 
 delete from public.otp_challenges
 where channel = 'sms';

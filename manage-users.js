@@ -1,13 +1,6 @@
-// =====================================
-// MEDTRACK MANAGE USERS
-// ADMIN ONLY
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
 
-    // =====================================
-    // ELEMENTS
-    // =====================================
 
     const currentUserName =
         document.getElementById("currentUserName");
@@ -42,7 +35,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const accountStatusFilter =
         document.getElementById("accountStatusFilter");
 
-    // User modal
     const userModal =
         document.getElementById("userModal");
 
@@ -103,7 +95,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const resendCodeButton = document.getElementById("resendRegistrationCode");
     const verifyRegistrationButton = document.getElementById("verifyRegistrationButton");
 
-    // Delete modal
     const deleteModal =
         document.getElementById("deleteModal");
 
@@ -119,9 +110,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     let registrationChallengeId = "";
     let cooldownTimer = null;
 
-    // =====================================
-    // CURRENT ADMIN
-    // =====================================
 
     const currentUser =
         await window.medtrackAuth.requireRoles(["admin"]);
@@ -135,9 +123,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         currentUser.username ||
         "Administrator";
 
-    // =====================================
-    // SUPABASE ACCOUNT ADMINISTRATION
-    // =====================================
 
     async function getFunctionErrorMessage(error) {
         const response = error && error.context;
@@ -241,9 +226,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderAccounts();
     }
 
-    // =====================================
-    // SAFE TEXT AND DATE
-    // =====================================
 
     function escapeHTML(value) {
         return String(value)
@@ -268,9 +250,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // =====================================
-    // RENDER ACCOUNTS
-    // =====================================
 
     function renderAccounts() {
         const searchValue =
@@ -419,9 +398,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updateStatistics(accounts);
     }
 
-    // =====================================
-    // STATISTICS
-    // =====================================
 
     function updateStatistics(accounts) {
         const admins = accounts.filter(function (account) {
@@ -442,9 +418,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         activeUsers.textContent = active;
     }
 
-    // =====================================
-    // OPEN ADD USER
-    // =====================================
 
     function openAddModal() {
         userForm.reset();
@@ -466,9 +439,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         fullnameInput.focus();
     }
 
-    // =====================================
-    // OPEN EDIT USER
-    // =====================================
 
     function openEditModal(userId) {
         const account = accounts.find(function (item) {
@@ -496,7 +466,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         confirmPasswordInput.required = false;
         passwordHelp.textContent = "Passwords can only be reset by the account owner through OTP verification on the login page.";
 
-        // Current Admin cannot disable or demote their own account
         const isCurrentAccount =
             String(account.id) === String(currentUser.id);
 
@@ -528,9 +497,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         passwordHelp.textContent = "Use 12+ characters with uppercase, lowercase, and a number. Account creation continues after OTP verification.";
     }
 
-    // =====================================
-    // SAVE USER
-    // =====================================
 
     userForm.addEventListener("submit", async function (event) {
         event.preventDefault();
@@ -742,9 +708,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         saveUserButton.disabled = false;
     });
 
-    // =====================================
-    // TABLE ACTIONS
-    // =====================================
 
     usersTableBody.addEventListener("click", function (event) {
         const button = event.target.closest("button");
@@ -770,7 +733,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // Enable or disable account
     async function toggleAccountStatus(userId) {
         const account = accounts.find(function (account) {
             return String(account.id) === String(userId);
@@ -800,9 +762,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // =====================================
-    // DELETE USER
-    // =====================================
 
     confirmDelete.addEventListener("click", async function () {
         if (!userToDelete) {
@@ -840,9 +799,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         deleteModal.classList.remove("show");
     });
 
-    // =====================================
-    // SEARCH AND FILTERS
-    // =====================================
 
     userSearch.addEventListener("input", renderAccounts);
     roleFilter.addEventListener("change", renderAccounts);
@@ -852,9 +808,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderAccounts
     );
 
-    // =====================================
-    // MODAL CONTROLS
-    // =====================================
 
     openAddModalButton.addEventListener(
         "click",
@@ -899,9 +852,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // =====================================
-    // LOGOUT
-    // =====================================
 
     logoutButton.addEventListener("click", async function () {
         const confirmLogout = confirm(
@@ -915,9 +865,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         await window.medtrackAuth.signOutAndRedirect();
     });
 
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
 
     try {
         await loadAccounts();

@@ -1,12 +1,6 @@
-// =====================================
-// MEDTRACK MEDICAL EQUIPMENT
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
 
-    // =====================================
-    // ELEMENTS
-    // =====================================
 
     const dashboardLink =
         document.getElementById("dashboardLink");
@@ -59,7 +53,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const statusFilter =
         document.getElementById("statusFilter");
 
-    // Equipment modal
     const equipmentModal =
         document.getElementById("equipmentModal");
 
@@ -105,7 +98,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const formMessage =
         document.getElementById("formMessage");
 
-    // Delete modal
     const deleteModal =
         document.getElementById("deleteModal");
 
@@ -117,9 +109,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let equipmentToDelete = null;
 
-    // =====================================
-    // LOGIN AND ROLE CHECK
-    // =====================================
 
     const currentUser =
         await window.medtrackAuth.requireRoles([
@@ -158,9 +147,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     openAddModalButton.hidden = !canManageInventory;
 
-    // =====================================
-    // DEFAULT EQUIPMENT
-    // =====================================
 
     const defaultEquipment = [
         {
@@ -205,9 +191,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     ];
 
-    // =====================================
-    // LOCAL STORAGE
-    // =====================================
 
     function getEquipment() {
         const savedEquipment =
@@ -248,9 +231,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    // =====================================
-    // SAFE TEXT
-    // =====================================
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -269,9 +249,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return String(value ?? "").trim();
     }
 
-    // =====================================
-    // DATE FUNCTIONS
-    // =====================================
 
     function formatDate(dateValue) {
         if (!dateValue) {
@@ -313,9 +290,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return scheduledDate < today;
     }
 
-    // =====================================
-    // CSS CLASSES
-    // =====================================
 
     function getStatusClass(status) {
         if (status === "Available") {
@@ -349,9 +323,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return "condition-damaged";
     }
 
-    // =====================================
-    // GENERATE EQUIPMENT ID
-    // =====================================
 
     function generateEquipmentId(equipment) {
         let highestNumber = 0;
@@ -386,9 +357,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    // =====================================
-    // RENDER EQUIPMENT
-    // =====================================
 
     function renderEquipment() {
         const equipment = getEquipment();
@@ -583,9 +551,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updateStatistics(equipment);
     }
 
-    // =====================================
-    // STATISTICS
-    // =====================================
 
     function updateStatistics(equipment) {
         let availableCount = 0;
@@ -640,9 +605,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             alertCount;
     }
 
-    // =====================================
-    // OPEN ADD MODAL
-    // =====================================
 
     function openAddModal() {
         if (!canManageInventory) {
@@ -662,9 +624,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         equipmentName.focus();
     }
 
-    // =====================================
-    // OPEN EDIT MODAL
-    // =====================================
 
     function openEditModal(equipmentId) {
         if (!canManageInventory) {
@@ -735,9 +694,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         equipmentName.focus();
     }
 
-    // =====================================
-    // CLOSE EQUIPMENT MODAL
-    // =====================================
 
     function closeEquipmentModal() {
         equipmentModal.classList.remove("show");
@@ -747,9 +703,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         formMessage.textContent = "";
     }
 
-    // =====================================
-    // SAVE OR UPDATE EQUIPMENT
-    // =====================================
 
     equipmentForm.addEventListener(
         "submit",
@@ -870,9 +823,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // EDIT AND DELETE ACTIONS
-    // =====================================
 
     equipmentTableBody.addEventListener(
         "click",
@@ -914,9 +864,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // CONFIRM DELETE
-    // =====================================
 
     confirmDelete.addEventListener(
         "click",
@@ -970,9 +917,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // CANCEL DELETE
-    // =====================================
 
     cancelDelete.addEventListener(
         "click",
@@ -982,9 +926,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // SEARCH AND FILTERS
-    // =====================================
 
     equipmentSearch.addEventListener(
         "input",
@@ -1001,9 +942,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderEquipment
     );
 
-    // =====================================
-    // MODAL BUTTONS
-    // =====================================
 
     openAddModalButton.addEventListener(
         "click",
@@ -1039,9 +977,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // KEYBOARD SUPPORT
-    // =====================================
 
     document.addEventListener(
         "keydown",
@@ -1072,9 +1007,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // NOTIFICATIONS
-    // =====================================
 
     notificationButton.addEventListener(
         "click",
@@ -1108,9 +1040,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // UPDATE FROM OTHER TABS
-    // =====================================
 
     window.addEventListener(
         "storage",
@@ -1124,9 +1053,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // LOGOUT
-    // =====================================
 
     logoutButton.addEventListener(
         "click",
@@ -1145,9 +1071,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
 
     renderEquipment();
 });

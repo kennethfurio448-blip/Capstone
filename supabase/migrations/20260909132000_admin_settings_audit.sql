@@ -1,5 +1,3 @@
--- Allow active Administrators to append a small, predefined set of Settings
--- events without granting direct insert access to the immutable audit table.
 
 create or replace function public.medtrack_record_admin_settings_event(
     p_event text
@@ -67,8 +65,6 @@ from public;
 grant execute on function public.medtrack_record_admin_settings_event(text)
 to authenticated;
 
--- Restore all operational collections in one transaction. Any invalid record
--- rolls back the complete restore instead of leaving partially replaced data.
 create or replace function public.medtrack_restore_encrypted_backup(
     p_data jsonb
 )

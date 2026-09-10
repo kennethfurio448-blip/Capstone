@@ -1,13 +1,6 @@
-// =====================================
-// MEDTRACK SYSTEM SETTINGS
-// ADMIN ONLY
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
 
-    // =====================================
-    // ELEMENTS
-    // =====================================
 
     const currentUserName =
         document.getElementById("currentUserName");
@@ -24,7 +17,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const settingsMessage =
         document.getElementById("settingsMessage");
 
-    // General settings
     const generalSection =
         document.getElementById("generalSection");
 
@@ -40,7 +32,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const systemEmail =
         document.getElementById("systemEmail");
 
-    // Inventory settings
     const inventorySection =
         document.getElementById("inventorySection");
 
@@ -56,7 +47,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const defaultBorrowDays =
         document.getElementById("defaultBorrowDays");
 
-    // Notification settings
     const notificationSection =
         document.getElementById("notificationSection");
 
@@ -75,7 +65,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const emergencyAlerts =
         document.getElementById("emergencyAlerts");
 
-    // Security settings
     const securitySection =
         document.getElementById("securitySection");
 
@@ -88,7 +77,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const confirmNewPassword =
         document.getElementById("confirmNewPassword");
 
-    // Backup settings
     const downloadBackup =
         document.getElementById("downloadBackup");
 
@@ -118,9 +106,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let selectedBackup = null;
 
-    // =====================================
-    // ADMIN ACCESS CHECK
-    // =====================================
 
     const currentUser =
         await window.medtrackAuth.requireRoles(["admin"]);
@@ -138,9 +123,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         currentUser.username ||
         "Administrator";
 
-    // =====================================
-    // DEFAULT SETTINGS
-    // =====================================
 
     const defaultSettings = {
         general: {
@@ -168,9 +150,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updatedAt: null
     };
 
-    // =====================================
-    // SETTINGS STORAGE
-    // =====================================
 
     function getSettings() {
         const savedSettings =
@@ -216,9 +195,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    // =====================================
-    // LOAD SETTINGS
-    // =====================================
 
     function loadSettings() {
         const settings = getSettings();
@@ -263,9 +239,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             settings.notifications.emergencyAlerts;
     }
 
-    // =====================================
-    // SETTINGS TABS
-    // =====================================
 
     settingsTabs.forEach(function (tab) {
         tab.addEventListener("click", function () {
@@ -290,9 +263,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     });
 
-    // =====================================
-    // MESSAGES
-    // =====================================
 
     function showMessage(message, type) {
         settingsMessage.textContent = message;
@@ -311,9 +281,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         settingsMessage.className = "settings-message";
     }
 
-    // =====================================
-    // SAVE GENERAL SETTINGS
-    // =====================================
 
     generalSection.addEventListener("submit", function (event) {
         event.preventDefault();
@@ -366,9 +333,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     });
 
-    // =====================================
-    // SAVE INVENTORY SETTINGS
-    // =====================================
 
     inventorySection.addEventListener("submit", function (event) {
         event.preventDefault();
@@ -421,9 +385,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     });
 
-    // =====================================
-    // SAVE NOTIFICATIONS
-    // =====================================
 
     notificationSection.addEventListener(
         "submit",
@@ -463,9 +424,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // CHANGE ADMIN PASSWORD
-    // =====================================
 
     securitySection.addEventListener("submit", async function (event) {
         event.preventDefault();
@@ -546,9 +504,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     });
 
-    // =====================================
-    // ENCRYPTED BACKUP AND RESTORE
-    // =====================================
 
     const backupKeys = [
         "medtrackMedicalSupplies",
@@ -1022,9 +977,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // =====================================
-    // AUDIT LOG
-    // =====================================
 
     async function recordAdminEvent(eventName) {
         try {
@@ -1041,9 +993,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // =====================================
-    // LOGOUT
-    // =====================================
 
     logoutButton.addEventListener("click", async function () {
         const confirmLogout = confirm(
@@ -1057,9 +1006,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         await window.medtrackAuth.signOutAndRedirect();
     });
 
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
 
     loadSettings();
 });

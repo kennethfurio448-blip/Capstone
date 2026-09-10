@@ -1,4 +1,3 @@
--- Detailed, quantity-aware borrowing for Medical Equipment and Mobility only.
 
 alter table public.borrow_transactions
     add column if not exists borrowed_at timestamptz,
@@ -191,8 +190,6 @@ grant execute on function public.medtrack_borrow_item(
     text, text, text, text
 ) to authenticated;
 
--- Keep returns and later status changes quantity-aware as well. Equipment
--- remains borrowable while at least one unit is still available.
 create or replace function public.medtrack_update_borrow_status(
     p_transaction_id text,
     p_status text

@@ -1,5 +1,3 @@
--- Atomic MedTrack inventory operations.
--- These functions keep quantity checks and database updates in one transaction.
 
 create table if not exists public.medtrack_inventory_operations (
     operation_key text primary key,

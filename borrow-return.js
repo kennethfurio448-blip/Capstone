@@ -1,6 +1,3 @@
-// =====================================
-// MEDTRACK BORROWING STATUS MANAGEMENT
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
     "use strict";

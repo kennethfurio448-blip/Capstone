@@ -434,7 +434,6 @@ Deno.serve(async (request) => {
         }
         return json(await createChallenge(supabase, { purpose: "password_reset", destination: email, targetUserId: user.id }));
       }
-      // Avoid revealing whether an email is registered. This challenge can never verify.
       return json(await createDummyResetChallenge(supabase, email));
     }
 

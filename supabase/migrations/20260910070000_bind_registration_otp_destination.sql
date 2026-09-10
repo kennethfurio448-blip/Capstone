@@ -1,6 +1,3 @@
--- Bind registration verification to the exact Gmail address while holding the
--- challenge row lock. This prevents a valid code from being consumed for a
--- different address during concurrent or tampered requests.
 drop function if exists public.medtrack_verify_otp_challenge(uuid, text, text, uuid);
 
 create function public.medtrack_verify_otp_challenge(

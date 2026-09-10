@@ -1,13 +1,7 @@
-// =====================================
-// MEDTRACK MEDICAL SUPPLIES
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
     "use strict";
 
-    // =====================================
-    // HTML ELEMENTS
-    // =====================================
 
     const dashboardLink = document.getElementById("dashboardLink");
     const adminNavigation = document.getElementById("adminNavigation");
@@ -55,7 +49,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const historyMessage =
         document.getElementById("historyMessage");
 
-    // Consumed supplies modal
     const consumeModal =
         document.getElementById("consumeModal");
 
@@ -89,7 +82,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const consumeFormMessage =
         document.getElementById("consumeFormMessage");
 
-    // Supply modal
     const supplyModal =
         document.getElementById("supplyModal");
 
@@ -135,7 +127,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const saveSupplyButton =
         supplyForm.querySelector("button[type='submit']");
 
-    // Delete modal
     const deleteModal =
         document.getElementById("deleteModal");
 
@@ -148,9 +139,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     let supplyToDelete = null;
     let supplyTransactions = [];
 
-    // =====================================
-    // CHECK REQUIRED ELEMENTS
-    // =====================================
 
     const requiredElements = [
         dashboardLink,
@@ -213,9 +201,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
-    // =====================================
-    // LOGIN AND ROLE CHECK
-    // =====================================
 
     if (
         !window.medtrackAuth ||
@@ -263,9 +248,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     openAddModalButton.hidden = !canManageInventory;
 
-    // =====================================
-    // DEFAULT MEDICAL SUPPLIES
-    // =====================================
 
     const defaultSupplies = [
         {
@@ -308,9 +290,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const storageKey = "medtrackMedicalSupplies";
 
-    // =====================================
-    // SAFE VALUE FUNCTIONS
-    // =====================================
 
     function normalizeId(value) {
         return String(value ?? "").trim();
@@ -329,9 +308,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             .replaceAll("'", "&#039;");
     }
 
-    // =====================================
-    // LOCAL STORAGE
-    // =====================================
 
     function getSupplies() {
         const savedSupplies =
@@ -389,9 +365,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // =====================================
-    // STATUS CALCULATION
-    // =====================================
 
     function getSupplyStatus(supply) {
         const quantity =
@@ -442,9 +415,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return classes[status] || "status-expired";
     }
 
-    // =====================================
-    // DATE FORMAT
-    // =====================================
 
     function formatDate(dateValue) {
         const normalizedDate =
@@ -698,9 +668,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             "Select a supply to view available stock.";
     }
 
-    // =====================================
-    // GENERATE SUPPLY ID
-    // =====================================
 
     function generateSupplyId(supplies) {
         let highestNumber = 0;
@@ -732,9 +699,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    // =====================================
-    // UPDATE STATISTICS
-    // =====================================
 
     function updateStatistics(supplies) {
         let availableCount = 0;
@@ -781,9 +745,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             String(notificationTotal);
     }
 
-    // =====================================
-    // RENDER SUPPLIES
-    // =====================================
 
     function renderSupplies() {
         const supplies = getSupplies();
@@ -928,9 +889,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updateStatistics(supplies);
     }
 
-    // =====================================
-    // OPEN ADD MODAL
-    // =====================================
 
     function openAddModal() {
         if (!canManageInventory) {
@@ -951,9 +909,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         supplyName.focus();
     }
 
-    // =====================================
-    // OPEN EDIT MODAL
-    // =====================================
 
     function openEditModal(supplyId) {
         if (!canManageInventory) {
@@ -1012,9 +967,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         supplyName.focus();
     }
 
-    // =====================================
-    // CLOSE SUPPLY MODAL
-    // =====================================
 
     function closeSupplyModal() {
         supplyModal.classList.remove("show");
@@ -1024,9 +976,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         editingSupplyId.value = "";
     }
 
-    // =====================================
-    // SAVE OR UPDATE SUPPLY
-    // =====================================
 
     supplyForm.addEventListener(
         "submit",
@@ -1172,9 +1121,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // RECORD CONSUMED SUPPLIES
-    // =====================================
 
     consumeForm.addEventListener(
         "submit",
@@ -1287,9 +1233,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // EDIT AND DELETE BUTTONS
-    // =====================================
 
     supplyTableBody.addEventListener(
         "click",
@@ -1329,9 +1272,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // CONFIRM DELETE
-    // =====================================
 
     confirmDelete.addEventListener(
         "click",
@@ -1391,9 +1331,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // CANCEL DELETE
-    // =====================================
 
     cancelDelete.addEventListener(
         "click",
@@ -1403,9 +1340,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // SEARCH AND FILTERS
-    // =====================================
 
     supplySearch.addEventListener(
         "input",
@@ -1427,9 +1361,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updateConsumptionAvailability
     );
 
-    // =====================================
-    // MODAL BUTTONS
-    // =====================================
 
     openAddModalButton.addEventListener(
         "click",
@@ -1489,9 +1420,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // KEYBOARD SUPPORT
-    // =====================================
 
     document.addEventListener(
         "keydown",
@@ -1515,9 +1443,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // NOTIFICATION BUTTON
-    // =====================================
 
     notificationButton.addEventListener(
         "click",
@@ -1546,9 +1471,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // UPDATE FROM OTHER BROWSER TABS
-    // =====================================
 
     window.addEventListener(
         "storage",
@@ -1571,9 +1493,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         loadSupplyTransactions
     );
 
-    // =====================================
-    // LOGOUT
-    // =====================================
 
     logoutButton.addEventListener(
         "click",
@@ -1592,9 +1511,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
 
     renderSupplies();
     await loadSupplyTransactions();

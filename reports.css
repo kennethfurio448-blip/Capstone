@@ -1,6 +1,3 @@
-/* =====================================
-   MEDTRACK REPORTS
-===================================== */
 
 * {
     margin: 0;
@@ -47,9 +44,6 @@ a {
     text-decoration: none;
 }
 
-/* =====================================
-   PAGE LAYOUT
-===================================== */
 
 .page-layout {
     display: flex;
@@ -57,9 +51,6 @@ a {
     min-height: 100vh;
 }
 
-/* =====================================
-   ADMIN SIDEBAR
-===================================== */
 
 .sidebar {
     position: fixed;
@@ -175,7 +166,6 @@ a {
     color: var(--white);
 }
 
-/* Logout */
 
 .logout-button {
     width: 100%;
@@ -225,9 +215,6 @@ a {
     border-radius: 10px;
 }
 
-/* =====================================
-   MAIN CONTENT
-===================================== */
 
 .main-content {
     width: calc(100% - 270px);
@@ -236,9 +223,6 @@ a {
     padding: 28px;
 }
 
-/* =====================================
-   TOP BAR
-===================================== */
 
 .topbar {
     margin-bottom: 26px;
@@ -303,7 +287,6 @@ a {
     background-color: var(--primary-dark);
 }
 
-/* Admin profile */
 
 .user-profile {
     min-width: 165px;
@@ -352,9 +335,6 @@ a {
     font-size: 11px;
 }
 
-/* =====================================
-   STATISTIC CARDS
-===================================== */
 
 .statistics-grid {
     margin-bottom: 25px;
@@ -434,9 +414,6 @@ a {
     background-color: #e8f5e9;
 }
 
-/* =====================================
-   REPORT GENERATOR
-===================================== */
 
 .report-card {
     margin-bottom: 25px;
@@ -548,9 +525,6 @@ a {
     font-weight: bold;
 }
 
-/* =====================================
-   REPORT RESULTS
-===================================== */
 
 .report-results {
     padding: 24px;
@@ -606,9 +580,6 @@ a {
     font-size: 10px;
 }
 
-/* =====================================
-   REPORT TABLE
-===================================== */
 
 .table-wrapper {
     width: 100%;
@@ -648,7 +619,6 @@ a {
     background-color: #fffafa;
 }
 
-/* Report status */
 
 .report-status {
     display: inline-block;
@@ -701,7 +671,6 @@ a {
     background-color: #ffebee;
 }
 
-/* Empty report */
 
 .empty-state {
     display: none;
@@ -730,9 +699,6 @@ a {
     font-size: 13px;
 }
 
-/* =====================================
-   RESPONSIVE DESIGN
-===================================== */
 
 @media (max-width: 1200px) {
     .statistics-grid {
@@ -810,9 +776,6 @@ a {
     }
 }
 
-/* =====================================
-   PRINT DESIGN
-===================================== */
 
 @media print {
     body {

@@ -1,13 +1,7 @@
-// =====================================
-// MEDTRACK EMERGENCY RESPONSE
-// =====================================
 
 document.addEventListener("DOMContentLoaded", async function () {
     "use strict";
 
-    // =====================================
-    // ELEMENTS
-    // =====================================
 
     const dashboardLink =
         document.getElementById("dashboardLink");
@@ -63,7 +57,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const statusFilter =
         document.getElementById("statusFilter");
 
-    // Request form
     const requestModal =
         document.getElementById("requestModal");
 
@@ -133,7 +126,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const formMessage =
         document.getElementById("formMessage");
 
-    // Complete modal
     const completeModal =
         document.getElementById("completeModal");
 
@@ -143,7 +135,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const confirmComplete =
         document.getElementById("confirmComplete");
 
-    // Delete modal
     const deleteModal =
         document.getElementById("deleteModal");
 
@@ -156,9 +147,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     let requestToComplete = null;
     let requestToDelete = null;
 
-    // =====================================
-    // SHARED INVENTORY KEYS
-    // =====================================
 
     const inventoryKeys = {
         "Medical Supply": "medtrackMedicalSupplies",
@@ -166,9 +154,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         "Mobility Asset": "medtrackMobilityAssets"
     };
 
-    // =====================================
-    // LOGIN AND ROLE CHECK
-    // =====================================
 
     const currentUser =
         await window.medtrackAuth.requireRoles([
@@ -205,9 +190,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         adminNavigation.hidden = true;
     }
 
-    // =====================================
-    // DATE AND TIME
-    // =====================================
 
     function getCurrentDate() {
         const today = new Date();
@@ -261,9 +243,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // =====================================
-    // DEFAULT REQUESTS
-    // =====================================
 
     const defaultRequests = [
         {
@@ -322,9 +301,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     ];
 
-    // =====================================
-    // REQUEST STORAGE
-    // =====================================
 
     function getRequests() {
         const savedRequests =
@@ -378,9 +354,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // =====================================
-    // INVENTORY STORAGE
-    // =====================================
 
     function getInventoryRecords(itemType) {
         const storageKey =
@@ -442,9 +415,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // =====================================
-    // SAFE VALUES
-    // =====================================
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -467,9 +437,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return normalizeText(value).toLowerCase();
     }
 
-    // =====================================
-    // CSS CLASSES
-    // =====================================
 
     function getStatusClass(status) {
         if (status === "Pending") {
@@ -503,9 +470,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return "priority-low";
     }
 
-    // =====================================
-    // GENERATE REQUEST ID
-    // =====================================
 
     function generateRequestId(requests) {
         let highestNumber = 0;
@@ -538,9 +502,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    // =====================================
-    // INVENTORY AVAILABILITY
-    // =====================================
 
     function isSupplyExpired(dateValue) {
         if (!dateValue) {
@@ -594,9 +555,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return false;
     }
 
-    // =====================================
-    // POPULATE INVENTORY ITEMS
-    // =====================================
 
     function populateResourceItems(
         selectedId = ""
@@ -686,9 +644,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updateResourceAvailability();
     }
 
-    // =====================================
-    // DISPLAY AVAILABLE QUANTITY
-    // =====================================
 
     function updateResourceAvailability() {
         const itemType =
@@ -744,9 +699,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // =====================================
-    // READ INVENTORY USAGE
-    // =====================================
 
     function getInventoryUsageFromForm() {
         const itemType =
@@ -818,9 +770,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    // =====================================
-    // DEDUCT INVENTORY
-    // =====================================
 
     async function deductInventory(
         usage,
@@ -952,7 +901,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return { ok: true };
     }
 
-    // Prevent double deduction
     async function deductRequestInventory(request) {
         if (
             request.inventoryDeducted ||
@@ -979,9 +927,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return result;
     }
 
-    // =====================================
-    // RENDER REQUESTS
-    // =====================================
 
     function renderRequests() {
         const requests = getRequests();
@@ -1201,9 +1146,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updateStatistics(requests);
     }
 
-    // =====================================
-    // STATISTICS
-    // =====================================
 
     function updateStatistics(requests) {
         const pendingCount =
@@ -1261,9 +1203,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             urgentCount;
     }
 
-    // =====================================
-    // OPEN ADD MODAL
-    // =====================================
 
     function openAddModal() {
         requestForm.reset();
@@ -1292,9 +1231,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         emergencyType.focus();
     }
 
-    // =====================================
-    // OPEN EDIT MODAL
-    // =====================================
 
     function openEditModal(requestId) {
         const requests = getRequests();
@@ -1399,9 +1335,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         requestModal.classList.add("show");
     }
 
-    // =====================================
-    // CLOSE REQUEST MODAL
-    // =====================================
 
     function closeRequestModal() {
         requestModal.classList.remove("show");
@@ -1420,9 +1353,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             "Select an inventory item to see its available quantity.";
     }
 
-    // =====================================
-    // SAVE OR UPDATE REQUEST
-    // =====================================
 
     requestForm.addEventListener(
         "submit",
@@ -1660,9 +1590,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // TABLE ACTIONS
-    // =====================================
 
     requestTableBody.addEventListener(
         "click",
@@ -1759,9 +1686,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // COMPLETE REQUEST
-    // =====================================
 
     confirmComplete.addEventListener(
         "click",
@@ -1837,9 +1761,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // DELETE REQUEST
-    // =====================================
 
     confirmDelete.addEventListener(
         "click",
@@ -1891,9 +1812,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // SEARCH AND FILTERS
-    // =====================================
 
     requestSearch.addEventListener(
         "input",
@@ -1928,9 +1846,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updateResourceAvailability
     );
 
-    // =====================================
-    // MODAL CONTROLS
-    // =====================================
 
     openAddModalButton.addEventListener(
         "click",
@@ -2006,9 +1921,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // NOTIFICATIONS
-    // =====================================
 
     notificationButton.addEventListener(
         "click",
@@ -2047,9 +1959,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // LOGOUT
-    // =====================================
 
     logoutButton.addEventListener(
         "click",
@@ -2068,9 +1977,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    // =====================================
-    // INITIAL DISPLAY
-    // =====================================
 
     renderRequests();
 });
