@@ -8,6 +8,15 @@
     const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
     const ACTIVITY_WRITE_INTERVAL_MS = 15 * 1000;
     const SESSION_ACTIVITY_KEY = "medtrackLastActivityAt";
+    const SENSITIVE_CACHE_KEYS = Object.freeze([
+        "medtrackMedicalSupplies",
+        "medtrackMedicalEquipment",
+        "medtrackMobilityAssets",
+        "medtrackBorrowTransactions",
+        "medtrackEmergencyRequests",
+        "medtrackAccounts",
+        "medtrackAuditLogs"
+    ]);
     const PAGE_ROLE_RULES = Object.freeze({
         "admin-dashboard.html": ["admin"],
         "staff-dashboard.html": ["staff"],
@@ -91,6 +100,21 @@
         return loadProfile(user);
     }
 
+    function clearSensitiveBrowserData() {
+        if (
+            window.medtrackData &&
+            typeof window.medtrackData.clearSensitiveCache === "function"
+        ) {
+            window.medtrackData.clearSensitiveCache();
+            return;
+        }
+
+        SENSITIVE_CACHE_KEYS.forEach(function (key) {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+    }
+
     async function signOut() {
         try {
             const auditResult = await client.rpc(
@@ -114,26 +138,7 @@
         try {
             await client.auth.signOut({ scope: "local" });
         } finally {
-            if (
-                window.medtrackData &&
-                typeof window.medtrackData.clearSensitiveCache === "function"
-            ) {
-                window.medtrackData.clearSensitiveCache();
-            } else {
-                [
-                    "medtrackMedicalSupplies",
-                    "medtrackMedicalEquipment",
-                    "medtrackMobilityAssets",
-                    "medtrackBorrowTransactions",
-                    "medtrackEmergencyRequests",
-                    "medtrackAccounts",
-                    "medtrackAuditLogs"
-                ].forEach(function (key) {
-                    localStorage.removeItem(key);
-                    sessionStorage.removeItem(key);
-                });
-            }
-
+            clearSensitiveBrowserData();
             sessionStorageManager.clearPersistence();
             sessionStorage.removeItem(SESSION_ACTIVITY_KEY);
         }
@@ -429,16 +434,27 @@
                 redirectToDashboard(profile);
                 return true;
             }
+
+            if (profile) {
+                await signOut();
+            } else {
+                clearSensitiveBrowserData();
+            }
         } catch (error) {
             console.error("Existing session validation failed:", error);
+            clearSensitiveBrowserData();
         }
 
         return false;
     }
 
     client.auth.onAuthStateChange(function (event) {
-        if (event === "SIGNED_OUT" && guardedRoles) {
-            window.location.replace(loginRedirectUrl(pendingLoginReason));
+        if (event === "SIGNED_OUT") {
+            clearSensitiveBrowserData();
+
+            if (guardedRoles) {
+                window.location.replace(loginRedirectUrl(pendingLoginReason));
+            }
         }
     });
 

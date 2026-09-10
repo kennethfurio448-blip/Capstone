@@ -115,6 +115,7 @@ for (const file of files.filter((path) => extname(path) === ".html")) {
 const vercelConfigPath = join(root, "vercel.json");
 const otpFunctionPath = join(root, "supabase", "functions", "otp-auth", "index.ts");
 const accountFunctionPath = join(root, "supabase", "functions", "dynamic-worker", "index.ts");
+const authGuardPath = join(root, "auth", "supabase-auth.js");
 
 try {
   const vercelConfig = JSON.parse(readFileSync(vercelConfigPath, "utf8"));
@@ -181,6 +182,20 @@ try {
   }
 } catch (error) {
   failures.push(`dynamic-worker: unable to inspect account security controls (${error.message})`);
+}
+
+try {
+  const authGuard = readFileSync(authGuardPath, "utf8");
+
+  if (
+    !authGuard.includes("SENSITIVE_CACHE_KEYS") ||
+    !authGuard.includes("function clearSensitiveBrowserData()") ||
+    !authGuard.includes('if (event === "SIGNED_OUT")')
+  ) {
+    failures.push("supabase-auth: sensitive browser data cleanup is incomplete");
+  }
+} catch (error) {
+  failures.push(`supabase-auth: unable to inspect session cleanup controls (${error.message})`);
 }
 
 if (failures.length > 0) {
