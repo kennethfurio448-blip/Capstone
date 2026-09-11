@@ -104,9 +104,9 @@ function constantTimeEqual(first: string, second: string) {
 function requireProxy(body: Record<string, unknown>) {
   const expected = Deno.env.get("LOGIN_PROXY_SECRET") || "";
   const received = String(body.proxySecret || "");
-  if (expected.length < 32 || !constantTimeEqual(expected, received)) {
-    throw new PublicError("Login approval service is unavailable.", 503);
-  }
+  if (expected.length < 32) throw new PublicError("Supabase login secret is not configured.", 503);
+  if (received.length < 32) throw new PublicError("Vercel login secret was not provided.", 503);
+  if (!constantTimeEqual(expected, received)) throw new PublicError("Vercel and Supabase login secrets do not match.", 503);
 }
 
 function maskEmail(email: string) {
