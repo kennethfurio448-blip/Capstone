@@ -74,6 +74,11 @@
         }
     );
 
+    window.medtrackSupabaseConfig = Object.freeze({
+        url: supabaseUrl,
+        publishableKey: supabasePublishableKey
+    });
+
     window.medtrackSessionStorage = {
         setPersistence: setSessionPersistence,
         clearPersistence: clearSessionPersistence

@@ -117,6 +117,12 @@
 
     async function signOut() {
         try {
+            await client.rpc("medtrack_revoke_current_approved_session");
+        } catch (revokeError) {
+            console.error("Unable to revoke the approved session:", revokeError);
+        }
+
+        try {
             const auditResult = await client.rpc(
                 "medtrack_record_auth_event",
                 { p_action: "Logout" }
@@ -371,50 +377,29 @@
     }
 
     async function signIn(email, password, rememberUser) {
-        sessionStorageManager.setPersistence(rememberUser);
+        throw new Error("Login must be completed through Gmail approval.");
+    }
 
-        const result = await client.auth.signInWithPassword({
-            email: email,
-            password: password
+    async function completeApprovedLogin(session, rememberUser) {
+        if (!session || !session.access_token || !session.refresh_token) {
+            throw new Error("The approved session is invalid.");
+        }
+
+        sessionStorageManager.setPersistence(rememberUser);
+        const result = await client.auth.setSession({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token
         });
 
-        if (result.error) {
-            const message = String(result.error.message || "").toLowerCase();
-            if (
-                message.includes("invalid login credentials") ||
-                message.includes("invalid credentials")
-            ) {
-                throw new Error("Email or password is incorrect.");
-            }
-            if (message.includes("rate limit") || message.includes("too many")) {
-                throw new Error("Too many sign-in attempts. Please try again later.");
-            }
-            throw new Error("Unable to sign in securely. Please try again.");
+        if (result.error || !result.data.user) {
+            throw new Error("Unable to activate the approved login session.");
         }
 
         try {
             const profile = await loadProfile(result.data.user);
-
-            if (profile.status !== "active") {
-                throw new Error("This account is disabled.");
+            if (profile.status !== "active" || !["admin", "staff"].includes(profile.role)) {
+                throw new Error("This account is unavailable.");
             }
-
-            if (!["admin", "staff"].includes(profile.role)) {
-                throw new Error("This account has an invalid role.");
-            }
-
-            const auditResult = await client.rpc(
-                "medtrack_record_auth_event",
-                { p_action: "Login" }
-            );
-
-            if (auditResult.error) {
-                console.error(
-                    "Unable to record login audit event:",
-                    auditResult.error
-                );
-            }
-
             return profile;
         } catch (error) {
             await signOut();
@@ -442,6 +427,7 @@
             }
         } catch (error) {
             console.error("Existing session validation failed:", error);
+            await client.auth.signOut({ scope: "local" });
             clearSensitiveBrowserData();
         }
 
@@ -464,6 +450,7 @@
         client: client,
         requireRoles: requireRoles,
         signIn: signIn,
+        completeApprovedLogin: completeApprovedLogin,
         signOut: signOut,
         signOutAndRedirect: signOutAndRedirect,
         redirectToDashboard: redirectToDashboard,

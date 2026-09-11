@@ -1,3 +1,5 @@
 [functions.otp-auth]
 verify_jwt = false
 
+[functions.login-approval]
+verify_jwt = false

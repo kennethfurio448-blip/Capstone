@@ -464,8 +464,20 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
+        const verificationClient = window.supabase.createClient(
+            window.medtrackSupabaseConfig.url,
+            window.medtrackSupabaseConfig.publishableKey,
+            {
+                auth: {
+                    persistSession: false,
+                    autoRefreshToken: false,
+                    detectSessionInUrl: false
+                }
+            }
+        );
+
         const reauthentication =
-            await window.medtrackAuth.client.auth.signInWithPassword({
+            await verificationClient.auth.signInWithPassword({
                 email: currentUser.email,
                 password: currentPasswordValue
             });
@@ -512,6 +524,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             return;
         }
+
+        await verificationClient.auth.signOut();
 
         securitySection.reset();
 

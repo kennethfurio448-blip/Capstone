@@ -20,9 +20,21 @@ const confirmNewPasswordInput = document.getElementById("confirmNewPassword");
 const recoveryVerifyMessage = document.getElementById("recoveryVerifyMessage");
 const resendRecoveryButton = document.getElementById("resendRecoveryCode");
 const resetPasswordButton = document.getElementById("resetPasswordButton");
+const loginApprovalPanel = document.getElementById("loginApprovalPanel");
+const loginApprovalDestination = document.getElementById("loginApprovalDestination");
+const loginApprovalStatus = document.getElementById("loginApprovalStatus");
+const loginApprovalCountdown = document.getElementById("loginApprovalCountdown");
+const resendLoginApprovalButton = document.getElementById("resendLoginApproval");
+const cancelLoginApprovalButton = document.getElementById("cancelLoginApproval");
+const trustDeviceInput = document.getElementById("trustDevice");
 
 let recoveryChallengeId = "";
 let recoveryCooldownTimer = null;
+let pendingLogin = null;
+let pendingPassword = "";
+let loginApprovalPollTimer = null;
+let loginApprovalClockTimer = null;
+let loginApprovalFinalizing = false;
 
 function showMessage(message, type) {
     formMessage.textContent = message;
@@ -53,6 +65,134 @@ togglePasswordButton.addEventListener("click", function () {
     }
 });
 
+async function invokeLoginApproval(action, values) {
+    const response = await fetch("/api/login-approval", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: action, ...(values || {}) })
+    });
+    const data = await response.json().catch(function () {
+        return { error: "The login approval service returned an invalid response." };
+    });
+    if (!response.ok || data.error) {
+        const error = new Error(data.error || "Unable to complete login approval.");
+        error.retryAfter = Number(data.retryAfter) || 0;
+        throw error;
+    }
+    return data;
+}
+
+function stopLoginApprovalTimers() {
+    clearInterval(loginApprovalPollTimer);
+    clearInterval(loginApprovalClockTimer);
+    loginApprovalPollTimer = null;
+    loginApprovalClockTimer = null;
+}
+
+function resetLoginApproval() {
+    stopLoginApprovalTimers();
+    pendingLogin = null;
+    pendingPassword = "";
+    loginApprovalFinalizing = false;
+    trustDeviceInput.checked = false;
+    loginApprovalPanel.hidden = true;
+    loginForm.hidden = false;
+    loginForm.querySelector("button[type='submit']").disabled = false;
+    passwordInput.value = "";
+    passwordInput.focus();
+}
+
+function updateLoginApprovalClock() {
+    if (!pendingLogin) return;
+    const seconds = Math.max(0, Math.ceil((pendingLogin.expiresAt - Date.now()) / 1000));
+    const minutes = Math.floor(seconds / 60);
+    loginApprovalCountdown.textContent = `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
+
+    const resendSeconds = Math.max(0, Math.ceil((pendingLogin.resendAt - Date.now()) / 1000));
+    resendLoginApprovalButton.disabled = resendSeconds > 0 || loginApprovalFinalizing;
+    resendLoginApprovalButton.textContent = resendSeconds > 0
+        ? `Resend Email (${resendSeconds}s)`
+        : "Resend Email";
+
+    if (seconds === 0) {
+        loginApprovalStatus.textContent = "This login request has expired. Access was not granted.";
+        loginApprovalStatus.classList.add("error");
+        clearInterval(loginApprovalClockTimer);
+        loginApprovalClockTimer = null;
+        checkLoginApproval();
+    }
+}
+
+async function finishApprovedLogin() {
+    if (!pendingLogin || loginApprovalFinalizing) return;
+    loginApprovalFinalizing = true;
+    loginApprovalStatus.textContent = "Approval received. Securing your session…";
+    resendLoginApprovalButton.disabled = true;
+    try {
+        const result = await invokeLoginApproval("finalize", {
+            requestId: pendingLogin.requestId,
+            browserSecret: pendingLogin.browserSecret,
+            password: pendingPassword,
+            trustDevice: trustDeviceInput.checked
+        });
+        pendingPassword = "";
+        const profile = await window.medtrackAuth.completeApprovedLogin(
+            result.session,
+            pendingLogin.rememberMe
+        );
+        stopLoginApprovalTimers();
+        loginApprovalStatus.textContent = "Login approved. Redirecting…";
+        window.medtrackAuth.redirectToDashboard(profile);
+    } catch (error) {
+        pendingPassword = "";
+        loginApprovalStatus.textContent = error.message || "Unable to complete the approved login.";
+        loginApprovalStatus.classList.add("error");
+        stopLoginApprovalTimers();
+    }
+}
+
+async function checkLoginApproval() {
+    if (!pendingLogin || loginApprovalFinalizing) return;
+    try {
+        const result = await invokeLoginApproval("status", {
+            requestId: pendingLogin.requestId,
+            browserSecret: pendingLogin.browserSecret
+        });
+        if (result.status === "approved") {
+            await finishApprovedLogin();
+        } else if (["denied", "expired", "completed"].includes(result.status)) {
+            loginApprovalStatus.textContent = result.status === "denied"
+                ? "This login was denied. Access was not granted."
+                : "This login request is no longer available.";
+            loginApprovalStatus.classList.add("error");
+            stopLoginApprovalTimers();
+        }
+    } catch (error) {
+        loginApprovalStatus.textContent = error.message || "Unable to check approval status.";
+        loginApprovalStatus.classList.add("error");
+    }
+}
+
+function showPendingLogin(result, password, rememberMe) {
+    pendingPassword = password;
+    pendingLogin = {
+        requestId: result.requestId,
+        browserSecret: result.browserSecret,
+        rememberMe: rememberMe,
+        expiresAt: Date.now() + Number(result.expiresIn || 600) * 1000,
+        resendAt: Date.now() + Number(result.resendAfter || 60) * 1000
+    };
+    loginApprovalDestination.textContent = result.maskedDestination;
+    loginApprovalStatus.textContent = "Waiting for your approval…";
+    loginApprovalStatus.classList.remove("error");
+    loginForm.hidden = true;
+    loginApprovalPanel.hidden = false;
+    updateLoginApprovalClock();
+    loginApprovalClockTimer = setInterval(updateLoginApprovalClock, 1000);
+    loginApprovalPollTimer = setInterval(checkLoginApproval, 3000);
+}
+
 loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -77,14 +217,22 @@ loginForm.addEventListener("submit", async function (event) {
     showMessage("Signing in...", "success");
 
     try {
-        const profile = await window.medtrackAuth.signIn(
-            email,
-            password,
-            rememberMe
-        );
+        const result = await invokeLoginApproval("begin", {
+            email: email,
+            password: password,
+            rememberMe: rememberMe
+        });
 
-        showMessage("Login successful. Redirecting...", "success");
-        window.medtrackAuth.redirectToDashboard(profile);
+        if (result.status === "completed" && result.session) {
+            const profile = await window.medtrackAuth.completeApprovedLogin(result.session, rememberMe);
+            passwordInput.value = "";
+            showMessage("Trusted device verified. Redirecting…", "success");
+            window.medtrackAuth.redirectToDashboard(profile);
+            return;
+        }
+
+        showMessage("", "success");
+        showPendingLogin(result, password, rememberMe);
     } catch (error) {
         showMessage(
             error.message || "Unable to sign in.",
@@ -93,6 +241,46 @@ loginForm.addEventListener("submit", async function (event) {
 
         submitButton.disabled = false;
     }
+});
+
+resendLoginApprovalButton.addEventListener("click", async function () {
+    if (!pendingLogin) return;
+    resendLoginApprovalButton.disabled = true;
+    loginApprovalStatus.classList.remove("error");
+    loginApprovalStatus.textContent = "Sending a new approval email…";
+    try {
+        const result = await invokeLoginApproval("resend", {
+            requestId: pendingLogin.requestId,
+            browserSecret: pendingLogin.browserSecret
+        });
+        pendingLogin.expiresAt = Date.now() + Number(result.expiresIn || 600) * 1000;
+        pendingLogin.resendAt = Date.now() + Number(result.resendAfter || 60) * 1000;
+        loginApprovalStatus.textContent = "A new approval email was sent.";
+        updateLoginApprovalClock();
+    } catch (error) {
+        if (error.retryAfter) pendingLogin.resendAt = Date.now() + error.retryAfter * 1000;
+        loginApprovalStatus.textContent = error.message || "Unable to resend the approval email.";
+        loginApprovalStatus.classList.add("error");
+        updateLoginApprovalClock();
+    }
+});
+
+cancelLoginApprovalButton.addEventListener("click", async function () {
+    if (pendingLogin) {
+        try {
+            await invokeLoginApproval("cancel", {
+                requestId: pendingLogin.requestId,
+                browserSecret: pendingLogin.browserSecret
+            });
+        } catch (error) {
+            console.error("Unable to cancel the pending login:", error);
+        }
+    }
+    resetLoginApproval();
+});
+
+document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && pendingLogin) checkLoginApproval();
 });
 
 async function functionErrorMessage(error) {

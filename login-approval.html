@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Login Approval | MedTrack</title>
+    <link rel="stylesheet" href="login-approval.css">
+</head>
+<body>
+    <main class="approval-card">
+        <div class="brand-mark" aria-hidden="true">+</div>
+        <p class="brand-name">MedTrack</p>
+        <h1 id="approvalTitle">Review Login Request</h1>
+        <p id="approvalDescription">Confirm your decision below. Opening this page alone does not approve the login.</p>
+        <div class="security-note">
+            Never approve a login you did not start. MedTrack will never ask for your password on this page.
+        </div>
+        <p class="result-message" id="approvalMessage" aria-live="polite"></p>
+        <button type="button" class="decision-button" id="confirmDecision">Confirm Decision</button>
+        <a class="return-link" href="login/login.html">Return to MedTrack Login</a>
+    </main>
+    <script src="login-approval.js"></script>
+</body>
+</html>

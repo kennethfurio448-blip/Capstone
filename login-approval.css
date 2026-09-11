@@ -1,0 +1,119 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    padding: 24px;
+    display: grid;
+    place-items: center;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(rgba(110, 0, 0, 0.86), rgba(110, 0, 0, 0.86));
+}
+
+.approval-card {
+    width: min(100%, 510px);
+    padding: 40px;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+    text-align: center;
+}
+
+.brand-mark {
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 10px;
+    display: grid;
+    place-items: center;
+    border-radius: 17px;
+    color: #ffffff;
+    background: #b71c1c;
+    font-size: 40px;
+    font-weight: 700;
+}
+
+.brand-name {
+    margin-bottom: 25px;
+    color: #b71c1c;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+h1 {
+    margin-bottom: 12px;
+    color: #222222;
+    font-size: 25px;
+}
+
+#approvalDescription {
+    color: #666666;
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.security-note {
+    margin: 24px 0 18px;
+    padding: 14px;
+    border: 1px solid #f0c7c7;
+    border-radius: 10px;
+    color: #7d1b1b;
+    background: #fff5f5;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.result-message {
+    min-height: 22px;
+    margin-bottom: 12px;
+    color: #2e7d32;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.result-message.error {
+    color: #d32f2f;
+}
+
+.decision-button {
+    width: 100%;
+    min-height: 50px;
+    border: 0;
+    border-radius: 9px;
+    color: #ffffff;
+    background: #b71c1c;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.decision-button.deny {
+    background: #333333;
+}
+
+.decision-button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.return-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: #b71c1c;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 14px;
+    }
+
+    .approval-card {
+        padding: 30px 20px;
+        border-radius: 14px;
+    }
+}
