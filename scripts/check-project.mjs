@@ -202,6 +202,12 @@ try {
   if (!loginScript.includes('"request-password-reset"')) {
     failures.push("login: password-recovery OTP request is missing");
   }
+  if (
+    !loginScript.includes('localPreviewHosts.includes(window.location.hostname)') ||
+    !loginScript.includes('window.location.replace(productionLoginUrl)')
+  ) {
+    failures.push("login: unsupported local previews must redirect to the secure deployed login");
+  }
 } catch (error) {
   failures.push(`login-auth: unable to inspect normal login security controls (${error.message})`);
 }

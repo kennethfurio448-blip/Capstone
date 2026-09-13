@@ -1,3 +1,13 @@
+const productionLoginUrl = "https://medtrack-system-ph.vercel.app/login/login.html";
+const localPreviewHosts = ["127.0.0.1", "localhost"];
+const isUnsupportedLocalPreview =
+    localPreviewHosts.includes(window.location.hostname) &&
+    window.location.port !== "3000";
+
+if (isUnsupportedLocalPreview) {
+    window.location.replace(productionLoginUrl);
+}
+
 const loginForm = document.getElementById("loginForm");
 const formMessage = document.getElementById("formMessage");
 const emailInput = document.getElementById("email");
