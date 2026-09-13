@@ -207,6 +207,10 @@ async function signIn(body: Record<string, unknown>) {
 Deno.serve(async (request) => {
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
   try {
+    const contentType = request.headers.get("Content-Type") || "";
+    if (!contentType.toLowerCase().includes("application/json")) {
+      throw new PublicError("Content-Type must be application/json.", 415);
+    }
     const text = await request.text();
     if (new TextEncoder().encode(text).byteLength > 32 * 1024) {
       throw new PublicError("Request body is too large.", 413);

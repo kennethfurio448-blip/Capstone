@@ -69,7 +69,7 @@
                 storage: authStorage,
                 autoRefreshToken: true,
                 persistSession: true,
-                detectSessionInUrl: true
+                detectSessionInUrl: false
             }
         }
     );

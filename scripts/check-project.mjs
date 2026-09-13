@@ -117,6 +117,8 @@ const otpFunctionPath = join(root, "supabase", "functions", "otp-auth", "index.t
 const accountFunctionPath = join(root, "supabase", "functions", "dynamic-worker", "index.ts");
 const loginFunctionPath = join(root, "supabase", "functions", "login-auth", "index.ts");
 const loginScriptPath = join(root, "login", "login.js");
+const loginProxyPath = join(root, "api", "login.js");
+const supabaseClientPath = join(root, "auth", "supabase-client.js");
 const authGuardPath = join(root, "auth", "supabase-auth.js");
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
@@ -174,6 +176,8 @@ try {
 try {
   const loginFunction = readFileSync(loginFunctionPath, "utf8");
   const loginScript = readFileSync(loginScriptPath, "utf8");
+  const loginProxy = readFileSync(loginProxyPath, "utf8");
+  const supabaseClient = readFileSync(supabaseClientPath, "utf8");
 
   for (const requiredControl of [
     "medtrack_check_otp_rate_limit",
@@ -184,6 +188,7 @@ try {
     "signInWithPassword",
     "recordEvent",
     "LOGIN_PROXY_SECRET",
+    "Content-Type must be application/json.",
   ]) {
     if (!loginFunction.includes(requiredControl)) {
       failures.push(`login-auth: missing required backend control ${requiredControl}`);
@@ -207,6 +212,28 @@ try {
     !loginScript.includes('window.location.replace(productionLoginUrl)')
   ) {
     failures.push("login: unsupported local previews must redirect to the secure deployed login");
+  }
+  if (
+    !loginProxy.includes("MAX_REQUEST_BYTES") ||
+    !loginProxy.includes("Content-Type must be application/json.") ||
+    !loginProxy.includes("Request body is too large.")
+  ) {
+    failures.push("login: Vercel proxy request validation is incomplete");
+  }
+  if (!supabaseClient.includes("detectSessionInUrl: false")) {
+    failures.push("supabase-auth: URL session detection must remain disabled");
+  }
+
+  const activeAuthenticationCode = [
+    loginFunction,
+    loginScript,
+    loginProxy,
+    supabaseClient,
+    readFileSync(authGuardPath, "utf8"),
+    readFileSync(accountFunctionPath, "utf8"),
+  ].join("\n");
+  if (/login-approval|approved_sessions|trusted_devices|LOGIN_APPROVAL/.test(activeAuthenticationCode)) {
+    failures.push("authentication: obsolete login-approval code remains active");
   }
 } catch (error) {
   failures.push(`login-auth: unable to inspect normal login security controls (${error.message})`);
@@ -235,7 +262,6 @@ try {
   if (
     !authGuard.includes("SENSITIVE_CACHE_KEYS") ||
     !authGuard.includes("function clearSensitiveBrowserData()") ||
-    !authGuard.includes("function clearLegacyLoginState()") ||
     !authGuard.includes('if (event === "SIGNED_OUT")')
   ) {
     failures.push("supabase-auth: sensitive browser data cleanup is incomplete");

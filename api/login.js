@@ -1,6 +1,6 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://agztgijxasjypmrndvyj.supabase.co";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_4JmtsAj-OqKIl3r-MdWy2A_Cr-RUtIk";
-const LEGACY_TRUST_COOKIE = "__Host-medtrack_trusted_device";
+const MAX_REQUEST_BYTES = 32 * 1024;
 
 function requestOriginAllowed(request) {
     const origin = request.headers.origin;
@@ -16,10 +16,6 @@ module.exports = async function handler(request, response) {
     response.setHeader("Cache-Control", "no-store, max-age=0");
     response.setHeader("Referrer-Policy", "no-referrer");
     response.setHeader("X-Content-Type-Options", "nosniff");
-    response.setHeader(
-        "Set-Cookie",
-        `${LEGACY_TRUST_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict`
-    );
 
     if (request.method !== "POST") {
         return response.status(405).json({ error: "Method not allowed." });
@@ -27,13 +23,23 @@ module.exports = async function handler(request, response) {
     if (!requestOriginAllowed(request)) {
         return response.status(403).json({ error: "This request origin is not allowed." });
     }
+    if (!String(request.headers["content-type"] || "").toLowerCase().includes("application/json")) {
+        return response.status(415).json({ error: "Content-Type must be application/json." });
+    }
+
+    const contentLength = Number(request.headers["content-length"] || 0);
+    if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
+        return response.status(413).json({ error: "Request body is too large." });
+    }
 
     const proxySecret = process.env.LOGIN_PROXY_SECRET || "";
     if (proxySecret.length < 32) {
         return response.status(503).json({ error: "Login service is not configured." });
     }
 
-    const body = request.body && typeof request.body === "object" ? request.body : {};
+    const body = request.body && typeof request.body === "object" && !Array.isArray(request.body)
+        ? request.body
+        : {};
     const forwardedFor = String(request.headers["x-forwarded-for"] || "").split(",")[0].trim();
     const clientIp = forwardedFor || String(request.headers["x-real-ip"] || "") || "Unavailable";
     const country = String(request.headers["x-vercel-ip-country"] || "").trim();
