@@ -1,5 +1,6 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://agztgijxasjypmrndvyj.supabase.co";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_4JmtsAj-OqKIl3r-MdWy2A_Cr-RUtIk";
+const LEGACY_TRUST_COOKIE = "__Host-medtrack_trusted_device";
 
 function requestOriginAllowed(request) {
     const origin = request.headers.origin;
@@ -15,6 +16,10 @@ module.exports = async function handler(request, response) {
     response.setHeader("Cache-Control", "no-store, max-age=0");
     response.setHeader("Referrer-Policy", "no-referrer");
     response.setHeader("X-Content-Type-Options", "nosniff");
+    response.setHeader(
+        "Set-Cookie",
+        `${LEGACY_TRUST_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict`
+    );
 
     if (request.method !== "POST") {
         return response.status(405).json({ error: "Method not allowed." });

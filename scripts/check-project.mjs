@@ -199,6 +199,9 @@ try {
   if (!loginScript.includes('functions.invoke("otp-auth"')) {
     failures.push("login: password-recovery OTP integration is missing");
   }
+  if (!loginScript.includes('"request-password-reset"')) {
+    failures.push("login: password-recovery OTP request is missing");
+  }
 } catch (error) {
   failures.push(`login-auth: unable to inspect normal login security controls (${error.message})`);
 }
@@ -226,6 +229,7 @@ try {
   if (
     !authGuard.includes("SENSITIVE_CACHE_KEYS") ||
     !authGuard.includes("function clearSensitiveBrowserData()") ||
+    !authGuard.includes("function clearLegacyLoginState()") ||
     !authGuard.includes('if (event === "SIGNED_OUT")')
   ) {
     failures.push("supabase-auth: sensitive browser data cleanup is incomplete");

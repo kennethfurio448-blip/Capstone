@@ -8,6 +8,11 @@
     const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
     const ACTIVITY_WRITE_INTERVAL_MS = 15 * 1000;
     const SESSION_ACTIVITY_KEY = "medtrackLastActivityAt";
+    const LEGACY_LOGIN_STATE_KEYS = Object.freeze([
+        "medtrackLoginApproval",
+        "medtrackPendingLogin",
+        "medtrackTrustedDevice"
+    ]);
     const SENSITIVE_CACHE_KEYS = Object.freeze([
         "medtrackMedicalSupplies",
         "medtrackMedicalEquipment",
@@ -38,6 +43,13 @@
     let sessionTimeoutTimer = null;
     let lastActivityWrite = 0;
     let pendingLoginReason = "";
+
+    function clearLegacyLoginState() {
+        LEGACY_LOGIN_STATE_KEYS.forEach(function (key) {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+    }
 
     function projectUrl(path) {
         return new URL(path, projectRootUrl).href;
@@ -449,6 +461,7 @@
         }
     });
 
+    clearLegacyLoginState();
     installNavigationOptimizations();
 
     window.medtrackAuth = {
