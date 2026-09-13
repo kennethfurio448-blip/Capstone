@@ -115,6 +115,8 @@ for (const file of files.filter((path) => extname(path) === ".html")) {
 const vercelConfigPath = join(root, "vercel.json");
 const otpFunctionPath = join(root, "supabase", "functions", "otp-auth", "index.ts");
 const accountFunctionPath = join(root, "supabase", "functions", "dynamic-worker", "index.ts");
+const loginFunctionPath = join(root, "supabase", "functions", "login-auth", "index.ts");
+const loginScriptPath = join(root, "login", "login.js");
 const authGuardPath = join(root, "auth", "supabase-auth.js");
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
@@ -167,6 +169,38 @@ try {
   }
 } catch (error) {
   failures.push(`otp-auth: unable to inspect server verification controls (${error.message})`);
+}
+
+try {
+  const loginFunction = readFileSync(loginFunctionPath, "utf8");
+  const loginScript = readFileSync(loginScriptPath, "utf8");
+
+  for (const requiredControl of [
+    "medtrack_check_otp_rate_limit",
+    "medtrack_login_security_check",
+    "medtrack_login_security_failure",
+    "medtrack_login_security_success",
+    "medtrack_resolve_login_email",
+    "signInWithPassword",
+    "recordEvent",
+    "LOGIN_PROXY_SECRET",
+  ]) {
+    if (!loginFunction.includes(requiredControl)) {
+      failures.push(`login-auth: missing required backend control ${requiredControl}`);
+    }
+  }
+
+  if (!loginScript.includes("window.medtrackAuth.signIn")) {
+    failures.push("login: credentials must use the protected login service");
+  }
+  if (/loginApproval|login-approval|Approve This Login/.test(loginScript)) {
+    failures.push("login: obsolete email-approval logic remains in the normal login flow");
+  }
+  if (!loginScript.includes('functions.invoke("otp-auth"')) {
+    failures.push("login: password-recovery OTP integration is missing");
+  }
+} catch (error) {
+  failures.push(`login-auth: unable to inspect normal login security controls (${error.message})`);
 }
 
 try {

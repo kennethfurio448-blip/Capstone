@@ -238,23 +238,6 @@ async function requireAdmin(request: Request, supabase: ReturnType<typeof adminC
   const token = bearer.startsWith("Bearer ") ? bearer.slice(7) : "";
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) throw new Error("Administrator authentication is required.");
-  let sessionId = "";
-  try {
-    const encoded = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-    const claims = JSON.parse(atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, "=")));
-    sessionId = String(claims.session_id || "");
-  } catch {
-    throw new Error("Administrator authentication is required.");
-  }
-  const { data: approvedSession } = await supabase
-    .from("approved_sessions")
-    .select("session_id")
-    .eq("session_id", sessionId)
-    .eq("user_id", data.user.id)
-    .is("revoked_at", null)
-    .gt("expires_at", new Date().toISOString())
-    .maybeSingle();
-  if (!approvedSession) throw new Error("Administrator authentication is required.");
   const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", data.user.id).maybeSingle();
   if (profile?.role !== "admin" || profile?.status !== "active") {
     throw new Error("An active administrator account is required.");

@@ -117,12 +117,6 @@
 
     async function signOut() {
         try {
-            await client.rpc("medtrack_revoke_current_approved_session");
-        } catch (revokeError) {
-            console.error("Unable to revoke the approved session:", revokeError);
-        }
-
-        try {
             const auditResult = await client.rpc(
                 "medtrack_record_auth_event",
                 { p_action: "Logout" }
@@ -376,13 +370,23 @@
         });
     }
 
-    async function signIn(email, password, rememberUser) {
-        throw new Error("Login must be completed through Gmail approval.");
-    }
+    async function signIn(identifier, password, rememberUser) {
+        const response = await fetch("/api/login", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier: identifier, password: password })
+        });
+        const data = await response.json().catch(function () {
+            return { error: "The login service returned an invalid response." };
+        });
+        if (!response.ok || data.error) {
+            throw new Error(data.error || "Unable to sign in.");
+        }
 
-    async function completeApprovedLogin(session, rememberUser) {
+        const session = data.session;
         if (!session || !session.access_token || !session.refresh_token) {
-            throw new Error("The approved session is invalid.");
+            throw new Error("The login service returned an invalid session.");
         }
 
         sessionStorageManager.setPersistence(rememberUser);
@@ -392,7 +396,8 @@
         });
 
         if (result.error || !result.data.user) {
-            throw new Error("Unable to activate the approved login session.");
+            sessionStorageManager.clearPersistence();
+            throw new Error("Unable to activate the login session.");
         }
 
         try {
@@ -450,7 +455,6 @@
         client: client,
         requireRoles: requireRoles,
         signIn: signIn,
-        completeApprovedLogin: completeApprovedLogin,
         signOut: signOut,
         signOutAndRedirect: signOutAndRedirect,
         redirectToDashboard: redirectToDashboard,

@@ -39,16 +39,16 @@
             <form id="loginForm">
 
                 <div class="input-group">
-                    <label for="email">Email Address</label>
+                    <label for="email">Email or Username</label>
 
                     <div class="input-box">
                         <i class="fa-solid fa-user"></i>
 
                         <input
-                            type="email"
+                            type="text"
                             id="email"
-                            placeholder="Enter your email address"
-                            autocomplete="email"
+                            placeholder="Enter your email or username"
+                            autocomplete="username"
                             required
                         >
                     </div>
@@ -98,22 +98,6 @@
                 </button>
 
             </form>
-
-            <section class="login-approval-panel" id="loginApprovalPanel" hidden aria-live="polite">
-                <div class="approval-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
-                <h2>Approve This Login</h2>
-                <p>A secure approval email was sent to <strong id="loginApprovalDestination"></strong>.</p>
-                <p class="approval-status" id="loginApprovalStatus">Waiting for your approval…</p>
-                <p class="approval-expiry">Request expires in <strong id="loginApprovalCountdown">10:00</strong>.</p>
-                <label class="trust-device-option">
-                    <input type="checkbox" id="trustDevice">
-                    Trust this verified device for 14 days
-                </label>
-                <div class="approval-actions">
-                    <button type="button" class="approval-secondary" id="resendLoginApproval" disabled>Resend Email (60s)</button>
-                    <button type="button" class="approval-secondary" id="cancelLoginApproval">Cancel Login</button>
-                </div>
-            </section>
 
             <p class="create-account-link">
                 Accounts are created by an administrator.

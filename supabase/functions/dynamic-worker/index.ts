@@ -157,26 +157,6 @@ export default {
         );
       }
 
-      const sessionClaims = (context.jwtClaims || {}) as Record<string, unknown>;
-      const sessionId = String(sessionClaims.session_id || "");
-      const { data: approvedSession, error: approvedSessionError } =
-        await supabaseAdmin
-          .from("approved_sessions")
-          .select("session_id")
-          .eq("session_id", sessionId)
-          .eq("user_id", callerId)
-          .is("revoked_at", null)
-          .gt("expires_at", new Date().toISOString())
-          .maybeSingle();
-
-      if (approvedSessionError) {
-        return internalError("approved session lookup", approvedSessionError);
-      }
-
-      if (!approvedSession) {
-        return errorResponse("Email-approved login is required.", 401);
-      }
-
       const { data: callerProfile, error: callerError } =
         await supabaseAdmin
           .from("profiles")
