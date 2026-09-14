@@ -1,5 +1,21 @@
 
 document.addEventListener("DOMContentLoaded", function () {
+    const trendSeries = [
+        ["supply_added", "Supplies added", "#c62828"],
+        ["supply_consumed", "Supplies consumed", "#ef5350"],
+        ["equipment_borrowed", "Equipment borrowed", "#ef6c00"],
+        ["equipment_returned", "Equipment returned", "#ffb74d"],
+        ["mobility_assigned", "Mobility assigned", "#1565c0"],
+        ["mobility_deployed", "Mobility deployed", "#42a5f5"],
+        ["item_missing", "Missing", "#6d4c41"],
+        ["item_damaged", "Damaged", "#8e24aa"],
+        ["item_for_repair", "For repair", "#7e57c2"],
+        ["low_stock", "Low stock", "#2e7d32"],
+        ["expiring_supply", "Expiring supplies", "#66bb6a"]
+    ];
+
+    let trendRequestNumber = 0;
+
     function getStoredData(key) {
         try {
             const data = JSON.parse(localStorage.getItem(key));
@@ -13,7 +29,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const supplies = getStoredData("medtrackMedicalSupplies");
         const equipment = getStoredData("medtrackMedicalEquipment");
         const mobility = getStoredData("medtrackMobilityAssets");
-        const emergencies = getStoredData("medtrackEmergencyRequests");
         const borrowing = getStoredData("medtrackBorrowTransactions");
 
         const today = new Date();
@@ -62,24 +77,13 @@ document.addEventListener("DOMContentLoaded", function () {
         setText("lowStockTotal", lowStockItems.length);
         updateNotificationCount(totalAlerts);
 
-        setText("supplyOverviewCount", supplies.length);
-        setText("equipmentOverviewCount", equipment.length);
-        setText("mobilityOverviewCount", mobility.length);
-        setText("emergencyOverviewCount", emergencies.length);
-
-        updateProgressBars(
-            supplies.length,
-            equipment.length,
-            mobility.length,
-            emergencies.length
-        );
-
         displayInventoryAlerts(
             lowStockItems,
             expiredItems,
             overdueItems
         );
         displayRecentActivity(borrowing);
+        void updateInventoryTrends();
     }
 
     function setText(elementId, value) {
@@ -112,33 +116,205 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function updateProgressBars(
-        supplies,
-        equipment,
-        mobility,
-        emergencies
-    ) {
-        const largestValue = Math.max(
-            supplies,
-            equipment,
-            mobility,
-            emergencies,
-            1
-        );
+    async function updateInventoryTrends() {
+        const chart = document.getElementById("inventoryTrendChart");
+        const status = document.getElementById("inventoryTrendStatus");
+        const periodSelect = document.getElementById("inventoryTrendPeriod");
 
-        setProgress("supplyProgress", supplies, largestValue);
-        setProgress("equipmentProgress", equipment, largestValue);
-        setProgress("mobilityProgress", mobility, largestValue);
-        setProgress("emergencyProgress", emergencies, largestValue);
+        if (!chart || !status || !periodSelect) {
+            return;
+        }
+
+        const requestNumber = ++trendRequestNumber;
+        status.classList.remove("error");
+        status.textContent = "Loading verified inventory activity...";
+
+        try {
+            if (!window.medtrackData ||
+                typeof window.medtrackData.loadInventoryTrends !== "function") {
+                throw new Error("Inventory analytics is unavailable.");
+            }
+
+            const rows = await window.medtrackData.loadInventoryTrends(
+                periodSelect.value
+            );
+
+            if (requestNumber !== trendRequestNumber) {
+                return;
+            }
+
+            renderTrendChart(chart, rows);
+
+            const total = rows.reduce(function (sum, row) {
+                return sum + Number(row.metricValue || 0);
+            }, 0);
+
+            status.textContent = total === 0
+                ? "No inventory activity was recorded in this period."
+                : `${total.toLocaleString()} verified inventory activity ` +
+                    `${total === 1 ? "unit" : "units"} in this period.`;
+        } catch (error) {
+            if (requestNumber !== trendRequestNumber) {
+                return;
+            }
+
+            chart.replaceChildren();
+            status.classList.add("error");
+            status.textContent =
+                "Inventory activity could not be loaded. Refresh and try again.";
+            console.error("Unable to load inventory trends:", error);
+        }
     }
 
-    function setProgress(elementId, value, largestValue) {
-        const progress = document.getElementById(elementId);
+    function renderTrendChart(container, rows) {
+        const grouped = new Map();
 
-        if (progress) {
-            const percentage = (value / largestValue) * 100;
-            progress.style.width = percentage + "%";
+        rows.forEach(function (row) {
+            const key = row.bucketStart;
+
+            if (!grouped.has(key)) {
+                grouped.set(key, {
+                    label: row.bucketLabel,
+                    values: Object.create(null)
+                });
+            }
+
+            grouped.get(key).values[row.eventType] =
+                Number(row.metricValue || 0);
+        });
+
+        const buckets = Array.from(grouped.values());
+        const svgNamespace = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNamespace, "svg");
+        const width = Math.max(620, buckets.length * 72 + 90);
+        const height = 300;
+        const margin = { top: 15, right: 20, bottom: 42, left: 46 };
+        const plotWidth = width - margin.left - margin.right;
+        const plotHeight = height - margin.top - margin.bottom;
+
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.setAttribute("aria-hidden", "true");
+
+        const totals = buckets.map(function (bucket) {
+            return trendSeries.reduce(function (sum, series) {
+                return sum + Number(bucket.values[series[0]] || 0);
+            }, 0);
+        });
+        const maximum = totals.length > 0 ? Math.max(...totals) : 0;
+        const roundedMaximum = niceMaximum(Math.max(maximum, 1));
+
+        for (let index = 0; index <= 4; index += 1) {
+            const value = roundedMaximum * (4 - index) / 4;
+            const y = margin.top + plotHeight * index / 4;
+            appendSvg(svg, "line", {
+                x1: margin.left,
+                y1: y,
+                x2: width - margin.right,
+                y2: y,
+                class: "chart-grid"
+            });
+            const label = appendSvg(svg, "text", {
+                x: margin.left - 8,
+                y: y + 4,
+                "text-anchor": "end",
+                class: "chart-axis-label"
+            });
+            label.textContent = String(Math.round(value));
         }
+
+        if (buckets.length === 0 || maximum === 0) {
+            const empty = appendSvg(svg, "text", {
+                x: width / 2,
+                y: height / 2,
+                class: "chart-empty"
+            });
+            empty.textContent = "No recorded activity for this period";
+        }
+
+        const groupWidth = buckets.length > 0
+            ? plotWidth / buckets.length
+            : plotWidth;
+        const barWidth = Math.min(38, groupWidth * 0.58);
+
+        buckets.forEach(function (bucket, bucketIndex) {
+            const x = margin.left + bucketIndex * groupWidth +
+                (groupWidth - barWidth) / 2;
+            let accumulated = 0;
+
+            trendSeries.forEach(function (series) {
+                const value = Number(bucket.values[series[0]] || 0);
+
+                if (value <= 0) {
+                    return;
+                }
+
+                const segmentHeight = value / roundedMaximum * plotHeight;
+                const y = margin.top + plotHeight - accumulated - segmentHeight;
+                const rectangle = appendSvg(svg, "rect", {
+                    x: x,
+                    y: y,
+                    width: barWidth,
+                    height: Math.max(segmentHeight, 1),
+                    fill: series[2],
+                    rx: 2
+                });
+                const title = document.createElementNS(svgNamespace, "title");
+                title.textContent = `${bucket.label}: ${series[1]} ${value}`;
+                rectangle.appendChild(title);
+                accumulated += segmentHeight;
+            });
+
+            const label = appendSvg(svg, "text", {
+                x: x + barWidth / 2,
+                y: height - 17,
+                "text-anchor": "middle",
+                class: "chart-axis-label"
+            });
+            label.textContent = bucket.label;
+        });
+
+        container.style.minWidth = `${width}px`;
+        container.replaceChildren(svg);
+        renderTrendLegend();
+    }
+
+    function appendSvg(parent, tagName, attributes) {
+        const element = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            tagName
+        );
+
+        Object.entries(attributes).forEach(function (entry) {
+            element.setAttribute(entry[0], String(entry[1]));
+        });
+        parent.appendChild(element);
+        return element;
+    }
+
+    function niceMaximum(value) {
+        const magnitude = 10 ** Math.floor(Math.log10(Math.max(value, 1)));
+        return Math.ceil(value / magnitude) * magnitude;
+    }
+
+    function renderTrendLegend() {
+        const legend = document.getElementById("inventoryTrendLegend");
+
+        if (!legend) {
+            return;
+        }
+
+        legend.replaceChildren(...trendSeries.map(function (series) {
+            const item = document.createElement("span");
+            const swatch = document.createElement("span");
+            const label = document.createElement("span");
+
+            item.className = "trend-legend-item";
+            swatch.className = "trend-legend-swatch";
+            swatch.style.backgroundColor = series[2];
+            label.textContent = series[1];
+            item.append(swatch, label);
+            return item;
+        }));
     }
 
     function displayInventoryAlerts(
@@ -319,6 +495,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     updateDashboardAnalytics();
 
+    const inventoryTrendPeriod =
+        document.getElementById("inventoryTrendPeriod");
+
+    if (inventoryTrendPeriod) {
+        inventoryTrendPeriod.addEventListener(
+            "change",
+            updateInventoryTrends
+        );
+    }
+
     window.addEventListener("storage", updateDashboardAnalytics);
 
     window.addEventListener(
@@ -328,5 +514,13 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener(
         "medtrack:dataChanged",
         updateDashboardAnalytics
+    );
+    window.addEventListener(
+        "medtrack:data-saved",
+        updateInventoryTrends
+    );
+    window.addEventListener(
+        "medtrack:inventory-activity",
+        updateInventoryTrends
     );
 });

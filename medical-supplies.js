@@ -249,45 +249,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     openAddModalButton.hidden = !canManageInventory;
 
 
-    const defaultSupplies = [
-        {
-            id: "MED-001",
-            name: "First Aid Kit",
-            category: "First Aid",
-            quantity: 4,
-            unit: "Sets",
-            expirationDate: "2027-06-15",
-            lowStockLevel: 10
-        },
-        {
-            id: "MED-002",
-            name: "Medical Gloves",
-            category: "Protective Equipment",
-            quantity: 35,
-            unit: "Boxes",
-            expirationDate: "2026-07-10",
-            lowStockLevel: 10
-        },
-        {
-            id: "MED-003",
-            name: "Paracetamol",
-            category: "Medicine",
-            quantity: 80,
-            unit: "Boxes",
-            expirationDate: "2027-08-20",
-            lowStockLevel: 20
-        },
-        {
-            id: "MED-004",
-            name: "Face Masks",
-            category: "Protective Equipment",
-            quantity: 100,
-            unit: "Boxes",
-            expirationDate: "2028-01-12",
-            lowStockLevel: 20
-        }
-    ];
-
     const storageKey = "medtrackMedicalSupplies";
 
 
@@ -314,13 +275,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             localStorage.getItem(storageKey);
 
         if (savedSupplies === null) {
-            const initialSupplies =
-                defaultSupplies.map(function (supply) {
-                    return { ...supply };
-                });
-
-            saveSupplies(initialSupplies);
-            return initialSupplies;
+            return [];
         }
 
         try {

@@ -745,6 +745,29 @@
         });
     }
 
+    async function loadInventoryTrends(period = "week") {
+        const normalizedPeriod = ["week", "month", "year"].includes(period)
+            ? period
+            : "week";
+        const result = await client.rpc(
+            "medtrack_inventory_activity_trends",
+            { p_period: normalizedPeriod }
+        );
+
+        if (result.error) {
+            throw new Error(result.error.message);
+        }
+
+        return (result.data || []).map(function (record) {
+            return {
+                bucketStart: record.bucket_start,
+                bucketLabel: record.bucket_label,
+                eventType: record.event_type,
+                metricValue: Number(record.metric_value || 0)
+            };
+        });
+    }
+
     function clearSensitiveCache() {
         logoutInProgress = true;
 
@@ -785,8 +808,25 @@
         saveMedicalSupply: saveMedicalSupply,
         consumeMedicalSupply: consumeMedicalSupply,
         loadSupplyTransactions: loadSupplyTransactions,
+        loadInventoryTrends: loadInventoryTrends,
         clearSensitiveCache: clearSensitiveCache
     };
+
+    client.channel("medtrack-inventory-activity")
+        .on(
+            "postgres_changes",
+            {
+                event: "INSERT",
+                schema: "public",
+                table: "inventory_activity_events"
+            },
+            function () {
+                window.dispatchEvent(
+                    new CustomEvent("medtrack:inventory-activity")
+                );
+            }
+        )
+        .subscribe();
 
     window.addEventListener("focus", function () {
         if (!logoutInProgress && uploadTimers.size === 0) {

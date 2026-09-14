@@ -162,136 +162,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         "medtrackBorrowTransactions";
 
 
-    const defaultSupplies = [
-        {
-            id: "MED-001",
-            name: "First Aid Kit",
-            category: "First Aid",
-            quantity: 4,
-            unit: "Sets",
-            expirationDate: "2027-06-15",
-            lowStockLevel: 10
-        },
-        {
-            id: "MED-002",
-            name: "Medical Gloves",
-            category: "Protective Equipment",
-            quantity: 35,
-            unit: "Boxes",
-            expirationDate: "2026-07-10",
-            lowStockLevel: 10
-        },
-        {
-            id: "MED-003",
-            name: "Paracetamol",
-            category: "Medicine",
-            quantity: 80,
-            unit: "Boxes",
-            expirationDate: "2027-08-20",
-            lowStockLevel: 20
-        },
-        {
-            id: "MED-004",
-            name: "Face Masks",
-            category: "Protective Equipment",
-            quantity: 100,
-            unit: "Boxes",
-            expirationDate: "2028-01-12",
-            lowStockLevel: 20
-        }
-    ];
-
-
-    const defaultEquipment = [
-        {
-            id: "EQP-001",
-            name: "Portable Oxygen Tank",
-            category: "Life Support",
-            quantity: 5,
-            condition: "Good",
-            location: "Equipment Room A",
-            maintenanceDate: "2027-01-15",
-            status: "Available"
-        },
-        {
-            id: "EQP-002",
-            name: "Blood Pressure Monitor",
-            category: "Monitoring",
-            quantity: 8,
-            condition: "Excellent",
-            location: "Medical Storage Room",
-            maintenanceDate: "2027-03-20",
-            status: "Available"
-        },
-        {
-            id: "EQP-003",
-            name: "Portable Generator",
-            category: "Emergency",
-            quantity: 2,
-            condition: "Fair",
-            location: "Emergency Warehouse",
-            maintenanceDate: "2026-07-10",
-            status: "Maintenance"
-        },
-        {
-            id: "EQP-004",
-            name: "Wheelchair",
-            category: "Transport",
-            quantity: 4,
-            condition: "Good",
-            location: "Equipment Room B",
-            maintenanceDate: "2027-05-12",
-            status: "In Use"
-        }
-    ];
-
-
-    const defaultMobility = [
-        {
-            id: "MOB-001",
-            name: "Rescue Ambulance 1",
-            type: "Ambulance",
-            plateNumber: "ABC-1234",
-            condition: "Excellent",
-            driver: "Juan Dela Cruz",
-            location: "PDRRMO Headquarters",
-            maintenanceDate: "2027-02-15",
-            status: "Available"
-        },
-        {
-            id: "MOB-002",
-            name: "Emergency Rescue Truck",
-            type: "Rescue Vehicle",
-            plateNumber: "DEF-5678",
-            condition: "Good",
-            driver: "Pedro Santos",
-            location: "Response Station 1",
-            maintenanceDate: "2027-01-10",
-            status: "Deployed"
-        },
-        {
-            id: "MOB-003",
-            name: "Command Vehicle",
-            type: "Command Vehicle",
-            plateNumber: "GHI-9012",
-            condition: "Fair",
-            driver: "Mario Reyes",
-            location: "Maintenance Area",
-            maintenanceDate: "2026-07-20",
-            status: "For Repair"
-        },
-        {
-            id: "MOB-004",
-            name: "Service Motorcycle",
-            type: "Motorcycle",
-            plateNumber: "JKL-3456",
-            condition: "Good",
-            driver: "Antonio Garcia",
-            location: "PDRRMO Headquarters",
-            maintenanceDate: "2027-04-08",
-            status: "Available"
-        }
-    ];
+    const emptyInventory = [];
 
 
     function cloneRecords(records) {
@@ -463,7 +334,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const supplies =
             getStoredArray(
                 inventoryKeys.supplies,
-                defaultSupplies
+                emptyInventory
             );
 
         return supplies
@@ -521,7 +392,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const equipment =
             getStoredArray(
                 inventoryKeys.equipment,
-                defaultEquipment
+                emptyInventory
             );
 
         return equipment
@@ -591,7 +462,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const mobilityAssets =
             getStoredArray(
                 inventoryKeys.mobility,
-                defaultMobility
+                emptyInventory
             );
 
         return mobilityAssets
@@ -865,7 +736,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 inventoryKeys.supplies;
 
             defaultRecords =
-                defaultSupplies;
+                emptyInventory;
         } else if (
             selectedItem.type ===
             "Medical Equipment"
@@ -874,7 +745,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 inventoryKeys.equipment;
 
             defaultRecords =
-                defaultEquipment;
+                emptyInventory;
         } else if (
             selectedItem.type ===
             "Mobility Asset"
@@ -883,7 +754,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 inventoryKeys.mobility;
 
             defaultRecords =
-                defaultMobility;
+                emptyInventory;
         } else {
             return false;
         }
@@ -1011,7 +882,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (isMobility && !normalizeText(assignedPersonnel.value)) {
             const mobilityRecord = getStoredArray(
                 inventoryKeys.mobility,
-                defaultMobility
+                emptyInventory
             ).find(function (asset) {
                 return normalizeText(asset.id) === selectedItem.id;
             });

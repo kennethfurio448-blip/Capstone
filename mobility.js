@@ -148,65 +148,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     openAddModalButton.hidden = !canManageInventory;
 
 
-    const defaultVehicles = [
-        {
-            id: "MOB-001",
-            name: "Rescue Ambulance 1",
-            type: "Ambulance",
-            plateNumber: "ABC-1234",
-            condition: "Excellent",
-            driver: "Juan Dela Cruz",
-            location: "PDRRMO Headquarters",
-            maintenanceDate: "2027-02-15",
-            status: "Available"
-        },
-        {
-            id: "MOB-002",
-            name: "Emergency Rescue Truck",
-            type: "Rescue Vehicle",
-            plateNumber: "DEF-5678",
-            condition: "Good",
-            driver: "Pedro Santos",
-            location: "Response Station 1",
-            maintenanceDate: "2027-01-10",
-            status: "Deployed"
-        },
-        {
-            id: "MOB-003",
-            name: "Command Vehicle",
-            type: "Command Vehicle",
-            plateNumber: "GHI-9012",
-            condition: "Fair",
-            driver: "Mario Reyes",
-            location: "Maintenance Area",
-            maintenanceDate: "2026-07-20",
-            status: "For Repair"
-        },
-        {
-            id: "MOB-004",
-            name: "Service Motorcycle",
-            type: "Motorcycle",
-            plateNumber: "JKL-3456",
-            condition: "Good",
-            driver: "Antonio Garcia",
-            location: "PDRRMO Headquarters",
-            maintenanceDate: "2027-04-08",
-            status: "Available"
-        }
-    ];
-
-
     function getVehicles() {
         const savedVehicles =
             localStorage.getItem("medtrackMobilityAssets");
 
         if (!savedVehicles) {
-            localStorage.setItem(
-                "medtrackMobilityAssets",
-                JSON.stringify(defaultVehicles)
-            );
-
-            return [...defaultVehicles];
+            return [];
         }
 
         try {

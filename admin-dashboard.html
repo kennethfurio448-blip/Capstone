@@ -206,68 +206,39 @@
 
         <section class="dashboard-grid">
 
-            <article class="dashboard-card inventory-overview">
+            <article class="dashboard-card inventory-trends">
 
                 <div class="card-heading">
                     <div>
-                        <h3>Inventory Overview</h3>
-                        <p>Current inventory distribution</p>
+                        <h3>Inventory Activity Trends</h3>
+                        <p>Verified inventory transactions and status changes</p>
                     </div>
 
-                    <select>
-                        <option>This Week</option>
-                        <option>This Month</option>
-                        <option>This Year</option>
+                    <select id="inventoryTrendPeriod"
+                            aria-label="Inventory activity period">
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="year">This Year</option>
                     </select>
                 </div>
 
-                <div class="progress-info">
-                    <div class="inventory-information">
-                        <span>Medical Supplies</span>
-                        <strong id="supplyOverviewCount">0</strong>
-                    </div>
-
-                    <div class="progress-bar">
-                        <span id="supplyProgress"
-                              class="progress red-progress"></span>
-                    </div>
+                <div id="inventoryTrendStatus"
+                     class="trend-status"
+                     role="status"
+                     aria-live="polite">
+                    Loading inventory activity...
                 </div>
 
-                <div class="progress-info">
-                    <div class="inventory-information">
-                        <span>Medical Equipment</span>
-                        <strong id="equipmentOverviewCount">0</strong>
-                    </div>
-
-                    <div class="progress-bar">
-                        <span id="equipmentProgress" 
-                               class="progress orange-progress"></span>
-                    </div>
+                <div class="trend-chart-scroll">
+                    <div id="inventoryTrendChart"
+                         class="trend-chart"
+                         role="img"
+                         aria-label="Inventory activity chart"></div>
                 </div>
 
-                <div class="progress-info">
-                    <div class="inventory-information">
-                        <span>Mobility Assets</span>
-                        <strong id="mobilityOverviewCount">0</strong>
-                    </div>
-
-                    <div class="progress-bar">
-                        <span id="mobilityProgress"
-                              class="progress blue-progress"></span>
-                    </div>
-                </div>
-
-                <div class="progress-info">
-                    <div class="inventory-information">
-                        <span>Emergency Supplies</span>
-                        <strong id="emergencyOverviewCount">0</strong>
-                    </div>
-
-                    <div class="progress-bar">
-                        <span id="emergencyProgress"
-                              class="progress green-progress"></span>
-                    </div>
-                </div>
+                <div id="inventoryTrendLegend"
+                     class="trend-legend"
+                     aria-label="Inventory activity legend"></div>
 
             </article>
 

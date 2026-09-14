@@ -148,50 +148,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     openAddModalButton.hidden = !canManageInventory;
 
 
-    const defaultEquipment = [
-        {
-            id: "EQP-001",
-            name: "Portable Oxygen Tank",
-            category: "Life Support",
-            quantity: 5,
-            condition: "Good",
-            location: "Equipment Room A",
-            maintenanceDate: "2027-01-15",
-            status: "Available"
-        },
-        {
-            id: "EQP-002",
-            name: "Blood Pressure Monitor",
-            category: "Monitoring",
-            quantity: 8,
-            condition: "Excellent",
-            location: "Medical Storage Room",
-            maintenanceDate: "2027-03-20",
-            status: "Available"
-        },
-        {
-            id: "EQP-003",
-            name: "Portable Generator",
-            category: "Emergency",
-            quantity: 2,
-            condition: "Fair",
-            location: "Emergency Warehouse",
-            maintenanceDate: "2026-07-10",
-            status: "Maintenance"
-        },
-        {
-            id: "EQP-004",
-            name: "Wheelchair",
-            category: "Transport",
-            quantity: 4,
-            condition: "Good",
-            location: "Equipment Room B",
-            maintenanceDate: "2027-05-12",
-            status: "In Use"
-        }
-    ];
-
-
     function getEquipment() {
         const savedEquipment =
             localStorage.getItem(
@@ -199,12 +155,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             );
 
         if (!savedEquipment) {
-            localStorage.setItem(
-                "medtrackMedicalEquipment",
-                JSON.stringify(defaultEquipment)
-            );
-
-            return [...defaultEquipment];
+            return [];
         }
 
         try {
