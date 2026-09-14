@@ -587,6 +587,46 @@ a {
     min-width: 0;
 }
 
+.inventory-distribution {
+    min-width: 0;
+}
+
+.distribution-chart {
+    min-height: 230px;
+    display: grid;
+    place-items: center;
+}
+
+.distribution-chart svg {
+    width: min(100%, 280px);
+    height: 230px;
+    display: block;
+}
+
+.distribution-legend {
+    display: grid;
+    gap: 8px;
+}
+
+.distribution-legend-item {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    color: #4b5563;
+    font-size: 12px;
+}
+
+.distribution-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.dashboard-alerts-grid {
+    grid-template-columns: 1fr;
+}
+
 .trend-status {
     min-height: 20px;
     margin: -10px 0 12px;

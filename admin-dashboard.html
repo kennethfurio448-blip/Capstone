@@ -206,6 +206,18 @@
 
         <section class="dashboard-grid">
 
+            <article class="dashboard-card inventory-distribution">
+                <div class="card-heading">
+                    <div>
+                        <h3>Inventory Distribution</h3>
+                        <p>Current registered inventory records</p>
+                    </div>
+                </div>
+                <div id="inventoryDistributionStatus" class="trend-status" role="status" aria-live="polite">Loading inventory totals...</div>
+                <div id="inventoryDistributionChart" class="distribution-chart" role="img" aria-label="Inventory distribution doughnut chart"></div>
+                <div id="inventoryDistributionLegend" class="distribution-legend"></div>
+            </article>
+
             <article class="dashboard-card inventory-trends">
 
                 <div class="card-heading">
@@ -241,6 +253,10 @@
                      aria-label="Inventory activity legend"></div>
 
             </article>
+
+        </section>
+
+        <section class="dashboard-grid dashboard-alerts-grid">
 
             <article class="dashboard-card"
                      id="inventoryAlertsSection"

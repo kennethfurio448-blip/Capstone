@@ -9,9 +9,12 @@ document.addEventListener("DOMContentLoaded", function () {
         ["mobility_deployed", "Mobility deployed", "#42a5f5"],
         ["item_missing", "Missing", "#6d4c41"],
         ["item_damaged", "Damaged", "#8e24aa"],
+        ["item_overdue", "Overdue", "#ad1457"],
         ["item_for_repair", "For repair", "#7e57c2"],
         ["low_stock", "Low stock", "#2e7d32"],
-        ["expiring_supply", "Expiring supplies", "#66bb6a"]
+        ["expiring_supply", "Expiring soon", "#66bb6a"],
+        ["expired_supply", "Expired", "#37474f"],
+        ["emergency_resource_used", "Emergency resources used", "#00838f"]
     ];
 
     let trendRequestNumber = 0;
@@ -83,6 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
             overdueItems
         );
         displayRecentActivity(borrowing);
+        void updateInventoryDistribution();
         void updateInventoryTrends();
     }
 
@@ -163,6 +167,75 @@ document.addEventListener("DOMContentLoaded", function () {
             status.textContent =
                 "Inventory activity could not be loaded. Refresh and try again.";
             console.error("Unable to load inventory trends:", error);
+        }
+    }
+
+    async function updateInventoryDistribution() {
+        const chart = document.getElementById("inventoryDistributionChart");
+        const legend = document.getElementById("inventoryDistributionLegend");
+        const status = document.getElementById("inventoryDistributionStatus");
+        if (!chart || !legend || !status || !window.medtrackData) return;
+
+        try {
+            const totals = await window.medtrackData.loadInventoryDistribution();
+            const segments = [
+                ["Medical Supplies", totals.medicalSupplies, "#c62828"],
+                ["Medical Equipment", totals.medicalEquipment, "#ef6c00"],
+                ["Mobility Assets", totals.mobilityAssets, "#1565c0"]
+            ];
+            const total = segments.reduce((sum, item) => sum + item[1], 0);
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("viewBox", "0 0 260 230");
+            let offset = 0;
+
+            segments.forEach(function (segment) {
+                const percentage = total ? segment[1] / total * 100 : 0;
+                const circle = appendSvg(svg, "circle", {
+                    cx: 130, cy: 104, r: 72, fill: "none",
+                    stroke: segment[2], "stroke-width": 34,
+                    "stroke-dasharray": `${percentage} ${100 - percentage}`,
+                    "stroke-dashoffset": -offset,
+                    "pathLength": 100,
+                    transform: "rotate(-90 130 104)"
+                });
+                const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+                title.textContent = `${segment[0]}: ${segment[1]} (${percentage.toFixed(1)}%)`;
+                circle.appendChild(title);
+                offset += percentage;
+            });
+
+            const totalText = appendSvg(svg, "text", { x: 130, y: 101, "text-anchor": "middle", "font-size": 28, "font-weight": 700, fill: "#111827" });
+            totalText.textContent = String(total);
+            const labelText = appendSvg(svg, "text", { x: 130, y: 122, "text-anchor": "middle", "font-size": 11, fill: "#6b7280" });
+            labelText.textContent = "total records";
+            chart.replaceChildren(svg);
+            chart.setAttribute(
+                "aria-label",
+                `Inventory distribution: ${segments.map(function (segment) {
+                    const percentage = total ? segment[1] / total * 100 : 0;
+                    return `${segment[0]} ${segment[1]} records, ${percentage.toFixed(1)} percent`;
+                }).join("; ")}`
+            );
+            legend.replaceChildren(...segments.map(function (segment) {
+                const percentage = total ? segment[1] / total * 100 : 0;
+                const row = document.createElement("div");
+                row.className = "distribution-legend-item";
+                const swatch = document.createElement("span");
+                swatch.className = "distribution-swatch";
+                swatch.style.backgroundColor = segment[2];
+                const name = document.createElement("span");
+                name.textContent = segment[0];
+                const value = document.createElement("strong");
+                value.textContent = `${segment[1]} (${percentage.toFixed(1)}%)`;
+                row.append(swatch, name, value);
+                return row;
+            }));
+            status.textContent = "Live totals from the inventory database.";
+        } catch (error) {
+            chart.replaceChildren();
+            legend.replaceChildren();
+            status.classList.add("error");
+            status.textContent = "Inventory totals could not be loaded.";
         }
     }
 
@@ -523,4 +596,11 @@ document.addEventListener("DOMContentLoaded", function () {
         "medtrack:inventory-activity",
         updateInventoryTrends
     );
+
+    window.setInterval(function () {
+        if (document.visibilityState === "visible") {
+            void updateInventoryDistribution();
+            void updateInventoryTrends();
+        }
+    }, 15 * 60 * 1000);
 });

@@ -768,6 +768,17 @@
         });
     }
 
+    async function loadInventoryDistribution() {
+        const result = await client.rpc("medtrack_inventory_distribution");
+        if (result.error) throw new Error(result.error.message);
+        const data = result.data || {};
+        return {
+            medicalSupplies: Number(data.medical_supplies || 0),
+            medicalEquipment: Number(data.medical_equipment || 0),
+            mobilityAssets: Number(data.mobility_assets || 0)
+        };
+    }
+
     function clearSensitiveCache() {
         logoutInProgress = true;
 
@@ -809,6 +820,7 @@
         consumeMedicalSupply: consumeMedicalSupply,
         loadSupplyTransactions: loadSupplyTransactions,
         loadInventoryTrends: loadInventoryTrends,
+        loadInventoryDistribution: loadInventoryDistribution,
         clearSensitiveCache: clearSensitiveCache
     };
 
