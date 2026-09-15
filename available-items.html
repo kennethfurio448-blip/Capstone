@@ -14,7 +14,7 @@
         crossorigin="anonymous"
         referrerpolicy="no-referrer"
     >
-    <link rel="stylesheet" href="available-items.css">
+    <link rel="stylesheet" href="available-items.css?v=20260915-borrowable-only">
     <link rel="stylesheet" href="app-shell.css">
 </head>
 
@@ -106,7 +106,7 @@
             <header class="topbar">
                 <div>
                     <h2>Available Items</h2>
-                    <p>Items available for borrowing or emergency use.</p>
+                    <p>Equipment and mobility assets available for borrowing.</p>
                 </div>
 
                 <div class="user-profile">
@@ -122,18 +122,6 @@
             </header>
 
             <section class="statistics-grid">
-                <article class="stat-card red">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-pills"></i>
-                    </div>
-
-                    <div>
-                        <p>Medical Supplies</p>
-                        <h3 id="availableSupplyCount">0</h3>
-                        <small>Available supply records</small>
-                    </div>
-                </article>
-
                 <article class="stat-card orange">
                     <div class="stat-icon">
                         <i class="fa-solid fa-suitcase-medical"></i>
@@ -175,7 +163,7 @@
                 <div class="inventory-header">
                     <div>
                         <h3>Emergency-Ready Inventory</h3>
-                        <p>Available supplies, equipment and mobility assets.</p>
+                        <p>Available medical equipment and mobility assets.</p>
                     </div>
 
                     <a href="borrow-return.html" class="borrow-page-link">
@@ -197,7 +185,6 @@
 
                     <select id="availableItemType">
                         <option value="all">All Item Types</option>
-                        <option value="Medical Supply">Medical Supplies</option>
                         <option value="Medical Equipment">Medical Equipment</option>
                         <option value="Mobility Asset">Mobility Assets</option>
                     </select>
@@ -336,6 +323,6 @@
     <script src="auth/supabase-client.js"></script>
     <script src="auth/supabase-auth.js"></script>
     <script src="auth/supabase-data.js?v=20260915-sync-fix"></script>
-    <script src="available-items.js"></script>
+    <script src="available-items.js?v=20260915-borrowable-only"></script>
 </body>
 </html>

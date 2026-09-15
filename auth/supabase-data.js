@@ -860,6 +860,32 @@
                 );
             }
         )
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "medical_equipment"
+            },
+            function () {
+                window.dispatchEvent(
+                    new CustomEvent("medtrack:inventory-changed")
+                );
+            }
+        )
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "mobility_assets"
+            },
+            function () {
+                window.dispatchEvent(
+                    new CustomEvent("medtrack:inventory-changed")
+                );
+            }
+        )
         .subscribe();
 
     window.addEventListener("focus", function () {

@@ -48,9 +48,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const availableItemsEmpty =
         document.getElementById("availableItemsEmpty");
 
-    const availableSupplyCount =
-        document.getElementById("availableSupplyCount");
-
     const availableEquipmentCount =
         document.getElementById("availableEquipmentCount");
 
@@ -148,19 +145,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     const inventoryKeys = {
-        supplies:
-            "medtrackMedicalSupplies",
-
         equipment:
             "medtrackMedicalEquipment",
 
         mobility:
             "medtrackMobilityAssets"
     };
-
-    const transactionStorageKey =
-        "medtrackBorrowTransactions";
-
 
     const emptyInventory = [];
 
@@ -208,17 +198,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    function saveStoredArray(
-        storageKey,
-        records
-    ) {
-        localStorage.setItem(
-            storageKey,
-            JSON.stringify(records)
-        );
-    }
-
-
     function normalizeText(value) {
         return String(value ?? "").trim();
     }
@@ -237,14 +216,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             .replaceAll("'", "&#039;");
     }
 
-
-    function getToday() {
-        const today = new Date();
-
-        today.setHours(0, 0, 0, 0);
-
-        return today;
-    }
 
     function getLocalDateString(date) {
         const year =
@@ -280,113 +251,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         );
     }
 
-    function isExpired(dateValue) {
-        if (!dateValue) {
-            return false;
-        }
-
-        const expirationDate =
-            new Date(
-                dateValue + "T00:00:00"
-            );
-
-        if (
-            Number.isNaN(
-                expirationDate.getTime()
-            )
-        ) {
-            return false;
-        }
-
-        return expirationDate < getToday();
+    function hasBorrowableCondition(value) {
+        return ![
+            "missing",
+            "damaged",
+            "for repair",
+            "under repair",
+            "repair"
+        ].includes(normalizeStatus(value));
     }
-
-    function formatDate(dateValue) {
-        if (!dateValue) {
-            return "No expiration date";
-        }
-
-        const date =
-            new Date(
-                dateValue + "T00:00:00"
-            );
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return dateValue;
-        }
-
-        return date.toLocaleDateString(
-            "en-US",
-            {
-                month: "short",
-                day: "numeric",
-                year: "numeric"
-            }
-        );
-    }
-
-
-    function getAvailableSupplies() {
-        const supplies =
-            getStoredArray(
-                inventoryKeys.supplies,
-                emptyInventory
-            );
-
-        return supplies
-            .filter(function (supply) {
-                const quantity =
-                    Number(
-                        supply.quantity
-                    ) || 0;
-
-                return (
-                    quantity > 0 &&
-                    !isExpired(
-                        supply.expirationDate
-                    )
-                );
-            })
-            .map(function (supply) {
-                return {
-                    id:
-                        normalizeText(
-                            supply.id
-                        ),
-
-                    name:
-                        normalizeText(
-                            supply.name
-                        ) ||
-                        "Unnamed supply",
-
-                    type:
-                        "Medical Supply",
-
-                    category:
-                        normalizeText(
-                            supply.category
-                        ) ||
-                        "Uncategorized",
-
-                    quantity:
-                        Number(
-                            supply.quantity
-                        ) || 0,
-
-                    details:
-                        "Expires: " +
-                        formatDate(
-                            supply.expirationDate
-                        )
-                };
-            });
-    }
-
 
     function getAvailableEquipment() {
         const equipment =
@@ -409,6 +282,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 return (
                     status === "available" &&
+                    hasBorrowableCondition(item.condition) &&
                     quantity > 0
                 );
             })
@@ -470,7 +344,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return (
                     normalizeStatus(
                         asset.status
-                    ) === "available"
+                    ) === "available" &&
+                    hasBorrowableCondition(asset.condition)
                 );
             })
             .map(function (asset) {
@@ -532,7 +407,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function getAllAvailableItems() {
         return [
-            ...getAvailableSupplies(),
             ...getAvailableEquipment(),
             ...getAvailableMobility()
         ];
@@ -540,17 +414,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     function updateSummaryCards() {
-        const supplies =
-            getAvailableSupplies();
-
         const equipment =
             getAvailableEquipment();
 
         const mobility =
             getAvailableMobility();
-
-        availableSupplyCount.textContent =
-            supplies.length;
 
         availableEquipmentCount.textContent =
             equipment.length;
@@ -559,7 +427,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             mobility.length;
 
         totalAvailableCount.textContent =
-            supplies.length +
             equipment.length +
             mobility.length;
     }
@@ -652,31 +519,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                             </td>
 
                             <td>
-                                ${
-                                    item.type === "Medical Supply"
-                                        ? `
-                                            <span class="consumption-only">
-                                                Emergency use only
-                                            </span>
-                                        `
-                                        : `
-                                            <button
-                                                type="button"
-                                                class="borrow-item-button"
-                                                data-id="${escapeHTML(
-                                                    item.id
-                                                )}"
-                                                data-name="${escapeHTML(
-                                                    item.name
-                                                )}"
-                                                data-type="${escapeHTML(
-                                                    item.type
-                                                )}"
-                                            >
-                                                Borrow
-                                            </button>
-                                        `
-                                }
+                                <button
+                                    type="button"
+                                    class="borrow-item-button"
+                                    data-id="${escapeHTML(item.id)}"
+                                    data-name="${escapeHTML(item.name)}"
+                                    data-type="${escapeHTML(item.type)}"
+                                >
+                                    Borrow
+                                </button>
                             </td>
                         </tr>
                     `;
@@ -692,141 +543,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     function refreshAvailableItems() {
         updateSummaryCards();
         displayAvailableItems();
-    }
-
-
-    function generateTransactionId(
-        transactions
-    ) {
-        let highestNumber = 0;
-
-        transactions.forEach(
-            function (transaction) {
-                const match = String(
-                    transaction.id || ""
-                ).match(/^TRN-(\d+)$/i);
-
-                if (match) {
-                    highestNumber =
-                        Math.max(
-                            highestNumber,
-                            Number(match[1])
-                        );
-                }
-            }
-        );
-
-        return `TRN-${String(
-            highestNumber + 1
-        ).padStart(3, "0")}`;
-    }
-
-
-    function deductBorrowedItem(
-        selectedItem
-    ) {
-        let storageKey = "";
-        let defaultRecords = [];
-
-        if (
-            selectedItem.type ===
-            "Medical Supply"
-        ) {
-            storageKey =
-                inventoryKeys.supplies;
-
-            defaultRecords =
-                emptyInventory;
-        } else if (
-            selectedItem.type ===
-            "Medical Equipment"
-        ) {
-            storageKey =
-                inventoryKeys.equipment;
-
-            defaultRecords =
-                emptyInventory;
-        } else if (
-            selectedItem.type ===
-            "Mobility Asset"
-        ) {
-            storageKey =
-                inventoryKeys.mobility;
-
-            defaultRecords =
-                emptyInventory;
-        } else {
-            return false;
-        }
-
-        const records =
-            getStoredArray(
-                storageKey,
-                defaultRecords
-            );
-
-        const recordIndex =
-            records.findIndex(
-                function (record) {
-                    return (
-                        normalizeText(
-                            record.id
-                        ) ===
-                        selectedItem.id
-                    );
-                }
-            );
-
-        if (recordIndex === -1) {
-            return false;
-        }
-
-        const record =
-            records[recordIndex];
-
-        if (
-            selectedItem.type ===
-            "Mobility Asset"
-        ) {
-            if (
-                normalizeStatus(
-                    record.status
-                ) !== "available"
-            ) {
-                return false;
-            }
-
-            record.status =
-                "Deployed";
-        } else {
-            const currentQuantity =
-                Number(
-                    record.quantity
-                ) || 0;
-
-            if (currentQuantity < 1) {
-                return false;
-            }
-
-            record.quantity =
-                currentQuantity - 1;
-
-            if (
-                selectedItem.type ===
-                    "Medical Equipment" &&
-                record.quantity === 0
-            ) {
-                record.status =
-                    "Unavailable";
-            }
-        }
-
-        saveStoredArray(
-            storageKey,
-            records
-        );
-
-        return true;
     }
 
 
@@ -1124,6 +840,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.addEventListener(
         "focus",
         refreshAvailableItems
+    );
+
+    window.addEventListener(
+        "medtrack:data-ready",
+        refreshAvailableItems
+    );
+
+    window.addEventListener(
+        "medtrack:inventory-changed",
+        async function () {
+            if (window.medtrackData) {
+                await window.medtrackData.refresh();
+            }
+
+            refreshAvailableItems();
+        }
     );
 
 

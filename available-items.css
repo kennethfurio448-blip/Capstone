@@ -332,7 +332,7 @@ a {
     margin-bottom: 25px;
 
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 18px;
 }
 
@@ -599,18 +599,6 @@ a {
 .borrow-item-button:hover {
     background-color: var(--primary-dark);
 }
-
-.consumption-only {
-    display: inline-block;
-    padding: 7px 10px;
-    color: var(--muted);
-    background-color: #f3f4f6;
-    border-radius: 7px;
-    font-size: 11px;
-    font-weight: bold;
-    white-space: nowrap;
-}
-
 
 .empty-state {
     display: none;
