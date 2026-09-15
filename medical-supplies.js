@@ -1230,7 +1230,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     confirmDelete.addEventListener(
         "click",
-        function () {
+        async function () {
             if (!canManageInventory) {
                 return;
             }
@@ -1263,20 +1263,30 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            const updatedSupplies =
-                supplies.filter(function (supply) {
-                    return (
-                        normalizeId(supply.id) !==
-                        deleteId
-                    );
-                });
-
-            if (!saveSupplies(updatedSupplies)) {
+            if (
+                !window.medtrackData ||
+                typeof window.medtrackData.deleteInventoryItem !==
+                    "function"
+            ) {
                 alert(
-                    "Unable to delete the selected supply."
+                    "The secure database delete service is unavailable."
                 );
-
                 return;
+            }
+
+            confirmDelete.disabled = true;
+
+            try {
+                await window.medtrackData.deleteInventoryItem(
+                    "medtrackMedicalSupplies",
+                    deleteId
+                );
+            } catch (error) {
+                console.error("Unable to delete supply:", error);
+                alert(error.message || "Unable to delete the selected supply.");
+                return;
+            } finally {
+                confirmDelete.disabled = false;
             }
 
             supplyToDelete = null;

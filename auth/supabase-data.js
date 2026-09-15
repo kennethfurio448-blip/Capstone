@@ -370,28 +370,49 @@
             }
         }
 
-        const idsToDelete = Array.from(
-            previousSnapshot.keys()
-        )
-            .filter(function (id) {
-                return !currentSnapshot.has(id);
-            });
-
-        if (idsToDelete.length > 0) {
-            const deleteResult = await client
-                .from(collection.table)
-                .delete()
-                .in("id", idsToDelete);
-
-            if (deleteResult.error) {
-                throw new Error(deleteResult.error.message);
-            }
-        }
-
         rememberSnapshot(
             storageKey,
             validLocalRecords
         );
+    }
+
+    async function deleteInventoryItem(storageKey, itemId) {
+        const allowedStorageKeys = new Set([
+            "medtrackMedicalSupplies",
+            "medtrackMedicalEquipment",
+            "medtrackMobilityAssets"
+        ]);
+        const normalizedId = text(itemId);
+
+        if (!allowedStorageKeys.has(storageKey) || !normalizedId) {
+            throw new Error("Invalid inventory delete request.");
+        }
+
+        const collection = collections[storageKey];
+        const result = await client
+            .from(collection.table)
+            .delete()
+            .eq("id", normalizedId)
+            .select("id");
+
+        if (result.error) {
+            throw new Error(result.error.message);
+        }
+
+        if (!result.data || result.data.length !== 1) {
+            throw new Error(
+                "The record was not deleted. It may no longer exist, " +
+                "or your account may not have Administrator permission."
+            );
+        }
+
+        await downloadCollection(storageKey);
+
+        window.dispatchEvent(
+            new CustomEvent("medtrack:data-ready")
+        );
+
+        return true;
     }
 
     function reportError(action, error) {
@@ -816,6 +837,7 @@
         returnBorrowedItem: returnBorrowedItem,
         updateBorrowStatus: updateBorrowStatus,
         useInventoryItem: useInventoryItem,
+        deleteInventoryItem: deleteInventoryItem,
         saveMedicalSupply: saveMedicalSupply,
         consumeMedicalSupply: consumeMedicalSupply,
         loadSupplyTransactions: loadSupplyTransactions,

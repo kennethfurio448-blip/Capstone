@@ -818,7 +818,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     confirmDelete.addEventListener(
         "click",
-        function () {
+        async function () {
             if (!canManageInventory) {
                 return;
             }
@@ -851,15 +851,31 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            const updatedEquipment =
-                equipment.filter(function (item) {
-                    return (
-                        normalizeId(item.id) !==
-                        deleteId
-                    );
-                });
+            if (
+                !window.medtrackData ||
+                typeof window.medtrackData.deleteInventoryItem !==
+                    "function"
+            ) {
+                alert(
+                    "The secure database delete service is unavailable."
+                );
+                return;
+            }
 
-            saveEquipment(updatedEquipment);
+            confirmDelete.disabled = true;
+
+            try {
+                await window.medtrackData.deleteInventoryItem(
+                    "medtrackMedicalEquipment",
+                    deleteId
+                );
+            } catch (error) {
+                console.error("Unable to delete equipment:", error);
+                alert(error.message || "Unable to delete the selected equipment.");
+                return;
+            } finally {
+                confirmDelete.disabled = false;
+            }
 
             equipmentToDelete = null;
             deleteModal.classList.remove("show");

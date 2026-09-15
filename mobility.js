@@ -657,7 +657,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    confirmDelete.addEventListener("click", function () {
+    confirmDelete.addEventListener("click", async function () {
         if (!canManageInventory) {
             return;
         }
@@ -666,14 +666,28 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const vehicles = getVehicles();
+        if (
+            !window.medtrackData ||
+            typeof window.medtrackData.deleteInventoryItem !== "function"
+        ) {
+            alert("The secure database delete service is unavailable.");
+            return;
+        }
 
-        const updatedVehicles =
-            vehicles.filter(function (vehicle) {
-                return vehicle.id !== vehicleToDelete;
-            });
+        confirmDelete.disabled = true;
 
-        saveVehicles(updatedVehicles);
+        try {
+            await window.medtrackData.deleteInventoryItem(
+                "medtrackMobilityAssets",
+                vehicleToDelete
+            );
+        } catch (error) {
+            console.error("Unable to delete mobility asset:", error);
+            alert(error.message || "Unable to delete the selected mobility asset.");
+            return;
+        } finally {
+            confirmDelete.disabled = false;
+        }
 
         vehicleToDelete = null;
         deleteModal.classList.remove("show");
