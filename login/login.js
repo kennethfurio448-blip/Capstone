@@ -1,4 +1,4 @@
-const productionLoginUrl = "https://medtrack-system-ph.vercel.app/login/login.html";
+const productionLoginUrl = "https://www.medtrackmanagement.com/login/login.html";
 const localPreviewHosts = ["127.0.0.1", "localhost"];
 const isUnsupportedLocalPreview =
     localPreviewHosts.includes(window.location.hostname) &&

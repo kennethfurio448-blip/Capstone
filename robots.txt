@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://medtrack-system-ph.vercel.app/sitemap.xml
+Sitemap: https://www.medtrackmanagement.com/sitemap.xml

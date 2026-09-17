@@ -32,7 +32,7 @@ Do not use `*`, paths, or trailing slashes. Localhost development origins are
 allowed separately by the Edge Function.
 
 ```sh
-supabase secrets set ALLOWED_ORIGINS="https://medtrack-system-ph.vercel.app,https://your-domain.example,https://www.your-domain.example"
+supabase secrets set ALLOWED_ORIGINS="https://medtrack-system-ph.vercel.app,https://medtrackmanagement.com,https://www.medtrackmanagement.com"
 ```
 
 Until a custom domain is purchased, keep only the stable Vercel production
