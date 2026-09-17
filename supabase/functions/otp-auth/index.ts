@@ -383,7 +383,7 @@ Deno.serve(async (request) => {
       if (
         fullName.length < 2 ||
         fullName.length > 100 ||
-        !/^[a-z0-9._-]{4,32}$/i.test(username) ||
+        !/^[a-z0-9._ -]{4,32}$/i.test(username) ||
         !["admin", "staff"].includes(role)
       ) throw new Error("The account information is invalid.");
       await enforceRateLimit(supabase, action, `client:${address}`, 30, 900, 900);
