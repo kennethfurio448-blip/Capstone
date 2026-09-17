@@ -3,11 +3,13 @@
 
     const client = window.medtrackSupabase;
     const sessionStorageManager = window.medtrackSessionStorage;
+    const offlineStore = window.medtrackOfflineStore;
     const scriptUrl = new URL(document.currentScript.src);
     const projectRootUrl = new URL("../", scriptUrl);
     const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
     const ACTIVITY_WRITE_INTERVAL_MS = 15 * 1000;
     const SESSION_ACTIVITY_KEY = "medtrackLastActivityAt";
+    const OFFLINE_PROFILE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
     const SENSITIVE_CACHE_KEYS = Object.freeze([
         "medtrackMedicalSupplies",
         "medtrackMedicalEquipment",
@@ -86,26 +88,66 @@
             );
         }
 
-        return normalizeProfile(user, result.data);
+        const profile = normalizeProfile(user, result.data);
+
+        if (offlineStore) {
+            await offlineStore.saveProfile(profile);
+        }
+
+        return profile;
+    }
+
+    function isNetworkError(error) {
+        return !navigator.onLine || /fetch|network|load failed|offline/i.test(
+            String(error && error.message || error || "")
+        );
+    }
+
+    async function loadCachedProfile() {
+        if (!offlineStore) return null;
+
+        const result = await client.auth.getSession();
+        const session = result.data && result.data.session;
+        const user = session && session.user;
+        if (result.error || !user) return null;
+
+        return offlineStore.loadProfile(
+            user.id,
+            OFFLINE_PROFILE_MAX_AGE_MS
+        );
     }
 
     async function getAuthenticatedProfile() {
+        if (!navigator.onLine) {
+            return loadCachedProfile();
+        }
+
         const result = await client.auth.getUser();
         const user = result.data && result.data.user;
 
         if (result.error || !user) {
+            if (result.error && isNetworkError(result.error)) {
+                return loadCachedProfile();
+            }
             return null;
         }
 
-        return loadProfile(user);
+        try {
+            return await loadProfile(user);
+        } catch (error) {
+            if (isNetworkError(error)) {
+                return loadCachedProfile();
+            }
+            throw error;
+        }
     }
 
-    function clearSensitiveBrowserData() {
+    async function clearSensitiveBrowserData() {
         if (
             window.medtrackData &&
             typeof window.medtrackData.clearSensitiveCache === "function"
         ) {
-            window.medtrackData.clearSensitiveCache();
+            await window.medtrackData.clearSensitiveCache();
             return;
         }
 
@@ -113,6 +155,10 @@
             localStorage.removeItem(key);
             sessionStorage.removeItem(key);
         });
+
+        if (offlineStore) {
+            await offlineStore.clearAll();
+        }
     }
 
     async function signOut() {
@@ -138,7 +184,7 @@
         try {
             await client.auth.signOut({ scope: "local" });
         } finally {
-            clearSensitiveBrowserData();
+            await clearSensitiveBrowserData();
             sessionStorageManager.clearPersistence();
             sessionStorage.removeItem(SESSION_ACTIVITY_KEY);
         }
@@ -428,20 +474,20 @@
             if (profile) {
                 await signOut();
             } else {
-                clearSensitiveBrowserData();
+                await clearSensitiveBrowserData();
             }
         } catch (error) {
             console.error("Existing session validation failed:", error);
             await client.auth.signOut({ scope: "local" });
-            clearSensitiveBrowserData();
+            await clearSensitiveBrowserData();
         }
 
         return false;
     }
 
-    client.auth.onAuthStateChange(function (event) {
+    client.auth.onAuthStateChange(async function (event) {
         if (event === "SIGNED_OUT") {
-            clearSensitiveBrowserData();
+            await clearSensitiveBrowserData();
 
             if (guardedRoles) {
                 window.location.replace(loginRedirectUrl(pendingLoginReason));

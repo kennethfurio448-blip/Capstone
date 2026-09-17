@@ -2,6 +2,7 @@
     "use strict";
 
     const client = window.medtrackSupabase;
+    const offlineStore = window.medtrackOfflineStore;
 
     if (!client) {
         console.error(
@@ -18,10 +19,30 @@
 
     let applyingCloudData = false;
     let refreshInProgress = null;
+    let syncInProgress = null;
     let logoutInProgress = false;
 
     const uploadTimers = new Map();
     const collectionSnapshots = new Map();
+
+    function createOperationId(prefix) {
+        const suffix = window.crypto && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        return `${prefix}-${suffix}`;
+    }
+
+    function isNetworkError(error) {
+        return !navigator.onLine || /fetch|network|load failed|offline/i.test(
+            String(error && error.message || error || "")
+        );
+    }
+
+    async function getSessionUserId() {
+        const result = await client.auth.getSession();
+        const session = result.data && result.data.session;
+        return session && session.user ? session.user.id : "";
+    }
 
     function text(value, fallback = "") {
         const normalized =
@@ -71,7 +92,8 @@
                     quantity: item.quantity,
                     unit: item.unit,
                     expirationDate: item.expiration_date || "",
-                    lowStockLevel: item.low_stock_level
+                    lowStockLevel: item.low_stock_level,
+                    serverUpdatedAt: item.updated_at || ""
                 };
             }
         },
@@ -102,7 +124,8 @@
                     condition: item.condition,
                     location: item.location,
                     maintenanceDate: item.maintenance_date || "",
-                    status: item.status
+                    status: item.status,
+                    serverUpdatedAt: item.updated_at || ""
                 };
             }
         },
@@ -138,7 +161,8 @@
                     driver: item.driver || "",
                     location: item.location,
                     maintenanceDate: item.maintenance_date || "",
-                    status: item.status
+                    status: item.status,
+                    serverUpdatedAt: item.updated_at || ""
                 };
             }
         },
@@ -189,7 +213,8 @@
                     remarks: item.remarks || "",
                     inventoryItemId: item.inventory_item_id || "",
                     inventoryAdjusted: item.inventory_adjusted,
-                    inventoryReturned: item.inventory_returned
+                    inventoryReturned: item.inventory_returned,
+                    serverUpdatedAt: item.updated_at || ""
                 };
             }
         },
@@ -245,7 +270,8 @@
                     inventoryDeducted: item.inventory_deducted,
                     inventoryDeductedAt:
                         item.inventory_deducted_at || "",
-                    completedAt: item.completed_at || ""
+                    completedAt: item.completed_at || "",
+                    serverUpdatedAt: item.updated_at || ""
                 };
             }
         }
@@ -290,6 +316,36 @@
         );
     }
 
+    function writeLocalCollection(storageKey, records, remember = true) {
+        applyingCloudData = true;
+
+        try {
+            originalSetItem.call(
+                localStorage,
+                storageKey,
+                JSON.stringify(records)
+            );
+            if (remember) rememberSnapshot(storageKey, records);
+        } finally {
+            applyingCloudData = false;
+        }
+
+        if (offlineStore) {
+            getSessionUserId().then(function (userId) {
+                if (userId) {
+                    return offlineStore.saveSnapshot(
+                        storageKey,
+                        records,
+                        userId
+                    );
+                }
+                return null;
+            }).catch(function (error) {
+                console.error("Unable to cache MedTrack records:", error);
+            });
+        }
+    }
+
     async function downloadCollection(storageKey) {
         const collection = collections[storageKey];
 
@@ -308,22 +364,7 @@
             collection.fromCloud
         );
 
-        applyingCloudData = true;
-
-        try {
-            originalSetItem.call(
-                localStorage,
-                storageKey,
-                JSON.stringify(localRecords)
-            );
-
-            rememberSnapshot(
-                storageKey,
-                localRecords
-            );
-        } finally {
-            applyingCloudData = false;
-        }
+        writeLocalCollection(storageKey, localRecords);
 
         return localRecords;
     }
@@ -346,7 +387,7 @@
         const currentSnapshot =
             createSnapshot(validLocalRecords);
 
-        const changedRecords = validLocalRecords
+        const changedLocalRecords = validLocalRecords
             .filter(function (item) {
                 const id = text(item.id);
 
@@ -355,19 +396,80 @@
                     previousSnapshot.get(id) !==
                         currentSnapshot.get(id)
                 );
-            })
-            .map(collection.toCloud);
+            });
+
+        if (changedLocalRecords.length > 0 && navigator.onLine) {
+            const ids = changedLocalRecords.map(function (item) {
+                return text(item.id);
+            });
+            const versionResult = await client
+                .from(collection.table)
+                .select("id, updated_at")
+                .in("id", ids);
+
+            if (versionResult.error) {
+                throw new Error(versionResult.error.message);
+            }
+
+            const cloudVersions = new Map(
+                (versionResult.data || []).map(function (record) {
+                    return [text(record.id), text(record.updated_at)];
+                })
+            );
+
+            for (const item of changedLocalRecords) {
+                const id = text(item.id);
+                const cloudVersion = cloudVersions.get(id);
+                if (!cloudVersion) continue;
+
+                let localVersion = text(item.serverUpdatedAt);
+                if (!localVersion && previousSnapshot.has(id)) {
+                    try {
+                        localVersion = text(
+                            JSON.parse(previousSnapshot.get(id)).serverUpdatedAt
+                        );
+                    } catch (error) {
+                        localVersion = "";
+                    }
+                }
+
+                if (!localVersion || localVersion !== cloudVersion) {
+                    throw new Error(
+                        `Sync conflict for ${collection.table} record ${id}. ` +
+                        "A newer database version is available; refresh and " +
+                        "review the record before saving again."
+                    );
+                }
+            }
+        }
+
+        const changedRecords = changedLocalRecords.map(collection.toCloud);
 
         if (changedRecords.length > 0) {
             const upsertResult = await client
                 .from(collection.table)
                 .upsert(changedRecords, {
                     onConflict: "id"
-                });
+                })
+                .select("id, updated_at");
 
             if (upsertResult.error) {
                 throw new Error(upsertResult.error.message);
             }
+
+            const savedVersions = new Map(
+                (upsertResult.data || []).map(function (record) {
+                    return [text(record.id), text(record.updated_at)];
+                })
+            );
+            const savedRecords = validLocalRecords.map(function (record) {
+                const serverUpdatedAt = savedVersions.get(text(record.id));
+                return serverUpdatedAt
+                    ? { ...record, serverUpdatedAt: serverUpdatedAt }
+                    : record;
+            });
+            writeLocalCollection(storageKey, savedRecords);
+            return;
         }
 
         rememberSnapshot(
@@ -389,13 +491,47 @@
         }
 
         const collection = collections[storageKey];
-        const result = await client
-            .from(collection.table)
-            .delete()
-            .eq("id", normalizedId)
-            .select("id");
+        const operation = {
+            id: createOperationId("delete"),
+            kind: "delete",
+            storageKey: storageKey,
+            itemId: normalizedId
+        };
+
+        function applyLocalDelete() {
+            const records = readLocalCollection(storageKey).filter(function (record) {
+                return text(record && record.id) !== normalizedId;
+            });
+            writeLocalCollection(storageKey, records, false);
+            window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+        }
+
+        if (!navigator.onLine) {
+            await queueOperation(operation);
+            applyLocalDelete();
+            return { queued: true };
+        }
+
+        let result;
+        try {
+            result = await client
+                .from(collection.table)
+                .delete()
+                .eq("id", normalizedId)
+                .select("id");
+        } catch (error) {
+            if (!isNetworkError(error)) throw error;
+            await queueOperation(operation);
+            applyLocalDelete();
+            return { queued: true };
+        }
 
         if (result.error) {
+            if (isNetworkError(result.error)) {
+                await queueOperation(operation);
+                applyLocalDelete();
+                return { queued: true };
+            }
             throw new Error(result.error.message);
         }
 
@@ -461,6 +597,33 @@
         );
     }
 
+    async function queueOperation(operation) {
+        if (!offlineStore) {
+            throw new Error(
+                "Offline storage is unavailable. Reconnect and try again."
+            );
+        }
+
+        const userId = await getSessionUserId();
+        if (!userId) {
+            throw new Error("Your session is unavailable. Reconnect and sign in.");
+        }
+
+        await offlineStore.enqueue({
+            ...operation,
+            userId: userId,
+            createdAt: operation.createdAt || new Date().toISOString()
+        });
+    }
+
+    async function queueCollectionUpload(storageKey) {
+        await queueOperation({
+            id: `collection:${storageKey}`,
+            kind: "collection",
+            storageKey: storageKey
+        });
+    }
+
     function scheduleUpload(storageKey) {
         if (!collections[storageKey]) {
             return;
@@ -477,6 +640,11 @@
                 uploadTimers.delete(storageKey);
 
                 try {
+                    if (!navigator.onLine) {
+                        await queueCollectionUpload(storageKey);
+                        return;
+                    }
+
                     await uploadCollection(storageKey);
 
                     window.dispatchEvent(
@@ -490,7 +658,15 @@
                         )
                     );
                 } catch (error) {
-                    reportError("upload", error);
+                    if (isNetworkError(error)) {
+                        try {
+                            await queueCollectionUpload(storageKey);
+                        } catch (queueError) {
+                            reportError("offline queue", queueError);
+                        }
+                    } else {
+                        reportError("upload", error);
+                    }
                 }
             },
             200
@@ -523,6 +699,27 @@
         }
     };
 
+    async function restoreOfflineCollections() {
+        if (!offlineStore) return false;
+        const userId = await getSessionUserId();
+        if (!userId) return false;
+
+        let restored = false;
+        for (const storageKey of Object.keys(collections)) {
+            const records = await offlineStore.loadSnapshot(storageKey, userId);
+            if (Array.isArray(records)) {
+                writeLocalCollection(storageKey, records);
+                restored = true;
+            }
+        }
+
+        if (restored) {
+            window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+        }
+        await offlineStore.announce(userId, "offline");
+        return restored;
+    }
+
     async function refresh() {
         if (logoutInProgress) {
             return false;
@@ -533,6 +730,10 @@
         }
 
         refreshInProgress = (async function () {
+            if (!navigator.onLine) {
+                return restoreOfflineCollections();
+            }
+
             const userResult = await client.auth.getUser();
             const user = userResult.data && userResult.data.user;
 
@@ -556,6 +757,9 @@
         try {
             return await refreshInProgress;
         } catch (error) {
+            if (isNetworkError(error)) {
+                return restoreOfflineCollections();
+            }
             reportError("download", error);
             return false;
         } finally {
@@ -577,14 +781,51 @@
     async function runInventoryOperation(
         functionName,
         parameters,
-        storageKeys = Object.keys(collections)
+        storageKeys = Object.keys(collections),
+        options = {}
     ) {
-        const result = await client.rpc(
-            functionName,
-            parameters
-        );
+        const operation = {
+            id: options.queueId || createOperationId("rpc"),
+            kind: "rpc",
+            functionName: functionName,
+            parameters: parameters,
+            storageKeys: storageKeys
+        };
+
+        if (!navigator.onLine) {
+            await queueOperation(operation);
+            if (options.optimistic) options.optimistic();
+            return {
+                queued: true,
+                id: options.pendingId || operation.id
+            };
+        }
+
+        let result;
+        try {
+            result = await client.rpc(functionName, parameters);
+        } catch (error) {
+            if (isNetworkError(error)) {
+                await queueOperation(operation);
+                if (options.optimistic) options.optimistic();
+                return {
+                    queued: true,
+                    id: options.pendingId || operation.id
+                };
+            }
+            throw error;
+        }
 
         if (result.error) {
+            if (isNetworkError(result.error)) {
+                await queueOperation(operation);
+                if (options.optimistic) options.optimistic();
+                return {
+                    queued: true,
+                    id: options.pendingId || operation.id
+                };
+            }
+
             const missingDatabaseFeature =
                 [
                     "medtrack_save_medical_supply",
@@ -618,10 +859,136 @@
         return result.data;
     }
 
+    function updateLocalRecord(storageKey, recordId, update) {
+        const records = readLocalCollection(storageKey);
+        const index = records.findIndex(function (record) {
+            return text(record && record.id) === text(recordId);
+        });
+        if (index < 0) return null;
+
+        records[index] = typeof update === "function"
+            ? update({ ...records[index] })
+            : { ...records[index], ...update };
+        writeLocalCollection(storageKey, records, false);
+        window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+        return records[index];
+    }
+
+    function optimisticallyBorrow(details, pendingId) {
+        const isEquipment = details.itemType === "Medical Equipment";
+        const storageKey = isEquipment
+            ? "medtrackMedicalEquipment"
+            : "medtrackMobilityAssets";
+        const item = updateLocalRecord(storageKey, details.itemId, function (record) {
+            if (isEquipment) {
+                const remaining = Math.max(
+                    0,
+                    number(record.quantity) - number(details.quantity, 1)
+                );
+                record.quantity = remaining;
+                record.status = remaining > 0 ? "Available" : "Unavailable";
+            } else {
+                record.status = "Deployed";
+            }
+            return record;
+        });
+
+        const transactions = readLocalCollection("medtrackBorrowTransactions");
+        transactions.push({
+            id: pendingId,
+            borrower: details.borrower,
+            department: details.department,
+            itemType: details.itemType,
+            itemName: item ? item.name : "Pending item",
+            quantity: details.quantity,
+            borrowDate: String(details.borrowedAt || "").slice(0, 10),
+            borrowedAt: details.borrowedAt,
+            dueDate: details.dueDate,
+            returnDate: "",
+            status: "Borrowed",
+            purpose: details.purpose,
+            assignedPersonnel: details.assignedPersonnel || "",
+            destination: details.destination || "",
+            remarks: details.remarks || "",
+            inventoryItemId: details.itemId,
+            inventoryAdjusted: true,
+            inventoryReturned: false,
+            pendingSync: true
+        });
+        writeLocalCollection("medtrackBorrowTransactions", transactions, false);
+        window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+    }
+
+    function optimisticallyUpdateBorrowStatus(transactionId, status) {
+        const transactions = readLocalCollection("medtrackBorrowTransactions");
+        const index = transactions.findIndex(function (record) {
+            return text(record.id) === text(transactionId);
+        });
+        if (index < 0) return;
+
+        const transaction = { ...transactions[index] };
+        const wasReturned = transaction.status === "Returned" ||
+            Boolean(transaction.inventoryReturned);
+        const isEquipment = transaction.itemType === "Medical Equipment";
+        const storageKey = isEquipment
+            ? "medtrackMedicalEquipment"
+            : "medtrackMobilityAssets";
+
+        updateLocalRecord(
+            storageKey,
+            transaction.inventoryItemId,
+            function (record) {
+                if (status === "Returned" && !wasReturned) {
+                    if (isEquipment) {
+                        record.quantity = number(record.quantity) +
+                            number(transaction.quantity, 1);
+                        record.status = "Available";
+                    } else {
+                        record.status = "Available";
+                    }
+                } else if (status !== "Returned" && wasReturned) {
+                    if (isEquipment) {
+                        record.quantity = Math.max(
+                            0,
+                            number(record.quantity) - number(transaction.quantity, 1)
+                        );
+                        record.status = record.quantity > 0
+                            ? "Available"
+                            : "Unavailable";
+                    } else {
+                        record.status = status === "Borrowed"
+                            ? "Deployed"
+                            : "For Repair";
+                    }
+                } else if (!isEquipment && status !== "Returned") {
+                    record.status = status === "Borrowed"
+                        ? "Deployed"
+                        : "For Repair";
+                }
+                return record;
+            }
+        );
+
+        transaction.status = status;
+        transaction.returnDate = status === "Returned"
+            ? (transaction.returnDate || new Date().toISOString().slice(0, 10))
+            : "";
+        transaction.inventoryReturned = status === "Returned";
+        transaction.pendingSync = true;
+        transactions[index] = transaction;
+        writeLocalCollection("medtrackBorrowTransactions", transactions, false);
+        window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+    }
+
     async function borrowItem(details) {
+        const operationKey = details.operationKey ||
+            createOperationId("BORROW");
+        const pendingId = `PENDING-${operationKey.slice(-12).toUpperCase()}`;
+
         return runInventoryOperation(
-            "medtrack_borrow_item",
+            "medtrack_borrow_item_once",
             {
+                p_operation_key: operationKey,
                 p_item_type: details.itemType,
                 p_item_id: details.itemId,
                 p_quantity: details.quantity,
@@ -633,6 +1000,14 @@
                 p_assigned_personnel: details.assignedPersonnel || null,
                 p_destination: details.destination,
                 p_remarks: details.remarks || null
+            },
+            Object.keys(collections),
+            {
+                queueId: `rpc:${operationKey}`,
+                pendingId: pendingId,
+                optimistic: function () {
+                    optimisticallyBorrow(details, pendingId);
+                }
             }
         );
     }
@@ -657,7 +1032,12 @@
                 "medtrackBorrowTransactions",
                 "medtrackMedicalEquipment",
                 "medtrackMobilityAssets"
-            ]
+            ],
+            {
+                optimistic: function () {
+                    optimisticallyUpdateBorrowStatus(transactionId, status);
+                }
+            }
         );
     }
 
@@ -694,7 +1074,25 @@
                 p_item_id: details.itemId,
                 p_quantity: details.quantity
             },
-            storageKey ? [storageKey] : []
+            storageKey ? [storageKey] : [],
+            {
+                queueId: `rpc:${details.operationKey}`,
+                optimistic: function () {
+                    if (!storageKey) return;
+                    updateLocalRecord(storageKey, details.itemId, function (record) {
+                        if (details.itemType === "Mobility Asset") {
+                            record.status = "Deployed";
+                        } else {
+                            record.quantity = Math.max(
+                                0,
+                                number(record.quantity) - number(details.quantity, 1)
+                            );
+                            if (record.quantity === 0) record.status = "Unavailable";
+                        }
+                        return record;
+                    });
+                }
+            }
         );
     }
 
@@ -711,7 +1109,30 @@
                 p_expiration_date: details.expirationDate,
                 p_low_stock_level: details.lowStockLevel
             },
-            ["medtrackMedicalSupplies"]
+            ["medtrackMedicalSupplies"],
+            {
+                queueId: `rpc:${details.operationKey}`,
+                optimistic: function () {
+                    const records = readLocalCollection("medtrackMedicalSupplies");
+                    const supply = {
+                        id: details.id,
+                        name: details.name,
+                        category: details.category,
+                        quantity: details.quantity,
+                        unit: details.unit,
+                        expirationDate: details.expirationDate || "",
+                        lowStockLevel: details.lowStockLevel,
+                        pendingSync: true
+                    };
+                    const index = records.findIndex(function (record) {
+                        return text(record.id) === text(details.id);
+                    });
+                    if (index >= 0) records[index] = supply;
+                    else records.push(supply);
+                    writeLocalCollection("medtrackMedicalSupplies", records, false);
+                    window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+                }
+            }
         );
     }
 
@@ -730,7 +1151,24 @@
                 p_emergency_label:
                     details.emergencyLabel || null
             },
-            ["medtrackMedicalSupplies"]
+            ["medtrackMedicalSupplies"],
+            {
+                queueId: `rpc:${details.operationKey}`,
+                optimistic: function () {
+                    updateLocalRecord(
+                        "medtrackMedicalSupplies",
+                        details.supplyId,
+                        function (record) {
+                            record.quantity = Math.max(
+                                0,
+                                number(record.quantity) - number(details.quantity, 1)
+                            );
+                            record.pendingSync = true;
+                            return record;
+                        }
+                    );
+                }
+            }
         );
     }
 
@@ -800,7 +1238,85 @@
         };
     }
 
-    function clearSensitiveCache() {
+    async function executeQueuedOperation(operation) {
+        if (operation.kind === "rpc") {
+            const result = await client.rpc(
+                operation.functionName,
+                operation.parameters
+            );
+            if (result.error) throw new Error(result.error.message);
+            return;
+        }
+
+        if (operation.kind === "collection") {
+            await uploadCollection(operation.storageKey);
+            return;
+        }
+
+        if (operation.kind === "delete") {
+            const collection = collections[operation.storageKey];
+            if (!collection) throw new Error("Invalid queued delete request.");
+            const result = await client
+                .from(collection.table)
+                .delete()
+                .eq("id", operation.itemId)
+                .select("id");
+            if (result.error) throw new Error(result.error.message);
+            return;
+        }
+
+        throw new Error("Unsupported offline operation.");
+    }
+
+    async function syncPending() {
+        if (logoutInProgress || !navigator.onLine || !offlineStore) {
+            return false;
+        }
+
+        if (syncInProgress) return syncInProgress;
+
+        syncInProgress = (async function () {
+            const userId = await getSessionUserId();
+            if (!userId) return false;
+
+            const operations = await offlineStore.listOperations(userId);
+            await offlineStore.announce(userId, "syncing");
+            let completed = 0;
+
+            for (const operation of operations) {
+                try {
+                    await executeQueuedOperation(operation);
+                    await offlineStore.removeOperation(operation.id);
+                    completed += 1;
+                } catch (error) {
+                    await offlineStore.recordFailure(operation, error);
+                    if (isNetworkError(error)) break;
+                    reportError("offline sync", error);
+                }
+            }
+
+            if (completed > 0 && navigator.onLine) {
+                await refresh();
+            }
+
+            const remaining = await offlineStore.countOperations(userId);
+            await offlineStore.announce(
+                userId,
+                remaining > 0
+                    ? (navigator.onLine ? "pending" : "offline")
+                    : "online"
+            );
+            return remaining === 0;
+        })();
+
+        try {
+            return await syncInProgress;
+        } finally {
+            syncInProgress = null;
+        }
+    }
+
+    async function clearSensitiveCache() {
         logoutInProgress = true;
 
         uploadTimers.forEach(function (timer) {
@@ -825,6 +1341,10 @@
         } finally {
             applyingCloudData = false;
         }
+
+        if (offlineStore) {
+            await offlineStore.clearAll();
+        }
     }
 
     const ready = refresh();
@@ -843,8 +1363,13 @@
         loadSupplyTransactions: loadSupplyTransactions,
         loadInventoryTrends: loadInventoryTrends,
         loadInventoryDistribution: loadInventoryDistribution,
+        syncPending: syncPending,
         clearSensitiveCache: clearSensitiveCache
     };
+
+    ready.then(function () {
+        if (navigator.onLine) syncPending();
+    });
 
     client.channel("medtrack-inventory-activity")
         .on(
@@ -890,7 +1415,8 @@
 
     window.addEventListener("focus", function () {
         if (!logoutInProgress && uploadTimers.size === 0) {
-            refresh();
+            if (navigator.onLine) syncPending();
+            else refresh();
         }
     });
 
@@ -902,7 +1428,8 @@
                 !logoutInProgress &&
                 uploadTimers.size === 0
             ) {
-                refresh();
+                if (navigator.onLine) syncPending();
+                else refresh();
             }
         }
     );

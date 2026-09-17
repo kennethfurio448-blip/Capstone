@@ -772,8 +772,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             refreshAvailableItems();
 
             window.alert(
-                `${selectedItem.name} was borrowed successfully.\n` +
-                `Transaction ID: ${newTransaction.id}`
+                newTransaction.queued
+                    ? `${selectedItem.name} was recorded offline.\n` +
+                        "It will be finalized automatically when the connection returns.\n" +
+                        `Pending ID: ${newTransaction.id}`
+                    : `${selectedItem.name} was borrowed successfully.\n` +
+                        `Transaction ID: ${newTransaction.id}`
             );
         } catch (error) {
             console.error("Unable to borrow item:", error);

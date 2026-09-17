@@ -1051,7 +1051,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             formMessage.textContent = "Saving supply...";
 
             try {
-                await window.medtrackData.saveMedicalSupply({
+                const saveResult = await window.medtrackData.saveMedicalSupply({
                     operationKey:
                         generateOperationKey("SUPPLY-ADD"),
                     id: supplyId,
@@ -1065,7 +1065,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 closeSupplyModal();
                 renderSupplies();
-                await loadSupplyTransactions();
+                if (saveResult.queued) {
+                    window.alert(
+                        "The supply change was saved offline and will sync automatically."
+                    );
+                } else {
+                    await loadSupplyTransactions();
+                }
             } catch (error) {
                 console.error("Unable to save supply:", error);
                 formMessage.textContent =
@@ -1159,7 +1165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 "Recording consumption...";
 
             try {
-                await window.medtrackData.consumeMedicalSupply({
+                const consumeResult = await window.medtrackData.consumeMedicalSupply({
                     operationKey:
                         generateOperationKey("SUPPLY-CONSUME"),
                     supplyId: supplyId,
@@ -1173,7 +1179,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 closeConsumeModal();
                 renderSupplies();
-                await loadSupplyTransactions();
+                if (consumeResult.queued) {
+                    window.alert(
+                        "The consumption was saved offline and will sync automatically."
+                    );
+                } else {
+                    await loadSupplyTransactions();
+                }
             } catch (error) {
                 console.error(
                     "Unable to record consumed supplies:",

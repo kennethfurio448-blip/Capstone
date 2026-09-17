@@ -120,6 +120,16 @@ const loginScriptPath = join(root, "login", "login.js");
 const loginProxyPath = join(root, "api", "login.js");
 const supabaseClientPath = join(root, "auth", "supabase-client.js");
 const authGuardPath = join(root, "auth", "supabase-auth.js");
+const dataSyncPath = join(root, "auth", "supabase-data.js");
+const offlineStorePath = join(root, "auth", "offline-store.js");
+const serviceWorkerPath = join(root, "service-worker.js");
+const manifestPath = join(root, "manifest.webmanifest");
+const offlineMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20260917150000_offline_borrow_idempotency.sql",
+);
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
 
@@ -268,6 +278,60 @@ try {
   }
 } catch (error) {
   failures.push(`supabase-auth: unable to inspect session cleanup controls (${error.message})`);
+}
+
+try {
+  const offlineStore = readFileSync(offlineStorePath, "utf8");
+  const dataSync = readFileSync(dataSyncPath, "utf8");
+  const serviceWorker = readFileSync(serviceWorkerPath, "utf8");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const offlineMigration = readFileSync(offlineMigrationPath, "utf8");
+
+  for (const storeName of ["snapshots", "operations", "profiles"]) {
+    if (!offlineStore.includes(`\"${storeName}\"`)) {
+      failures.push(`offline-store: missing IndexedDB store ${storeName}`);
+    }
+  }
+
+  for (const requiredControl of [
+    "restoreOfflineCollections",
+    "queueOperation",
+    "syncPending",
+    "medtrack_borrow_item_once",
+  ]) {
+    if (!dataSync.includes(requiredControl)) {
+      failures.push(`offline-sync: missing required control ${requiredControl}`);
+    }
+  }
+
+  if (
+    !serviceWorker.includes('request.mode === "navigate"') ||
+    !serviceWorker.includes("cacheFirst") ||
+    !serviceWorker.includes("networkFirst")
+  ) {
+    failures.push("service-worker: offline app-shell caching is incomplete");
+  }
+
+  const iconSizes = new Set(
+    (manifest.icons || []).map((icon) => icon.sizes),
+  );
+  if (
+    manifest.display !== "standalone" ||
+    !iconSizes.has("192x192") ||
+    !iconSizes.has("512x512")
+  ) {
+    failures.push("manifest: installable PWA metadata is incomplete");
+  }
+
+  if (
+    !offlineMigration.includes("medtrack_offline_operation_results") ||
+    !offlineMigration.includes("pg_advisory_xact_lock") ||
+    !offlineMigration.includes("medtrack_borrow_item_once")
+  ) {
+    failures.push("offline migration: borrowing idempotency protection is incomplete");
+  }
+} catch (error) {
+  failures.push(`offline support: unable to inspect PWA controls (${error.message})`);
 }
 
 try {
