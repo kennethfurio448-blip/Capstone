@@ -103,6 +103,16 @@ for (const file of files.filter((path) => extname(path) === ".html")) {
     const localTarget = target.split(/[?#]/, 1)[0];
     if (!localTarget) continue;
 
+    if (localTarget.startsWith("/api/")) {
+      const functionPath = join(root, `${localTarget.slice(1)}.js`);
+      if (!existsSync(functionPath)) {
+        failures.push(
+          `${displayPath}: missing API asset ${target}`,
+        );
+      }
+      continue;
+    }
+
     const resolvedTarget = resolve(dirname(file), localTarget);
     if (!existsSync(resolvedTarget)) {
       failures.push(

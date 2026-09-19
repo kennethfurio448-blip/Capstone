@@ -3,6 +3,9 @@
   "functions": {
     "api/login.js": {
       "maxDuration": 60
+    },
+    "api/supabase-js.js": {
+      "maxDuration": 30
     }
   },
   "headers": [

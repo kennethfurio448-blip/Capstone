@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v3";
+const CACHE_NAME = "medtrack-shell-v4";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -55,8 +55,7 @@ const APP_SHELL = [
     "/settings.css",
     "/settings.js"
 ];
-const SUPABASE_LIBRARY =
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js";
+const SUPABASE_LIBRARY = "/api/supabase-js";
 
 self.addEventListener("install", function (event) {
     event.waitUntil((async function () {
@@ -122,7 +121,7 @@ self.addEventListener("fetch", function (event) {
     if (request.method !== "GET") return;
 
     const url = new URL(request.url);
-    if (url.href === SUPABASE_LIBRARY) {
+    if (url.origin === self.location.origin && url.pathname === SUPABASE_LIBRARY) {
         event.respondWith(cacheFirst(request));
         return;
     }
