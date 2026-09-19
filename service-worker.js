@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v6-clean-ui";
+const CACHE_NAME = "medtrack-shell-v7-page-favicons";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -8,6 +8,19 @@ const APP_SHELL = [
     "/app-shell.css",
     "/manifest.webmanifest",
     "/medtrack-icon.svg",
+    "/page-favicon.js",
+    "/icons/favicons/dashboard.svg",
+    "/icons/favicons/medical-supplies.svg",
+    "/icons/favicons/medical-equipment.svg",
+    "/icons/favicons/mobility.svg",
+    "/icons/favicons/status.svg",
+    "/icons/favicons/available-items.svg",
+    "/icons/favicons/emergency-response.svg",
+    "/icons/favicons/manage-users.svg",
+    "/icons/favicons/reports.svg",
+    "/icons/favicons/audit-logs.svg",
+    "/icons/favicons/settings.svg",
+    "/icons/favicons/medtrack.svg",
     "/pwa.js",
     "/pwa.css",
     "/auth/offline-store.js",
