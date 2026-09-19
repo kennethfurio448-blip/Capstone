@@ -163,7 +163,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 JSON.parse(savedEquipment);
 
             return Array.isArray(parsedEquipment)
-                ? parsedEquipment
+                ? parsedEquipment.map(function (item) {
+                    return {
+                        ...item,
+                        status: normalizeEquipmentStatus(item.status)
+                    };
+                })
                 : [];
         } catch (error) {
             console.error(
@@ -173,6 +178,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             return [];
         }
+    }
+
+    function normalizeEquipmentStatus(status) {
+        if (["In Use", "Assigned", "Deployed"].includes(status)) {
+            return "Borrowed";
+        }
+        if (["Maintenance", "Unavailable", "Under Repair"].includes(status)) {
+            return "For Repair";
+        }
+        return [
+            "Available", "Borrowed", "Returned", "Missing", "Damaged", "For Repair"
+        ].includes(status) ? status : "For Repair";
     }
 
     function saveEquipment(equipment) {
@@ -247,12 +264,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             return "status-available";
         }
 
-        if (status === "In Use") {
+        if (status === "Borrowed") {
             return "status-in-use";
         }
 
-        if (status === "Maintenance") {
+        if (["Missing", "Damaged", "For Repair"].includes(status)) {
             return "status-maintenance";
+        }
+
+        if (status === "Returned") {
+            return "status-available";
         }
 
         return "status-unavailable";
@@ -517,24 +538,20 @@ document.addEventListener("DOMContentLoaded", async function () {
                 availableCount++;
             }
 
-            if (status === "Maintenance") {
+            if (["Missing", "Damaged", "For Repair"].includes(status)) {
                 maintenanceCount++;
                 alertCount++;
             }
 
-            if (status === "In Use") {
+            if (status === "Borrowed") {
                 inUseCount++;
-            }
-
-            if (status === "Unavailable") {
-                alertCount++;
             }
 
             if (
                 isMaintenanceOverdue(
                     item.maintenanceDate
                 ) &&
-                status !== "Maintenance"
+                status !== "For Repair"
             ) {
                 alertCount++;
             }
@@ -983,10 +1000,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             const alerts =
                 equipment.filter(function (item) {
                     return (
-                        item.status ===
-                            "Maintenance" ||
-                        item.status ===
-                            "Unavailable" ||
+                        ["Missing", "Damaged", "For Repair"].includes(
+                            item.status
+                        ) ||
                         isMaintenanceOverdue(
                             item.maintenanceDate
                         )
@@ -1019,6 +1035,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     );
+
+    window.addEventListener("medtrack:data-ready", renderEquipment);
+    window.addEventListener("medtrack:inventory-changed", renderEquipment);
 
 
     logoutButton.addEventListener(

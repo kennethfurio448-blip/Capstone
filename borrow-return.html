@@ -9,7 +9,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Borrow and Return | MedTrack</title>
+    <title>Status | MedTrack</title>
 
     <link rel="stylesheet" href="borrow-return.css">
     <link rel="stylesheet" href="app-shell.css">
@@ -66,9 +66,9 @@
                 <span>Mobility</span>
             </a>
 
-            <a href="borrow-return.html"class="nav-item active">
+            <a href="borrow-return.html" class="nav-item active">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i>
-                <span>Borrow and Return</span>
+                <span>Status</span>
             </a>
 
              <a href="available-items.html" class="nav-item" >
@@ -125,8 +125,8 @@
         <header class="topbar">
 
             <div>
-                <h2>Borrow and Return</h2>
-                <p>Track medical equipment and mobility borrowing status.</p>
+                <h2>Status</h2>
+                <p>Manage the status of medical equipment and mobility assets.</p>
             </div>
 
             <div class="topbar-actions">
@@ -166,9 +166,9 @@
                 </div>
 
                 <div>
-                    <p>Total Transactions</p>
+                    <p>Status Records</p>
                     <h3 id="totalTransactions">0</h3>
-                    <small>All borrowing records</small>
+                    <small>Equipment and mobility history</small>
                 </div>
 
             </article>
@@ -222,10 +222,9 @@
             <div class="inventory-header">
 
                 <div>
-                    <h3>Borrowing Records</h3>
+                    <h3>Equipment and Mobility Status</h3>
                     <p>
-                        Borrow equipment from Available Items, then manage
-                        its status here.
+                        Record borrowing and manage every item status here.
                     </p>
                 </div>
 
@@ -235,7 +234,7 @@
                     id="openStatusModal"
                 >
                     <i class="fa-solid fa-pen-to-square"></i>
-                    Update Status
+                    Set Status
                 </button>
 
             </div>
@@ -266,6 +265,7 @@
 
                 <select id="statusFilter">
                     <option value="all">All Status</option>
+                    <option value="Available">Available</option>
                     <option value="Borrowed">Borrowed</option>
                     <option value="Returned">Returned</option>
                     <option value="Missing">Missing</option>
@@ -302,8 +302,8 @@
 
                 <div class="empty-state" id="emptyState">
                     <i class="fa-solid fa-clipboard"></i>
-                    <h3>No borrowing records found</h3>
-                    <p>Borrow an equipment or mobility item first.</p>
+                    <h3>No status records found</h3>
+                    <p>Set an equipment or mobility asset status first.</p>
                 </div>
 
             </div>
@@ -314,7 +314,7 @@
 
 </div>
 
-<div class="modal-overlay" id="statusModal">
+<div class="modal-overlay" id="statusModal" aria-hidden="true">
 
     <section class="modal action-modal" role="dialog" aria-modal="true"
              aria-labelledby="statusModalTitle">
@@ -322,8 +322,8 @@
         <div class="modal-header">
 
             <div>
-                <h2 id="statusModalTitle">Update Borrowing Status</h2>
-                <p>Choose a record and set its current condition.</p>
+                <h2 id="statusModalTitle">Set Item Status</h2>
+                <p>Choose a status and complete its required information.</p>
             </div>
 
             <button
@@ -342,21 +342,111 @@
             <div class="form-grid">
 
                 <div class="input-group full-width">
-                    <label for="statusTransaction">Borrowing Record</label>
-                    <select id="statusTransaction" required>
-                        <option value="">Select borrowing record</option>
-                    </select>
-                </div>
-
-                <div class="input-group full-width">
                     <label for="transactionStatus">New Status</label>
                     <select id="transactionStatus" required>
+                        <option value="Available">Available</option>
                         <option value="Borrowed">Borrowed</option>
                         <option value="Returned">Returned</option>
                         <option value="Missing">Missing</option>
                         <option value="Damaged">Damaged</option>
                         <option value="For Repair">For Repair</option>
                     </select>
+                </div>
+
+                <div id="borrowFields" class="conditional-fields full-width">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="borrowerName">Borrower's Full Name</label>
+                            <input id="borrowerName" type="text" maxlength="120">
+                        </div>
+                        <div class="input-group">
+                            <label for="borrowDepartment">Department or Unit</label>
+                            <input id="borrowDepartment" type="text" maxlength="120">
+                        </div>
+                        <div class="input-group">
+                            <label for="borrowItemType">Item Category</label>
+                            <select id="borrowItemType">
+                                <option value="Medical Equipment">Medical Equipment</option>
+                                <option value="Mobility Asset">Mobility Asset</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="borrowItemId">Specific Item</label>
+                            <select id="borrowItemId">
+                                <option value="">Select an available item</option>
+                            </select>
+                            <small id="borrowAvailability">Select an item to view its details.</small>
+                        </div>
+                        <div class="input-group">
+                            <label for="borrowQuantity">Quantity</label>
+                            <input id="borrowQuantity" type="number" min="1" step="1" value="1">
+                        </div>
+                        <div class="input-group">
+                            <label for="borrowedAt">Borrow Date and Time</label>
+                            <input id="borrowedAt" type="datetime-local">
+                        </div>
+                        <div class="input-group">
+                            <label for="expectedReturnDate">Due Date</label>
+                            <input id="expectedReturnDate" type="date">
+                        </div>
+                        <div class="input-group">
+                            <label for="assignedPersonnel">Assigned Personnel or Driver</label>
+                            <input id="assignedPersonnel" type="text" maxlength="120">
+                        </div>
+                        <div class="input-group full-width">
+                            <label for="borrowPurpose">Purpose</label>
+                            <textarea id="borrowPurpose" rows="3" maxlength="500"></textarea>
+                        </div>
+                        <div class="input-group full-width">
+                            <label for="borrowDestination">Item Destination / Details</label>
+                            <input id="borrowDestination" type="text" maxlength="200">
+                        </div>
+                        <div class="input-group full-width">
+                            <label for="borrowRemarks">Additional Remarks <span>(optional)</span></label>
+                            <textarea id="borrowRemarks" rows="2" maxlength="500"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="statusDetailFields" class="conditional-fields full-width" hidden>
+                    <div class="form-grid">
+                        <div class="input-group full-width">
+                            <label for="statusTransaction">Borrowing Record</label>
+                            <select id="statusTransaction">
+                                <option value="">Select an active borrowing record</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="statusEffectiveAt" id="statusEffectiveLabel">Status Date and Time</label>
+                            <input id="statusEffectiveAt" type="datetime-local">
+                        </div>
+                        <div class="input-group">
+                            <label for="statusQuantity">Quantity</label>
+                            <input id="statusQuantity" type="number" min="1" step="1" value="1">
+                        </div>
+                        <div class="input-group">
+                            <label for="statusReportedBy" id="statusReportedByLabel">Reported / Received By</label>
+                            <input id="statusReportedBy" type="text" maxlength="120">
+                        </div>
+                        <div class="input-group">
+                            <label for="statusCondition">Item Condition</label>
+                            <select id="statusCondition">
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Damaged">Damaged</option>
+                                <option value="Needs Repair">Needs Repair</option>
+                                <option value="Missing">Missing</option>
+                            </select>
+                        </div>
+                        <div class="input-group full-width">
+                            <label for="statusLocation" id="statusLocationLabel">Location / Last Known Location</label>
+                            <input id="statusLocation" type="text" maxlength="200">
+                        </div>
+                        <div class="input-group full-width">
+                            <label for="statusRemarks" id="statusRemarksLabel">Details or Remarks</label>
+                            <textarea id="statusRemarks" rows="4" maxlength="1000"></textarea>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="input-group full-width">
@@ -382,7 +472,7 @@
 
                 <button type="submit" class="save-button">
                     <i class="fa-solid fa-floppy-disk"></i>
-                    Update Status
+                    Save Status
                 </button>
 
             </div>

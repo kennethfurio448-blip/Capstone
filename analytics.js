@@ -62,10 +62,17 @@ document.addEventListener("DOMContentLoaded", function () {
             return dueDate < today;
         });
 
+        const statusAlerts = equipment.concat(mobility).filter(function (item) {
+            return ["missing", "damaged", "for repair"].includes(
+                String(item.status || "").toLowerCase()
+            );
+        });
+
         const totalAlerts =
             lowStockItems.length +
             expiredItems.length +
-            overdueItems.length;
+            overdueItems.length +
+            statusAlerts.length;
 
         const availableMobility = mobility.filter(function (item) {
             return String(item.status || "").toLowerCase() ===
@@ -83,7 +90,8 @@ document.addEventListener("DOMContentLoaded", function () {
         displayInventoryAlerts(
             lowStockItems,
             expiredItems,
-            overdueItems
+            overdueItems,
+            statusAlerts
         );
         displayRecentActivity(borrowing);
         void updateInventoryDistribution();
@@ -393,7 +401,8 @@ document.addEventListener("DOMContentLoaded", function () {
     function displayInventoryAlerts(
         lowStockItems,
         expiredItems,
-        overdueItems
+        overdueItems,
+        statusAlerts
     ) {
         const container =
             document.getElementById("inventoryAlerts");
@@ -457,6 +466,22 @@ document.addEventListener("DOMContentLoaded", function () {
                     <span class="alert-status information-text">
                         Overdue
                     </span>
+                </div>
+            `);
+        });
+
+        statusAlerts.forEach(function (item) {
+            const status = escapeHTML(item.status);
+            alerts.push(`
+                <div class="alert-item">
+                    <div class="alert-icon danger">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <strong>${status}</strong>
+                        <p>${escapeHTML(item.name)}</p>
+                    </div>
+                    <span class="alert-status danger-text">${status}</span>
                 </div>
             `);
         });

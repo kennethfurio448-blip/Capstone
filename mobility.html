@@ -68,7 +68,7 @@
 
             <a href="borrow-return.html" class="nav-item">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i>
-                <span>Borrow and Return</span>
+                <span>Status</span>
             </a>
 
              <a href="available-items.html" class="nav-item" >
@@ -194,9 +194,9 @@
                 </div>
 
                 <div>
-                    <p>Deployed</p>
+                    <p>Borrowed</p>
                     <h3 id="deployedVehicles">0</h3>
-                    <small>Currently in operation</small>
+                    <small>Currently borrowed</small>
                 </div>
 
             </article>
@@ -264,8 +264,10 @@
                 <select id="statusFilter">
                     <option value="all">All Status</option>
                     <option value="Available">Available</option>
-                    <option value="Assigned">Assigned</option>
-                    <option value="Deployed">Deployed</option>
+                    <option value="Borrowed">Borrowed</option>
+                    <option value="Returned">Returned</option>
+                    <option value="Missing">Missing</option>
+                    <option value="Damaged">Damaged</option>
                     <option value="For Repair">For Repair</option>
                 </select>
 
@@ -413,12 +415,10 @@
                         <option value="Available">
                             Available
                         </option>
-                        <option value="Assigned">
-                            Assigned
-                        </option>
-                        <option value="Deployed">
-                            Deployed
-                        </option>
+                        <option value="Borrowed">Borrowed</option>
+                        <option value="Returned">Returned</option>
+                        <option value="Missing">Missing</option>
+                        <option value="Damaged">Damaged</option>
                         <option value="For Repair">
                             For Repair
                         </option>

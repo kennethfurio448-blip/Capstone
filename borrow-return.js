@@ -1,138 +1,87 @@
-
 document.addEventListener("DOMContentLoaded", async function () {
     "use strict";
 
-    const dashboardLink = document.getElementById("dashboardLink");
-    const adminNavigation = document.getElementById("adminNavigation");
-    const portalName = document.getElementById("portalName");
-    const currentUserName = document.getElementById("currentUserName");
-    const currentUserRole = document.getElementById("currentUserRole");
-    const logoutButton = document.getElementById("logoutButton");
-    const notificationButton =
-        document.getElementById("notificationButton");
-    const notificationCount =
-        document.getElementById("notificationCount");
+    const byId = function (id) { return document.getElementById(id); };
+    const elements = {
+        dashboardLink: byId("dashboardLink"),
+        adminNavigation: byId("adminNavigation"),
+        portalName: byId("portalName"),
+        currentUserName: byId("currentUserName"),
+        currentUserRole: byId("currentUserRole"),
+        logoutButton: byId("logoutButton"),
+        notificationButton: byId("notificationButton"),
+        notificationCount: byId("notificationCount"),
+        totalTransactions: byId("totalTransactions"),
+        borrowedTransactions: byId("borrowedTransactions"),
+        returnedTransactions: byId("returnedTransactions"),
+        attentionTransactions: byId("attentionTransactions"),
+        transactionSearch: byId("transactionSearch"),
+        itemTypeFilter: byId("itemTypeFilter"),
+        statusFilter: byId("statusFilter"),
+        transactionTableBody: byId("transactionTableBody"),
+        emptyState: byId("emptyState"),
+        openStatusModal: byId("openStatusModal"),
+        statusModal: byId("statusModal"),
+        closeStatusModal: byId("closeStatusModal"),
+        cancelStatus: byId("cancelStatus"),
+        statusForm: byId("statusForm"),
+        transactionStatus: byId("transactionStatus"),
+        borrowFields: byId("borrowFields"),
+        statusDetailFields: byId("statusDetailFields"),
+        borrowerName: byId("borrowerName"),
+        borrowDepartment: byId("borrowDepartment"),
+        borrowItemType: byId("borrowItemType"),
+        borrowItemId: byId("borrowItemId"),
+        borrowAvailability: byId("borrowAvailability"),
+        borrowQuantity: byId("borrowQuantity"),
+        borrowedAt: byId("borrowedAt"),
+        expectedReturnDate: byId("expectedReturnDate"),
+        borrowPurpose: byId("borrowPurpose"),
+        assignedPersonnel: byId("assignedPersonnel"),
+        borrowDestination: byId("borrowDestination"),
+        borrowRemarks: byId("borrowRemarks"),
+        statusTransaction: byId("statusTransaction"),
+        statusEffectiveAt: byId("statusEffectiveAt"),
+        statusEffectiveLabel: byId("statusEffectiveLabel"),
+        statusQuantity: byId("statusQuantity"),
+        statusReportedBy: byId("statusReportedBy"),
+        statusReportedByLabel: byId("statusReportedByLabel"),
+        statusCondition: byId("statusCondition"),
+        statusLocation: byId("statusLocation"),
+        statusLocationLabel: byId("statusLocationLabel"),
+        statusRemarks: byId("statusRemarks"),
+        statusRemarksLabel: byId("statusRemarksLabel"),
+        statusRecordSummary: byId("statusRecordSummary"),
+        formMessage: byId("formMessage")
+    };
 
-    const totalTransactions =
-        document.getElementById("totalTransactions");
-    const borrowedTransactions =
-        document.getElementById("borrowedTransactions");
-    const returnedTransactions =
-        document.getElementById("returnedTransactions");
-    const attentionTransactions =
-        document.getElementById("attentionTransactions");
-
-    const transactionSearch =
-        document.getElementById("transactionSearch");
-    const itemTypeFilter =
-        document.getElementById("itemTypeFilter");
-    const statusFilter = document.getElementById("statusFilter");
-    const transactionTableBody =
-        document.getElementById("transactionTableBody");
-    const emptyState = document.getElementById("emptyState");
-
-    const openStatusModalButton =
-        document.getElementById("openStatusModal");
-    const statusModal = document.getElementById("statusModal");
-    const closeStatusModalButton =
-        document.getElementById("closeStatusModal");
-    const cancelStatusButton =
-        document.getElementById("cancelStatus");
-    const statusForm = document.getElementById("statusForm");
-    const statusTransaction =
-        document.getElementById("statusTransaction");
-    const transactionStatus =
-        document.getElementById("transactionStatus");
-    const statusRecordSummary =
-        document.getElementById("statusRecordSummary");
-    const formMessage = document.getElementById("formMessage");
-    const saveStatusButton =
-        statusForm.querySelector("button[type='submit']");
-
-    const allowedItemTypes = [
-        "Medical Equipment",
-        "Mobility Asset"
-    ];
-
-    const allowedStatuses = [
-        "Borrowed",
-        "Returned",
-        "Missing",
-        "Damaged",
-        "For Repair"
-    ];
-
-    const requiredElements = [
-        dashboardLink,
-        adminNavigation,
-        portalName,
-        currentUserName,
-        currentUserRole,
-        logoutButton,
-        notificationButton,
-        notificationCount,
-        totalTransactions,
-        borrowedTransactions,
-        returnedTransactions,
-        attentionTransactions,
-        transactionSearch,
-        itemTypeFilter,
-        statusFilter,
-        transactionTableBody,
-        emptyState,
-        openStatusModalButton,
-        statusModal,
-        closeStatusModalButton,
-        cancelStatusButton,
-        statusForm,
-        statusTransaction,
-        transactionStatus,
-        statusRecordSummary,
-        formMessage,
-        saveStatusButton
-    ];
-
-    if (requiredElements.some(function (element) {
-        return !element;
-    })) {
-        console.error(
-            "Borrowing page is missing one or more required elements."
-        );
+    if (Object.values(elements).some(function (element) { return !element; })) {
+        console.error("The Status page is missing one or more required elements.");
         return;
     }
 
-    const currentUser =
-        await window.medtrackAuth.requireRoles(["admin", "staff"]);
+    const saveButton = elements.statusForm.querySelector("button[type='submit']");
+    const itemTypes = ["Medical Equipment", "Mobility Asset"];
+    const statuses = [
+        "Available", "Borrowed", "Returned", "Missing", "Damaged", "For Repair"
+    ];
+    const activeStatuses = ["Borrowed", "Missing", "Damaged", "For Repair"];
 
-    if (!currentUser) {
-        return;
-    }
+    const currentUser = await window.medtrackAuth.requireRoles(["admin", "staff"]);
+    if (!currentUser) return;
 
-    if (window.medtrackData) {
-        await window.medtrackData.refresh();
-    }
+    if (window.medtrackData) await window.medtrackData.refresh();
 
-    const displayName =
-        currentUser.fullname ||
-        currentUser.username ||
-        "MedTrack User";
+    const displayName = currentUser.fullname || currentUser.username || "MedTrack User";
+    elements.currentUserName.textContent = displayName;
+    elements.currentUserRole.textContent = currentUser.role;
+    elements.portalName.textContent = currentUser.role === "admin"
+        ? "Admin Portal" : "Staff Portal";
+    elements.dashboardLink.href = currentUser.role === "admin"
+        ? "admin-dashboard.html" : "staff-dashboard.html";
+    elements.adminNavigation.hidden = currentUser.role !== "admin";
 
-    currentUserName.textContent = displayName;
-    currentUserRole.textContent = currentUser.role;
-
-    if (currentUser.role === "admin") {
-        portalName.textContent = "Admin Portal";
-        dashboardLink.href = "admin-dashboard.html";
-        adminNavigation.hidden = false;
-    } else {
-        portalName.textContent = "Staff Portal";
-        dashboardLink.href = "staff-dashboard.html";
-        adminNavigation.hidden = true;
-    }
-
-    function normalizeText(value) {
-        return String(value ?? "").trim();
-    }
+    function text(value) { return String(value ?? "").trim(); }
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -143,368 +92,496 @@ document.addEventListener("DOMContentLoaded", async function () {
             .replaceAll("'", "&#039;");
     }
 
-    function normalizeStatus(value) {
-        const status = normalizeText(value);
-        return allowedStatuses.includes(status)
-            ? status
-            : "Borrowed";
-    }
-
-    function getTransactions() {
+    function storedArray(key) {
         try {
-            const transactions = JSON.parse(
-                localStorage.getItem(
-                    "medtrackBorrowTransactions"
-                ) || "[]"
-            );
-
-            if (!Array.isArray(transactions)) {
-                return [];
-            }
-
-            return transactions
-                .filter(function (transaction) {
-                    return (
-                        transaction &&
-                        allowedItemTypes.includes(
-                            transaction.itemType
-                        )
-                    );
-                })
-                .map(function (transaction) {
-                    return {
-                        ...transaction,
-                        status: normalizeStatus(transaction.status)
-                    };
-                });
+            const records = JSON.parse(localStorage.getItem(key) || "[]");
+            return Array.isArray(records) ? records : [];
         } catch (error) {
-            console.error("Unable to read borrowing records:", error);
+            console.error("Unable to read Status data:", key, error);
             return [];
         }
     }
 
-    function formatDate(value) {
-        if (!value) {
-            return "\u2014";
-        }
+    function localDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
 
-        const date = new Date(`${value}T00:00:00`);
-        if (Number.isNaN(date.getTime())) {
-            return normalizeText(value);
-        }
+    function localDateTime(date) {
+        return `${localDate(date)}T${String(date.getHours()).padStart(2, "0")}:` +
+            String(date.getMinutes()).padStart(2, "0");
+    }
 
-        return date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric"
+    function formatDate(value, includeTime) {
+        if (!value) return "\u2014";
+        const date = new Date(includeTime ? value : `${value}T00:00:00`);
+        if (Number.isNaN(date.getTime())) return text(value);
+        return date.toLocaleString("en-US", {
+            month: "short", day: "numeric", year: "numeric",
+            ...(includeTime ? { hour: "numeric", minute: "2-digit" } : {})
         });
     }
 
-    function formatBorrowedDate(transaction) {
-        if (!transaction.borrowedAt) {
-            return formatDate(transaction.borrowDate);
-        }
-
-        const date = new Date(transaction.borrowedAt);
-
-        if (Number.isNaN(date.getTime())) {
-            return formatDate(transaction.borrowDate);
-        }
-
-        return date.toLocaleString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit"
+    function getTransactions() {
+        return storedArray("medtrackBorrowTransactions").filter(function (record) {
+            return record && itemTypes.includes(record.itemType);
         });
+    }
+
+    function getInventory() {
+        const equipment = storedArray("medtrackMedicalEquipment").map(function (item) {
+            return {
+                ...item,
+                itemType: "Medical Equipment",
+                quantity: Math.max(0, Number(item.quantity) || 0),
+                details: [item.category, item.location, item.condition].filter(Boolean).join(" | ")
+            };
+        });
+        const mobility = storedArray("medtrackMobilityAssets").map(function (item) {
+            return {
+                ...item,
+                itemType: "Mobility Asset",
+                quantity: 1,
+                details: [item.type, item.plateNumber, item.location, item.condition]
+                    .filter(Boolean).join(" | ")
+            };
+        });
+        return equipment.concat(mobility);
+    }
+
+    function canonicalInventoryStatus(item) {
+        const status = text(item.status).toLowerCase();
+        const condition = text(item.condition).toLowerCase();
+        if (status === "missing" || condition === "missing") return "Missing";
+        if (status === "damaged" || condition === "damaged") return "Damaged";
+        if (["maintenance", "for repair", "under repair", "repair", "unavailable"]
+            .includes(status)) return "For Repair";
+        if (["borrowed", "in use", "assigned", "deployed"].includes(status)) {
+            return "Borrowed";
+        }
+        return "Available";
+    }
+
+    function transactionTimestamp(record) {
+        return Date.parse(record.serverUpdatedAt || record.borrowedAt ||
+            record.borrowDate || 0) || 0;
+    }
+
+    function getStatusRecords() {
+        const transactions = getTransactions();
+        const activeByAsset = new Map();
+        transactions.filter(function (record) {
+            return activeStatuses.includes(text(record.status));
+        }).sort(function (a, b) {
+            return transactionTimestamp(b) - transactionTimestamp(a);
+        }).forEach(function (record) {
+            const key = `${record.itemType}:${record.inventoryItemId}`;
+            if (record.inventoryItemId && !activeByAsset.has(key)) {
+                activeByAsset.set(key, record);
+            }
+            const nameKey = `${record.itemType}:name:${text(record.itemName).toLowerCase()}`;
+            if (record.itemName && !activeByAsset.has(nameKey)) {
+                activeByAsset.set(nameKey, record);
+            }
+        });
+
+        const current = getInventory().map(function (item) {
+            const active = activeByAsset.get(`${item.itemType}:${item.id}`) ||
+                activeByAsset.get(`${item.itemType}:name:${text(item.name).toLowerCase()}`);
+            return active ? { ...active, recordKind: "current" } : {
+                id: `ASSET-${item.itemType}-${item.id}`,
+                inventoryItemId: item.id,
+                itemType: item.itemType,
+                itemName: item.name,
+                quantity: item.quantity,
+                borrower: "\u2014",
+                department: "\u2014",
+                borrowDate: "",
+                borrowedAt: "",
+                dueDate: "",
+                returnDate: "",
+                status: canonicalInventoryStatus(item),
+                purpose: item.details,
+                recordKind: "asset"
+            };
+        });
+
+        const returnedHistory = transactions.filter(function (record) {
+            return record.status === "Returned";
+        }).map(function (record) { return { ...record, recordKind: "history" }; });
+        return current.concat(returnedHistory);
     }
 
     function statusClass(status) {
         return {
-            "Borrowed": "status-borrowed",
-            "Returned": "status-returned",
-            "Missing": "status-missing",
-            "Damaged": "status-damaged",
+            Available: "status-returned",
+            Borrowed: "status-borrowed",
+            Returned: "status-returned",
+            Missing: "status-missing",
+            Damaged: "status-damaged",
             "For Repair": "status-for-repair"
         }[status] || "status-borrowed";
     }
 
-    function updateStatistics(transactions) {
-        const borrowed = transactions.filter(function (transaction) {
-            return transaction.status === "Borrowed";
+    function updateStatistics(records) {
+        const current = records.filter(function (record) {
+            return record.recordKind !== "history";
+        });
+        const count = function (wanted) {
+            return current.filter(function (record) { return record.status === wanted; }).length;
+        };
+        const attention = current.filter(function (record) {
+            return ["Missing", "Damaged", "For Repair"].includes(record.status);
         }).length;
-        const returned = transactions.filter(function (transaction) {
-            return transaction.status === "Returned";
-        }).length;
-        const needsAttention = transactions.filter(function (transaction) {
-            return ["Missing", "Damaged", "For Repair"].includes(
-                transaction.status
-            );
-        }).length;
-
-        totalTransactions.textContent = String(transactions.length);
-        borrowedTransactions.textContent = String(borrowed);
-        returnedTransactions.textContent = String(returned);
-        attentionTransactions.textContent = String(needsAttention);
-        notificationCount.textContent = String(needsAttention);
-        notificationCount.hidden = needsAttention === 0;
-
-        notificationButton.setAttribute(
-            "aria-label",
-            needsAttention === 0
-                ? "No borrowing records need attention"
-                : `${needsAttention} borrowing ${
-                    needsAttention === 1 ? "record needs" : "records need"
-                } attention`
+        elements.totalTransactions.textContent = String(current.length);
+        elements.borrowedTransactions.textContent = String(count("Borrowed"));
+        elements.returnedTransactions.textContent = String(
+            records.filter(function (record) { return record.recordKind === "history"; }).length
         );
+        elements.attentionTransactions.textContent = String(attention);
+        elements.notificationCount.textContent = String(attention);
+        elements.notificationCount.hidden = attention === 0;
+        elements.notificationButton.setAttribute("aria-label", attention
+            ? `${attention} items need attention` : "No items need attention");
     }
 
-    function renderTransactions() {
-        const transactions = getTransactions();
-        const searchValue =
-            normalizeText(transactionSearch.value).toLowerCase();
-        const selectedType = itemTypeFilter.value;
-        const selectedStatus = statusFilter.value;
-
-        const filteredTransactions = transactions.filter(
-            function (transaction) {
-                const searchableText = `
-                    ${transaction.id} ${transaction.borrower}
-                    ${transaction.department} ${transaction.itemType}
-                    ${transaction.itemName} ${transaction.purpose}
-                    ${transaction.status}
-                `.toLowerCase();
-
-                return (
-                    searchableText.includes(searchValue) &&
-                    (
-                        selectedType === "all" ||
-                        transaction.itemType === selectedType
-                    ) &&
-                    (
-                        selectedStatus === "all" ||
-                        transaction.status === selectedStatus
-                    )
-                );
-            }
-        );
-
-        transactionTableBody.innerHTML = "";
-        emptyState.classList.toggle(
-            "show",
-            filteredTransactions.length === 0
-        );
-
-        filteredTransactions.forEach(function (transaction) {
-            const row = document.createElement("tr");
-            const status = normalizeStatus(transaction.status);
-
-            row.innerHTML = `
-                <td>${escapeHTML(transaction.id)}</td>
-                <td><strong>${escapeHTML(transaction.borrower)}</strong></td>
-                <td>${escapeHTML(transaction.department)}</td>
-                <td>${escapeHTML(transaction.itemType)}</td>
-                <td>${escapeHTML(transaction.itemName)}</td>
-                <td>${escapeHTML(transaction.quantity)}</td>
-                <td>${escapeHTML(formatBorrowedDate(transaction))}</td>
-                <td>${escapeHTML(formatDate(transaction.dueDate))}</td>
-                <td>${escapeHTML(formatDate(transaction.returnDate))}</td>
-                <td>
-                    <span class="status-badge ${statusClass(status)}">
-                        ${escapeHTML(status)}
-                    </span>
-                </td>
-                <td>
-                    <button
-                        type="button"
-                        class="edit-button"
-                        data-action="status"
-                        data-id="${escapeHTML(transaction.id)}"
-                        aria-label="Update status for ${escapeHTML(
-                            transaction.itemName
-                        )}"
-                        title="Update status"
-                    >
-                        <i class="fa-solid fa-pen"></i>
-                    </button>
-                </td>
-            `;
-
-            transactionTableBody.appendChild(row);
+    function renderStatus() {
+        const records = getStatusRecords();
+        const search = text(elements.transactionSearch.value).toLowerCase();
+        const typeFilter = elements.itemTypeFilter.value;
+        const statusFilter = elements.statusFilter.value;
+        const filtered = records.filter(function (record) {
+            const haystack = [record.id, record.borrower, record.department,
+                record.itemType, record.itemName, record.purpose, record.status]
+                .join(" ").toLowerCase();
+            return haystack.includes(search) &&
+                (typeFilter === "all" || record.itemType === typeFilter) &&
+                (statusFilter === "all" || record.status === statusFilter);
         });
 
-        updateStatistics(transactions);
+        elements.transactionTableBody.innerHTML = "";
+        elements.emptyState.classList.toggle("show", filtered.length === 0);
+        filtered.forEach(function (record) {
+            const row = document.createElement("tr");
+            const editable = record.recordKind !== "history";
+            row.innerHTML = `
+                <td>${escapeHTML(record.id)}</td>
+                <td><strong>${escapeHTML(record.borrower || "\u2014")}</strong></td>
+                <td>${escapeHTML(record.department || "\u2014")}</td>
+                <td>${escapeHTML(record.itemType)}</td>
+                <td>${escapeHTML(record.itemName)}</td>
+                <td>${escapeHTML(record.quantity)}</td>
+                <td>${escapeHTML(formatDate(record.borrowedAt || record.borrowDate,
+                    Boolean(record.borrowedAt)))}</td>
+                <td>${escapeHTML(formatDate(record.dueDate))}</td>
+                <td>${escapeHTML(formatDate(record.returnDate))}</td>
+                <td><span class="status-badge ${statusClass(record.status)}">${escapeHTML(record.status)}</span></td>
+                <td>${editable ? `<button type="button" class="edit-button"
+                    data-action="status" data-id="${escapeHTML(record.id)}"
+                    data-transaction-id="${escapeHTML(record.recordKind === "current" ? record.id : "")}"
+                    data-item-id="${escapeHTML(record.inventoryItemId)}"
+                    data-item-type="${escapeHTML(record.itemType)}"
+                    aria-label="Set status for ${escapeHTML(record.itemName)}" title="Set status">
+                    <i class="fa-solid fa-pen"></i></button>` : "\u2014"}</td>`;
+            elements.transactionTableBody.appendChild(row);
+        });
+        updateStatistics(records);
+    }
+
+    function borrowableItems(type) {
+        return getInventory().filter(function (item) {
+            return item.itemType === type && canonicalInventoryStatus(item) === "Available" &&
+                item.quantity > 0;
+        });
+    }
+
+    function selectedBorrowItem() {
+        return borrowableItems(elements.borrowItemType.value).find(function (item) {
+            return item.id === elements.borrowItemId.value;
+        }) || null;
+    }
+
+    function populateBorrowItems(selectedId) {
+        const items = borrowableItems(elements.borrowItemType.value);
+        elements.borrowItemId.innerHTML = '<option value="">Select an available item</option>' +
+            items.map(function (item) {
+                return `<option value="${escapeHTML(item.id)}">${escapeHTML(item.name)} ` +
+                    `(${escapeHTML(item.quantity)} available)</option>`;
+            }).join("");
+        elements.borrowItemId.value = selectedId || "";
+        updateBorrowItem();
+    }
+
+    function updateBorrowItem() {
+        const item = selectedBorrowItem();
+        if (!item) {
+            elements.borrowAvailability.textContent = "Select an item to view its details.";
+            return;
+        }
+        elements.borrowQuantity.max = String(item.quantity);
+        elements.borrowQuantity.disabled = item.itemType === "Mobility Asset";
+        if (item.itemType === "Mobility Asset") elements.borrowQuantity.value = "1";
+        elements.borrowAvailability.textContent =
+            `${item.quantity} available. ${item.details || "No additional item details."}`;
+        if (item.itemType === "Mobility Asset" && !text(elements.assignedPersonnel.value)) {
+            elements.assignedPersonnel.value = text(item.driver);
+        }
+    }
+
+    function activeTransactions() {
+        return getTransactions().filter(function (record) {
+            return activeStatuses.includes(record.status);
+        });
     }
 
     function populateTransactionOptions(selectedId) {
-        const transactions = getTransactions();
-
-        statusTransaction.innerHTML =
-            '<option value="">Select borrowing record</option>' +
-            transactions.map(function (transaction) {
-                return `
-                    <option value="${escapeHTML(transaction.id)}">
-                        ${escapeHTML(transaction.id)} -
-                        ${escapeHTML(transaction.itemName)} -
-                        ${escapeHTML(transaction.borrower)}
-                    </option>
-                `;
+        const records = activeTransactions();
+        elements.statusTransaction.innerHTML =
+            '<option value="">Select an active borrowing record</option>' +
+            records.map(function (record) {
+                return `<option value="${escapeHTML(record.id)}">${escapeHTML(record.id)} - ` +
+                    `${escapeHTML(record.itemName)} - ${escapeHTML(record.borrower)}</option>`;
             }).join("");
-
-        statusTransaction.value = selectedId || "";
-        saveStatusButton.disabled = transactions.length === 0;
+        elements.statusTransaction.value = selectedId || "";
         updateStatusSummary();
     }
 
+    function selectedTransaction() {
+        return getTransactions().find(function (record) {
+            return record.id === elements.statusTransaction.value;
+        }) || null;
+    }
+
     function updateStatusSummary() {
-        const transaction = getTransactions().find(function (item) {
-            return item.id === statusTransaction.value;
+        if (elements.transactionStatus.value === "Borrowed") {
+            const item = selectedBorrowItem();
+            elements.statusRecordSummary.textContent = item
+                ? `${item.name} (${item.itemType}); ${item.quantity} currently available.`
+                : "Select an available medical equipment or mobility asset.";
+            return;
+        }
+        const record = selectedTransaction();
+        if (!record) {
+            elements.statusRecordSummary.textContent =
+                "Select an active borrowing record to view its item and borrower details.";
+            return;
+        }
+        elements.statusQuantity.max = String(record.quantity || 1);
+        elements.statusQuantity.value = String(record.quantity || 1);
+        elements.statusQuantity.readOnly = true;
+        elements.statusRecordSummary.textContent =
+            `${record.itemName} (${record.itemType}) is assigned to ${record.borrower}. ` +
+            `Current status: ${record.status}.`;
+    }
+
+    function setRequired(fields, required) {
+        fields.forEach(function (field) { field.required = required; });
+    }
+
+    function updateConditionalForm() {
+        const status = elements.transactionStatus.value;
+        const borrowing = status === "Borrowed";
+        elements.borrowFields.hidden = !borrowing;
+        elements.statusDetailFields.hidden = borrowing;
+        setRequired([
+            elements.borrowerName, elements.borrowDepartment, elements.borrowItemType,
+            elements.borrowItemId, elements.borrowQuantity, elements.borrowedAt,
+            elements.expectedReturnDate, elements.borrowPurpose, elements.borrowDestination
+        ], borrowing);
+        setRequired([
+            elements.statusTransaction, elements.statusEffectiveAt, elements.statusQuantity,
+            elements.statusReportedBy, elements.statusCondition, elements.statusLocation,
+            elements.statusRemarks
+        ], !borrowing);
+
+        const labels = {
+            Available: ["Availability Date and Time", "Confirmed By", "Current Location", "Availability Details"],
+            Returned: ["Return Date and Time", "Received By", "Return Location", "Return Details or Remarks"],
+            Missing: ["Incident Date and Time", "Reported By", "Last Known Location", "Missing Item Details or Remarks"],
+            Damaged: ["Damage Date and Time", "Reported By", "Current Location", "Damage Description or Remarks"],
+            "For Repair": ["Repair Status Date and Time", "Reported By", "Repair Location / Provider", "Repair Details or Remarks"]
+        }[status];
+        if (labels) {
+            elements.statusEffectiveLabel.textContent = labels[0];
+            elements.statusReportedByLabel.textContent = labels[1];
+            elements.statusLocationLabel.textContent = labels[2];
+            elements.statusRemarksLabel.textContent = labels[3];
+        }
+        updateStatusSummary();
+    }
+
+    function resetModalDefaults() {
+        elements.statusForm.reset();
+        elements.formMessage.textContent = "";
+        const now = new Date();
+        const due = new Date();
+        due.setDate(due.getDate() + 7);
+        elements.borrowerName.value = displayName;
+        elements.borrowDepartment.value = currentUser.role === "admin" ? "Administration" : "Staff";
+        elements.borrowedAt.value = localDateTime(now);
+        elements.expectedReturnDate.value = localDate(due);
+        elements.expectedReturnDate.min = localDate(now);
+        elements.statusEffectiveAt.value = localDateTime(now);
+        elements.statusReportedBy.value = displayName;
+        elements.transactionStatus.value = "Borrowed";
+        populateBorrowItems("");
+        populateTransactionOptions("");
+        updateConditionalForm();
+    }
+
+    function openModal(options) {
+        resetModalDefaults();
+        const config = options || {};
+        if (config.status && statuses.includes(config.status)) {
+            elements.transactionStatus.value = config.status;
+        }
+        if (config.itemType && itemTypes.includes(config.itemType)) {
+            elements.borrowItemType.value = config.itemType;
+            populateBorrowItems(config.itemId || "");
+        }
+        if (config.transactionId) populateTransactionOptions(config.transactionId);
+        updateConditionalForm();
+        elements.statusModal.classList.add("show");
+        elements.statusModal.setAttribute("aria-hidden", "false");
+        elements.transactionStatus.focus();
+    }
+
+    function closeModal() {
+        elements.statusModal.classList.remove("show");
+        elements.statusModal.setAttribute("aria-hidden", "true");
+        elements.statusForm.reset();
+        elements.formMessage.textContent = "";
+    }
+
+    async function submitBorrowed() {
+        const item = selectedBorrowItem();
+        const quantity = Number(elements.borrowQuantity.value);
+        const borrowed = new Date(elements.borrowedAt.value);
+        const due = new Date(`${elements.expectedReturnDate.value}T23:59:59`);
+        if (!item) throw new Error("The selected item is no longer available.");
+        if (!Number.isInteger(quantity) || quantity < 1 || quantity > item.quantity) {
+            throw new Error(`Quantity must be between 1 and ${item.quantity}.`);
+        }
+        if (item.itemType === "Mobility Asset" && quantity !== 1) {
+            throw new Error("Only one mobility asset can be borrowed per record.");
+        }
+        if (Number.isNaN(borrowed.getTime()) || Number.isNaN(due.getTime()) || due < borrowed) {
+            throw new Error("The due date cannot be earlier than the borrow date.");
+        }
+        return window.medtrackData.borrowItem({
+            itemType: item.itemType,
+            itemId: item.id,
+            quantity: quantity,
+            borrower: text(elements.borrowerName.value),
+            department: text(elements.borrowDepartment.value),
+            borrowedAt: borrowed.toISOString(),
+            dueDate: elements.expectedReturnDate.value,
+            purpose: text(elements.borrowPurpose.value),
+            assignedPersonnel: text(elements.assignedPersonnel.value),
+            destination: text(elements.borrowDestination.value),
+            remarks: text(elements.borrowRemarks.value)
         });
+    }
 
-        if (!transaction) {
-            statusRecordSummary.textContent =
-                "Select a borrowing record to view its details.";
-            transactionStatus.value = "Borrowed";
-            return;
+    async function submitStatusChange(status) {
+        const record = selectedTransaction();
+        if (!record) throw new Error("Select an active borrowing record.");
+        const quantity = Number(elements.statusQuantity.value);
+        if (!Number.isInteger(quantity) || quantity < 1 || quantity > Number(record.quantity || 1)) {
+            throw new Error(`Quantity must be between 1 and ${record.quantity || 1}.`);
         }
-
-        transactionStatus.value = normalizeStatus(transaction.status);
-        statusRecordSummary.textContent =
-            `${transaction.itemName} (${transaction.itemType}) was ` +
-            `borrowed by ${transaction.borrower}. Current status: ` +
-            `${normalizeStatus(transaction.status)}.`;
+        return window.medtrackData.updateBorrowStatus(record.id, status, {
+            effectiveAt: new Date(elements.statusEffectiveAt.value).toISOString(),
+            quantity: quantity,
+            reportedBy: text(elements.statusReportedBy.value),
+            condition: elements.statusCondition.value,
+            location: text(elements.statusLocation.value),
+            remarks: text(elements.statusRemarks.value)
+        });
     }
 
-    function openStatusModal(transactionId) {
-        statusForm.reset();
-        formMessage.textContent = "";
-        populateTransactionOptions(transactionId || "");
-        statusModal.classList.add("show");
-        statusTransaction.focus();
-    }
-
-    function closeStatusModal() {
-        statusModal.classList.remove("show");
-        statusForm.reset();
-        formMessage.textContent = "";
-        statusRecordSummary.textContent =
-            "Select a borrowing record to view its details.";
-    }
-
-    statusForm.addEventListener("submit", async function (event) {
+    elements.statusForm.addEventListener("submit", async function (event) {
         event.preventDefault();
-
-        const transactionId = normalizeText(statusTransaction.value);
-        const newStatus = normalizeText(transactionStatus.value);
-
-        if (!transactionId || !allowedStatuses.includes(newStatus)) {
-            formMessage.textContent =
-                "Select a borrowing record and a valid status.";
+        elements.formMessage.textContent = "";
+        if (!elements.statusForm.checkValidity()) {
+            elements.statusForm.reportValidity();
+            elements.formMessage.textContent = "Complete all required status information.";
             return;
         }
-
-        if (
-            !window.medtrackData ||
-            typeof window.medtrackData.updateBorrowStatus !== "function"
-        ) {
-            formMessage.textContent =
-                "Status updates are unavailable. Apply the latest " +
-                "Supabase migration and refresh the page.";
+        if (!window.medtrackData) {
+            elements.formMessage.textContent = "Secure status updates are unavailable.";
             return;
         }
-
-        saveStatusButton.disabled = true;
-        formMessage.textContent = "Updating status...";
-
+        saveButton.disabled = true;
+        elements.formMessage.textContent = "Saving status...";
         try {
-            await window.medtrackData.updateBorrowStatus(
-                transactionId,
-                newStatus
-            );
-
-            closeStatusModal();
-            renderTransactions();
+            const status = elements.transactionStatus.value;
+            if (status === "Borrowed") await submitBorrowed();
+            else await submitStatusChange(status);
+            closeModal();
+            await window.medtrackData.refresh();
+            renderStatus();
         } catch (error) {
-            console.error("Unable to update borrowing status:", error);
-            formMessage.textContent =
-                error.message ||
-                "Unable to update the borrowing status.";
+            console.error("Unable to save item status:", error);
+            elements.formMessage.textContent = error.message || "The status could not be saved.";
         } finally {
-            saveStatusButton.disabled = false;
+            saveButton.disabled = false;
         }
     });
 
-    transactionTableBody.addEventListener("click", function (event) {
-        const button = event.target.closest(
-            "button[data-action='status']"
-        );
-
-        if (button) {
-            openStatusModal(button.dataset.id);
-        }
+    elements.transactionTableBody.addEventListener("click", function (event) {
+        const button = event.target.closest("button[data-action='status']");
+        if (!button) return;
+        openModal({
+            status: button.dataset.transactionId ? "Returned" : "Borrowed",
+            transactionId: button.dataset.transactionId,
+            itemId: button.dataset.itemId,
+            itemType: button.dataset.itemType
+        });
     });
-
-    transactionSearch.addEventListener("input", renderTransactions);
-    itemTypeFilter.addEventListener("change", renderTransactions);
-    statusFilter.addEventListener("change", renderTransactions);
-    statusTransaction.addEventListener("change", updateStatusSummary);
-
-    openStatusModalButton.addEventListener("click", function () {
-        openStatusModal("");
+    elements.transactionStatus.addEventListener("change", updateConditionalForm);
+    elements.borrowItemType.addEventListener("change", function () { populateBorrowItems(""); });
+    elements.borrowItemId.addEventListener("change", updateBorrowItem);
+    elements.statusTransaction.addEventListener("change", updateStatusSummary);
+    elements.transactionSearch.addEventListener("input", renderStatus);
+    elements.itemTypeFilter.addEventListener("change", renderStatus);
+    elements.statusFilter.addEventListener("change", renderStatus);
+    elements.openStatusModal.addEventListener("click", function () { openModal(); });
+    elements.closeStatusModal.addEventListener("click", closeModal);
+    elements.cancelStatus.addEventListener("click", closeModal);
+    elements.statusModal.addEventListener("click", function (event) {
+        if (event.target === elements.statusModal) closeModal();
     });
-    closeStatusModalButton.addEventListener("click", closeStatusModal);
-    cancelStatusButton.addEventListener("click", closeStatusModal);
-
-    statusModal.addEventListener("click", function (event) {
-        if (event.target === statusModal) {
-            closeStatusModal();
-        }
-    });
-
     document.addEventListener("keydown", function (event) {
-        if (
-            event.key === "Escape" &&
-            statusModal.classList.contains("show")
-        ) {
-            closeStatusModal();
+        if (event.key === "Escape" && elements.statusModal.classList.contains("show")) closeModal();
+    });
+    elements.notificationButton.addEventListener("click", function () {
+        const count = getStatusRecords().filter(function (record) {
+            return record.recordKind !== "history" &&
+                ["Missing", "Damaged", "For Repair"].includes(record.status);
+        }).length;
+        window.alert(count ? `${count} items currently need attention.` : "No items currently need attention.");
+    });
+    elements.logoutButton.addEventListener("click", async function () {
+        if (window.confirm("Are you sure you want to log out?")) {
+            await window.medtrackAuth.signOutAndRedirect();
         }
     });
-
-    notificationButton.addEventListener("click", function () {
-        const needsAttention = getTransactions().filter(
-            function (transaction) {
-                return ["Missing", "Damaged", "For Repair"].includes(
-                    transaction.status
-                );
-            }
-        ).length;
-
-        window.alert(
-            needsAttention === 0
-                ? "No borrowing records currently need attention."
-                : `${needsAttention} borrowing ${
-                    needsAttention === 1 ? "record needs" : "records need"
-                } attention.`
-        );
+    ["medtrack:data-ready", "medtrack:inventory-changed"].forEach(function (name) {
+        window.addEventListener(name, renderStatus);
     });
+    window.addEventListener("storage", renderStatus);
+    window.addEventListener("pageshow", renderStatus);
 
-    window.addEventListener("storage", function (event) {
-        if (event.key === "medtrackBorrowTransactions") {
-            renderTransactions();
-        }
-    });
-    window.addEventListener("medtrack:data-ready", renderTransactions);
-    window.addEventListener("pageshow", renderTransactions);
-    window.addEventListener("focus", renderTransactions);
-
-    logoutButton.addEventListener("click", async function () {
-        if (!window.confirm("Are you sure you want to log out?")) {
-            return;
-        }
-
-        await window.medtrackAuth.signOutAndRedirect();
-    });
-
-    renderTransactions();
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("action") === "borrow") {
+        openModal({
+            status: "Borrowed",
+            itemType: query.get("type"),
+            itemId: query.get("item")
+        });
+    }
+    renderStatus();
 });

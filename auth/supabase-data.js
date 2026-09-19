@@ -187,6 +187,9 @@
                     assigned_personnel: nullable(item.assignedPersonnel),
                     destination: nullable(item.destination),
                     remarks: nullable(item.remarks),
+                    status_details: item.statusDetails || {},
+                    status_remarks: nullable(item.statusRemarks),
+                    status_updated_at: nullable(item.statusUpdatedAt),
                     inventory_item_id: nullable(item.inventoryItemId),
                     inventory_adjusted: Boolean(item.inventoryAdjusted),
                     inventory_returned: Boolean(item.inventoryReturned),
@@ -211,6 +214,9 @@
                     assignedPersonnel: item.assigned_personnel || "",
                     destination: item.destination || "",
                     remarks: item.remarks || "",
+                    statusDetails: item.status_details || {},
+                    statusRemarks: item.status_remarks || "",
+                    statusUpdatedAt: item.status_updated_at || "",
                     inventoryItemId: item.inventory_item_id || "",
                     inventoryAdjusted: item.inventory_adjusted,
                     inventoryReturned: item.inventory_returned,
@@ -886,9 +892,9 @@
                     number(record.quantity) - number(details.quantity, 1)
                 );
                 record.quantity = remaining;
-                record.status = remaining > 0 ? "Available" : "Unavailable";
+                record.status = "Borrowed";
             } else {
-                record.status = "Deployed";
+                record.status = "Borrowed";
             }
             return record;
         });
@@ -919,7 +925,7 @@
         window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
     }
 
-    function optimisticallyUpdateBorrowStatus(transactionId, status) {
+    function optimisticallyUpdateBorrowStatus(transactionId, status, details) {
         const transactions = readLocalCollection("medtrackBorrowTransactions");
         const index = transactions.findIndex(function (record) {
             return text(record.id) === text(transactionId);
@@ -938,7 +944,7 @@
             storageKey,
             transaction.inventoryItemId,
             function (record) {
-                if (status === "Returned" && !wasReturned) {
+                if (["Available", "Returned"].includes(status) && !wasReturned) {
                     if (isEquipment) {
                         record.quantity = number(record.quantity) +
                             number(transaction.quantity, 1);
@@ -946,34 +952,35 @@
                     } else {
                         record.status = "Available";
                     }
-                } else if (status !== "Returned" && wasReturned) {
+                } else if (!["Available", "Returned"].includes(status) && wasReturned) {
                     if (isEquipment) {
                         record.quantity = Math.max(
                             0,
                             number(record.quantity) - number(transaction.quantity, 1)
                         );
-                        record.status = record.quantity > 0
-                            ? "Available"
-                            : "Unavailable";
+                        record.status = status;
                     } else {
-                        record.status = status === "Borrowed"
-                            ? "Deployed"
-                            : "For Repair";
+                        record.status = status;
                     }
-                } else if (!isEquipment && status !== "Returned") {
-                    record.status = status === "Borrowed"
-                        ? "Deployed"
-                        : "For Repair";
+                } else if (!["Available", "Returned"].includes(status)) {
+                    record.status = status;
                 }
+                if (details && details.condition) record.condition = details.condition;
+                if (details && details.location) record.location = details.location;
                 return record;
             }
         );
 
-        transaction.status = status;
-        transaction.returnDate = status === "Returned"
+        transaction.status = ["Available", "Returned"].includes(status)
+            ? "Returned" : status;
+        transaction.returnDate = ["Available", "Returned"].includes(status)
             ? (transaction.returnDate || new Date().toISOString().slice(0, 10))
             : "";
-        transaction.inventoryReturned = status === "Returned";
+        transaction.inventoryReturned = ["Available", "Returned"].includes(status);
+        transaction.statusDetails = details || {};
+        transaction.statusRemarks = details && details.remarks || "";
+        transaction.statusUpdatedAt = details && details.effectiveAt ||
+            new Date().toISOString();
         transaction.pendingSync = true;
         transactions[index] = transaction;
         writeLocalCollection("medtrackBorrowTransactions", transactions, false);
@@ -1021,12 +1028,13 @@
         );
     }
 
-    async function updateBorrowStatus(transactionId, status) {
+    async function updateBorrowStatus(transactionId, status, details) {
         return runInventoryOperation(
             "medtrack_update_borrow_status",
             {
                 p_transaction_id: transactionId,
-                p_status: status
+                p_status: status,
+                p_details: details || {}
             },
             [
                 "medtrackBorrowTransactions",
@@ -1035,7 +1043,7 @@
             ],
             {
                 optimistic: function () {
-                    optimisticallyUpdateBorrowStatus(transactionId, status);
+                    optimisticallyUpdateBorrowStatus(transactionId, status, details);
                 }
             }
         );
@@ -1238,6 +1246,35 @@
         };
     }
 
+    async function loadAssetStatusHistory() {
+        const result = await client
+            .from("asset_status_history")
+            .select(
+                "id, item_type, inventory_item_id, transaction_id, " +
+                "previous_status, new_status, quantity, remarks, details, " +
+                "changed_by, changed_at"
+            )
+            .order("changed_at", { ascending: false })
+            .limit(5000);
+
+        if (result.error) throw new Error(result.error.message);
+        return (result.data || []).map(function (record) {
+            return {
+                id: record.id,
+                itemType: record.item_type,
+                inventoryItemId: record.inventory_item_id,
+                transactionId: record.transaction_id || "",
+                previousStatus: record.previous_status || "",
+                newStatus: record.new_status,
+                quantity: record.quantity,
+                remarks: record.remarks || "",
+                details: record.details || {},
+                changedBy: record.changed_by || "",
+                changedAt: record.changed_at
+            };
+        });
+    }
+
     async function executeQueuedOperation(operation) {
         if (operation.kind === "rpc") {
             const result = await client.rpc(
@@ -1363,6 +1400,7 @@
         loadSupplyTransactions: loadSupplyTransactions,
         loadInventoryTrends: loadInventoryTrends,
         loadInventoryDistribution: loadInventoryDistribution,
+        loadAssetStatusHistory: loadAssetStatusHistory,
         syncPending: syncPending,
         clearSensitiveCache: clearSensitiveCache
     };
@@ -1406,6 +1444,20 @@
                 table: "mobility_assets"
             },
             function () {
+                window.dispatchEvent(
+                    new CustomEvent("medtrack:inventory-changed")
+                );
+            }
+        )
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "borrow_transactions"
+            },
+            function () {
+                void refresh();
                 window.dispatchEvent(
                     new CustomEvent("medtrack:inventory-changed")
                 );

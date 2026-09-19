@@ -71,7 +71,7 @@
 
             <a href="borrow-return.html" class="nav-item">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i>
-                <span>Borrow and Return</span>
+                <span>Status</span>
             </a>
 
              <a href="available-items.html" class="nav-item" >
@@ -197,9 +197,9 @@
                 </div>
 
                 <div>
-                    <p>Maintenance</p>
+                    <p>Needs Attention</p>
                     <h3 id="maintenanceEquipment">0</h3>
-                    <small>Needs maintenance</small>
+                    <small>Missing, damaged, or for repair</small>
                 </div>
 
             </article>
@@ -211,9 +211,9 @@
                 </div>
 
                 <div>
-                    <p>In Use</p>
+                    <p>Borrowed</p>
                     <h3 id="inUseEquipment">0</h3>
-                    <small>Currently being used</small>
+                    <small>Currently borrowed</small>
                 </div>
 
             </article>
@@ -272,9 +272,11 @@
                 <select id="statusFilter">
                     <option value="all">All Status</option>
                     <option value="Available">Available</option>
-                    <option value="In Use">In Use</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Unavailable">Unavailable</option>
+                    <option value="Borrowed">Borrowed</option>
+                    <option value="Returned">Returned</option>
+                    <option value="Missing">Missing</option>
+                    <option value="Damaged">Damaged</option>
+                    <option value="For Repair">For Repair</option>
                 </select>
 
             </div>
@@ -428,9 +430,11 @@
                             Select status
                         </option>
                         <option value="Available">Available</option>
-                        <option value="In Use">In Use</option>
-                        <option value="Maintenance">Maintenance</option>
-                        <option value="Unavailable">Unavailable</option>
+                        <option value="Borrowed">Borrowed</option>
+                        <option value="Returned">Returned</option>
+                        <option value="Missing">Missing</option>
+                        <option value="Damaged">Damaged</option>
+                        <option value="For Repair">For Repair</option>
                     </select>
 
                 </div>

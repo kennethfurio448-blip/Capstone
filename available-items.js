@@ -678,7 +678,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        openBorrowModal(selectedItem);
+        const parameters = new URLSearchParams({
+            action: "borrow",
+            type: selectedItem.type,
+            item: selectedItem.id
+        });
+        window.location.href = `borrow-return.html?${parameters.toString()}`;
     });
 
     borrowForm.addEventListener("submit", async function (event) {

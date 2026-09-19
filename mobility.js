@@ -191,14 +191,20 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     function normalizeVehicleStatus(status) {
-        if (status === "Maintenance" || status === "Unavailable") {
+        if (["Maintenance", "Unavailable", "For Repair"].includes(status)) {
             return "For Repair";
+        }
+
+        if (["Assigned", "Deployed", "In Use"].includes(status)) {
+            return "Borrowed";
         }
 
         return [
             "Available",
-            "Assigned",
-            "Deployed",
+            "Borrowed",
+            "Returned",
+            "Missing",
+            "Damaged",
             "For Repair"
         ].includes(status)
             ? status
@@ -240,12 +246,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             return "status-available";
         }
 
-        if (status === "Deployed") {
+        if (status === "Borrowed") {
             return "status-deployed";
         }
 
-        if (status === "Assigned") {
-            return "status-assigned";
+        if (status === "Returned") {
+            return "status-available";
         }
 
         return "status-for-repair";
@@ -429,11 +435,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 availableCount++;
             }
 
-            if (vehicle.status === "Deployed") {
+            if (vehicle.status === "Borrowed") {
                 deployedCount++;
             }
 
-            if (vehicle.status === "For Repair") {
+            if (["Missing", "Damaged", "For Repair"].includes(vehicle.status)) {
                 forRepairCount++;
                 alertsCount++;
             }
@@ -760,7 +766,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const alerts = vehicles.filter(function (vehicle) {
             return (
-                vehicle.status === "For Repair" ||
+                ["Missing", "Damaged", "For Repair"].includes(
+                    vehicle.status
+                ) ||
                 isMaintenanceOverdue(vehicle.maintenanceDate)
             );
         });
@@ -773,6 +781,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         alert(
             `There are ${alerts.length} mobility assets requiring attention.`
         );
+    });
+
+    window.addEventListener("medtrack:data-ready", renderVehicles);
+    window.addEventListener("medtrack:inventory-changed", renderVehicles);
+    window.addEventListener("storage", function (event) {
+        if (event.key === "medtrackMobilityAssets") renderVehicles();
     });
 
 

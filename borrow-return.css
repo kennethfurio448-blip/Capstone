@@ -1110,8 +1110,30 @@ a {
 }
 
 #statusModal .modal {
-    max-width: 560px;
+    max-width: 760px;
     text-align: left;
+}
+
+.conditional-fields {
+    grid-column: 1 / -1;
+}
+
+.conditional-fields[hidden] {
+    display: none;
+}
+
+.conditional-fields .form-grid {
+    padding: 16px;
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.input-group small {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
 }
 
 .status-record-summary {

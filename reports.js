@@ -67,6 +67,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     let currentReportHeaders = [];
     let currentReportRows = [];
     let currentReportName = "medtrack-report";
+    let assetStatusHistory = [];
 
 
     const currentUser =
@@ -78,6 +79,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (window.medtrackData) {
         await window.medtrackData.refresh();
+        if (typeof window.medtrackData.loadAssetStatusHistory === "function") {
+            try {
+                assetStatusHistory =
+                    await window.medtrackData.loadAssetStatusHistory();
+            } catch (error) {
+                console.error("Unable to load asset status history:", error);
+            }
+        }
     }
 
     currentUserName.textContent =
@@ -385,45 +394,91 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         if (type === "borrowing") {
-            const records = getBorrowing()
-                .filter(function (transaction) {
-                    return isWithinDateRange(
-                        transaction.borrowDate
-                    );
+            const transactions = getBorrowing();
+            const inventory = getEquipment().map(function (item) {
+                return { ...item, itemType: "Medical Equipment" };
+            }).concat(getMobility().map(function (item) {
+                return { ...item, itemType: "Mobility Asset" };
+            }));
+            const itemName = function (event) {
+                const item = inventory.find(function (record) {
+                    return record.itemType === event.itemType &&
+                        record.id === event.inventoryItemId;
                 });
+                return item ? item.name : event.inventoryItemId;
+            };
+            const recordedTransactions = new Set(
+                assetStatusHistory.map(function (event) {
+                    return event.transactionId;
+                }).filter(Boolean)
+            );
+            const records = assetStatusHistory.filter(function (event) {
+                return isWithinDateRange(String(event.changedAt || "").slice(0, 10));
+            }).map(function (event) {
+                return {
+                    id: `STATUS-${event.id}`,
+                    itemType: event.itemType,
+                    itemName: itemName(event),
+                    transactionId: event.transactionId,
+                    previousStatus: event.previousStatus || "\u2014",
+                    newStatus: event.newStatus,
+                    quantity: event.quantity,
+                    changedAt: event.changedAt,
+                    reportedBy: event.details.reportedBy ||
+                        event.details.borrower || "\u2014",
+                    remarks: event.remarks
+                };
+            }).concat(transactions.filter(function (transaction) {
+                return !recordedTransactions.has(transaction.id) &&
+                    isWithinDateRange(transaction.borrowDate);
+            }).map(function (transaction) {
+                return {
+                    id: transaction.id,
+                    itemType: transaction.itemType,
+                    itemName: transaction.itemName,
+                    transactionId: transaction.id,
+                    previousStatus: "\u2014",
+                    newStatus: getBorrowingStatus(transaction),
+                    quantity: transaction.quantity,
+                    changedAt: transaction.statusUpdatedAt ||
+                        transaction.borrowedAt || transaction.borrowDate,
+                    reportedBy: transaction.borrower,
+                    remarks: transaction.statusRemarks || transaction.remarks || ""
+                };
+            }));
 
             return {
-                title: "Borrow and Return Report",
+                title: "Status History Report",
                 description:
-                    "Borrowing transactions and return status.",
-                filename: "borrow-return-report",
+                    "Medical equipment and mobility status history.",
+                filename: "status-history-report",
                 headers: [
-                    "Transaction ID",
-                    "Borrower",
-                    "Department",
+                    "Status Record",
                     "Item Type",
                     "Item Name",
+                    "Transaction ID",
+                    "Previous Status",
+                    "New Status",
                     "Quantity",
-                    "Borrow Date",
-                    "Due Date",
-                    "Return Date",
-                    "Status"
+                    "Changed At",
+                    "Reported / Received By",
+                    "Details or Remarks"
                 ],
-                rows: records.map(function (transaction) {
+                rows: records.map(function (record) {
                     return [
-                        transaction.id,
-                        transaction.borrower,
-                        transaction.department,
-                        transaction.itemType,
-                        transaction.itemName,
-                        transaction.quantity,
-                        formatDate(transaction.borrowDate),
-                        formatDate(transaction.dueDate),
-                        formatDate(transaction.returnDate),
-                        getBorrowingStatus(transaction)
+                        record.id,
+                        record.itemType,
+                        record.itemName,
+                        record.transactionId,
+                        record.previousStatus,
+                        record.newStatus,
+                        record.quantity,
+                        formatDate(record.changedAt),
+                        record.reportedBy,
+                        record.remarks
                     ];
                 }),
-                statusColumn: 9
+                statusColumn: 5
             };
         }
 
@@ -695,6 +750,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     reportType.addEventListener("change", function () {
         reportMessage.textContent = "";
+    });
+
+    window.addEventListener("medtrack:data-ready", async function () {
+        updateSummaryCards();
+        if (window.medtrackData &&
+            typeof window.medtrackData.loadAssetStatusHistory === "function") {
+            try {
+                assetStatusHistory =
+                    await window.medtrackData.loadAssetStatusHistory();
+            } catch (error) {
+                console.error("Unable to refresh asset status history:", error);
+            }
+        }
+        generateReport();
     });
 
 
