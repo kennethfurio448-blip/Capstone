@@ -109,6 +109,14 @@
     ensureMetadata();
     document.addEventListener("DOMContentLoaded", createStatusBar);
 
+    window.setTimeout(function () {
+        if (!document.body || !document.body.hidden) return;
+
+        const loginUrl = new URL("/login/login.html", window.location.origin);
+        loginUrl.searchParams.set("reason", "auth-unavailable");
+        window.location.replace(loginUrl.href);
+    }, 20 * 1000);
+
     if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
             navigator.serviceWorker.register("/service-worker.js")

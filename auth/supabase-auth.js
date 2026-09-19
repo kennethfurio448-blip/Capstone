@@ -10,6 +10,8 @@
     const ACTIVITY_WRITE_INTERVAL_MS = 15 * 1000;
     const SESSION_ACTIVITY_KEY = "medtrackLastActivityAt";
     const OFFLINE_PROFILE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+    const AUTH_REQUEST_TIMEOUT_MS = 10 * 1000;
+    const OFFLINE_STORE_TIMEOUT_MS = 3 * 1000;
     const SENSITIVE_CACHE_KEYS = Object.freeze([
         "medtrackMedicalSupplies",
         "medtrackMedicalEquipment",
@@ -74,12 +76,27 @@
         };
     }
 
+    function withTimeout(promise, timeoutMs, message) {
+        return Promise.race([
+            promise,
+            new Promise(function (_, reject) {
+                window.setTimeout(function () {
+                    reject(new Error(message));
+                }, timeoutMs);
+            })
+        ]);
+    }
+
     async function loadProfile(user) {
-        const result = await client
-            .from("profiles")
-            .select("full_name, username, role, status")
-            .eq("id", user.id)
-            .single();
+        const result = await withTimeout(
+            client
+                .from("profiles")
+                .select("full_name, username, role, status")
+                .eq("id", user.id)
+                .single(),
+            AUTH_REQUEST_TIMEOUT_MS,
+            "Profile lookup timed out."
+        );
 
         if (result.error) {
             console.error("Supabase profile lookup failed:", result.error);
@@ -91,14 +108,16 @@
         const profile = normalizeProfile(user, result.data);
 
         if (offlineStore) {
-            await offlineStore.saveProfile(profile);
+            offlineStore.saveProfile(profile).catch(function (error) {
+                console.error("Unable to cache the MedTrack profile:", error);
+            });
         }
 
         return profile;
     }
 
     function isNetworkError(error) {
-        return !navigator.onLine || /fetch|network|load failed|offline/i.test(
+        return !navigator.onLine || /fetch|network|load failed|offline|timed out/i.test(
             String(error && error.message || error || "")
         );
     }
@@ -106,14 +125,22 @@
     async function loadCachedProfile() {
         if (!offlineStore) return null;
 
-        const result = await client.auth.getSession();
+        const result = await withTimeout(
+            client.auth.getSession(),
+            OFFLINE_STORE_TIMEOUT_MS,
+            "Local session lookup timed out."
+        );
         const session = result.data && result.data.session;
         const user = session && session.user;
         if (result.error || !user) return null;
 
-        return offlineStore.loadProfile(
-            user.id,
-            OFFLINE_PROFILE_MAX_AGE_MS
+        return withTimeout(
+            offlineStore.loadProfile(
+                user.id,
+                OFFLINE_PROFILE_MAX_AGE_MS
+            ),
+            OFFLINE_STORE_TIMEOUT_MS,
+            "Offline profile lookup timed out."
         );
     }
 
@@ -122,7 +149,11 @@
             return loadCachedProfile();
         }
 
-        const result = await client.auth.getUser();
+        const result = await withTimeout(
+            client.auth.getUser(),
+            AUTH_REQUEST_TIMEOUT_MS,
+            "Authentication timed out."
+        );
         const user = result.data && result.data.user;
 
         if (result.error || !user) {

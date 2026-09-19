@@ -272,7 +272,9 @@ try {
   if (
     !authGuard.includes("SENSITIVE_CACHE_KEYS") ||
     !authGuard.includes("function clearSensitiveBrowserData()") ||
-    !authGuard.includes('if (event === "SIGNED_OUT")')
+    !authGuard.includes('if (event === "SIGNED_OUT")') ||
+    !authGuard.includes("AUTH_REQUEST_TIMEOUT_MS") ||
+    !authGuard.includes("function withTimeout(")
   ) {
     failures.push("supabase-auth: sensitive browser data cleanup is incomplete");
   }
