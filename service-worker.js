@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v2";
+const CACHE_NAME = "medtrack-shell-v3";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -16,7 +16,7 @@ const APP_SHELL = [
     "/auth/supabase-data.js",
     "/login/login.html",
     "/login/login.css",
-    "/login/login.js",
+    "/login/login-app.js",
     "/admin-dashboard.html",
     "/admin-dashboard.css",
     "/admin-dashboard.js",
@@ -130,6 +130,15 @@ self.addEventListener("fetch", function (event) {
     if (url.origin !== self.location.origin) return;
 
     if (request.mode === "navigate") {
+        event.respondWith(networkFirst(request));
+        return;
+    }
+
+    if (
+        url.pathname.startsWith("/auth/") ||
+        url.pathname.startsWith("/login/") ||
+        url.pathname === "/pwa.js"
+    ) {
         event.respondWith(networkFirst(request));
         return;
     }

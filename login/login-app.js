@@ -1,3 +1,5 @@
+"use strict";
+
 const productionLoginUrl = "https://www.medtrackmanagement.com/login/login.html";
 const localPreviewHosts = ["127.0.0.1", "localhost"];
 const isUnsupportedLocalPreview =
@@ -31,6 +33,43 @@ const resetPasswordButton = document.getElementById("resetPasswordButton");
 
 let recoveryChallengeId = "";
 let recoveryCooldownTimer = null;
+let authenticationReady = null;
+
+function getAuthenticationServices() {
+    if (authenticationReady) return authenticationReady;
+
+    authenticationReady = new Promise(function (resolve, reject) {
+        const startedAt = Date.now();
+
+        function check() {
+            if (
+                window.medtrackAuth &&
+                typeof window.medtrackAuth.signIn === "function" &&
+                window.medtrackSupabase
+            ) {
+                resolve({
+                    auth: window.medtrackAuth,
+                    client: window.medtrackSupabase
+                });
+                return;
+            }
+
+            if (Date.now() - startedAt >= 8 * 1000) {
+                reject(new Error(
+                    "The secure login service did not finish loading. " +
+                    "Check your connection, refresh the page, and try again."
+                ));
+                return;
+            }
+
+            window.setTimeout(check, 100);
+        }
+
+        check();
+    });
+
+    return authenticationReady;
+}
 
 function showMessage(message, type) {
     formMessage.textContent = message;
@@ -73,12 +112,23 @@ loginForm.addEventListener("submit", async function (event) {
     submitButton.disabled = true;
     showMessage("Signing in...", "success");
     try {
-        const profile = await window.medtrackAuth.signIn(identifier, password, rememberMe);
+        const services = await getAuthenticationServices();
+        const profile = await services.auth.signIn(
+            identifier,
+            password,
+            rememberMe
+        );
         passwordInput.value = "";
         showMessage("Login successful. Redirecting...", "success");
-        window.medtrackAuth.redirectToDashboard(profile);
+        services.auth.redirectToDashboard(profile);
     } catch (error) {
-        showMessage(error.message || "Unable to sign in.", "error");
+        showMessage(
+            error instanceof TypeError
+                ? "The secure login service is temporarily unavailable. " +
+                    "Refresh the page and try again."
+                : error.message || "Unable to sign in.",
+            "error"
+        );
         submitButton.disabled = false;
     }
 });
@@ -97,7 +147,8 @@ async function functionErrorMessage(error) {
 }
 
 async function invokeOtp(action, values) {
-    const result = await window.medtrackSupabase.functions.invoke("otp-auth", {
+    const services = await getAuthenticationServices();
+    const result = await services.client.functions.invoke("otp-auth", {
         body: { action: action, ...(values || {}) }
     });
     if (result.error) throw new Error(await functionErrorMessage(result.error));
@@ -193,7 +244,8 @@ recoveryVerifyForm.addEventListener("submit", async function (event) {
         recoveryVerifyMessage.className = "form-message error";
         return;
     }
-    const passwordError = window.medtrackAuth.passwordPolicyError(password);
+    const services = await getAuthenticationServices();
+    const passwordError = services.auth.passwordPolicyError(password);
     if (passwordError) {
         recoveryVerifyMessage.textContent = passwordError;
         recoveryVerifyMessage.className = "form-message error";
@@ -250,4 +302,11 @@ document.addEventListener("keydown", function (event) {
     if (event.key === "Escape" && recoveryModal.classList.contains("show")) closeRecovery();
 });
 
-window.medtrackAuth.redirectAuthenticatedUser();
+getAuthenticationServices()
+    .then(function (services) {
+        return services.auth.redirectAuthenticatedUser();
+    })
+    .catch(function (error) {
+        console.error("MedTrack authentication startup failed:", error);
+        showMessage(error.message, "error");
+    });
