@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v7-page-favicons";
+const CACHE_NAME = "medtrack-shell-v9-security-hardening";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -136,6 +136,11 @@ self.addEventListener("fetch", function (event) {
     const url = new URL(request.url);
     if (url.origin === self.location.origin && url.pathname === SUPABASE_LIBRARY) {
         event.respondWith(cacheFirst(request));
+        return;
+    }
+
+    if (url.origin === self.location.origin && url.pathname.startsWith("/api/")) {
+        event.respondWith(fetch(request));
         return;
     }
 

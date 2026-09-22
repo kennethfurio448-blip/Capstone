@@ -17,6 +17,10 @@
     const originalRemoveItem =
         Storage.prototype.removeItem;
 
+    const sessionOnlyCollections = new Set([
+        "medtrackEmergencyRequests"
+    ]);
+
     let applyingCloudData = false;
     let refreshInProgress = null;
     let syncInProgress = null;
@@ -24,6 +28,12 @@
 
     const uploadTimers = new Map();
     const collectionSnapshots = new Map();
+
+    function storageForCollection(storageKey) {
+        return sessionOnlyCollections.has(storageKey)
+            ? sessionStorage
+            : localStorage;
+    }
 
     function createOperationId(prefix) {
         const suffix = window.crypto && crypto.randomUUID
@@ -227,6 +237,12 @@
 
         medtrackEmergencyRequests: {
             table: "emergency_requests",
+            select:
+                "id, request_date, request_time, type, location, " +
+                "contact_person, contact_number, assigned_team, status, " +
+                "resources, description, inventory_usage, " +
+                "inventory_deducted, inventory_deducted_at, completed_at, " +
+                "updated_at",
 
             toCloud: function (item) {
                 return {
@@ -234,7 +250,6 @@
                     request_date: nullable(item.date),
                     request_time: text(item.time, "00:00"),
                     type: text(item.type, "Emergency"),
-                    priority: text(item.priority, "Medium"),
                     location: text(item.location, "Not specified"),
                     contact_person: text(
                         item.contactPerson,
@@ -264,7 +279,6 @@
                     date: item.request_date,
                     time: item.request_time,
                     type: item.type,
-                    priority: item.priority,
                     location: item.location,
                     contactPerson: item.contact_person,
                     contactNumber: item.contact_number,
@@ -283,10 +297,24 @@
         }
     };
 
+    sessionOnlyCollections.forEach(function (storageKey) {
+        const legacyValue = localStorage.getItem(storageKey);
+        if (legacyValue && !sessionStorage.getItem(storageKey)) {
+            originalSetItem.call(sessionStorage, storageKey, legacyValue);
+        }
+        originalRemoveItem.call(localStorage, storageKey);
+
+        if (offlineStore && typeof offlineStore.removeSnapshot === "function") {
+            offlineStore.removeSnapshot(storageKey).catch(function (error) {
+                console.error("Unable to remove a sensitive offline snapshot:", error);
+            });
+        }
+    });
+
     function readLocalCollection(storageKey) {
         try {
             const records = JSON.parse(
-                localStorage.getItem(storageKey) || "[]"
+                storageForCollection(storageKey).getItem(storageKey) || "[]"
             );
 
             return Array.isArray(records)
@@ -327,7 +355,7 @@
 
         try {
             originalSetItem.call(
-                localStorage,
+                storageForCollection(storageKey),
                 storageKey,
                 JSON.stringify(records)
             );
@@ -336,7 +364,7 @@
             applyingCloudData = false;
         }
 
-        if (offlineStore) {
+        if (offlineStore && !sessionOnlyCollections.has(storageKey)) {
             getSessionUserId().then(function (userId) {
                 if (userId) {
                     return offlineStore.saveSnapshot(
@@ -357,7 +385,7 @@
 
         const result = await client
             .from(collection.table)
-            .select("*")
+            .select(collection.select || "*")
             .order("id", { ascending: true });
 
         if (result.error) {
@@ -685,7 +713,7 @@
         originalSetItem.call(this, key, value);
 
         if (
-            this === localStorage &&
+            this === storageForCollection(key) &&
             !applyingCloudData &&
             collections[key]
         ) {
@@ -697,7 +725,7 @@
         originalRemoveItem.call(this, key);
 
         if (
-            this === localStorage &&
+            this === storageForCollection(key) &&
             !applyingCloudData &&
             collections[key]
         ) {
@@ -712,6 +740,7 @@
 
         let restored = false;
         for (const storageKey of Object.keys(collections)) {
+            if (sessionOnlyCollections.has(storageKey)) continue;
             const records = await offlineStore.loadSnapshot(storageKey, userId);
             if (Array.isArray(records)) {
                 writeLocalCollection(storageKey, records);

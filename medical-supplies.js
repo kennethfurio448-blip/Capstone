@@ -533,7 +533,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function getEmergencyResponses() {
         try {
             const records = JSON.parse(
-                localStorage.getItem(
+                sessionStorage.getItem(
                     "medtrackEmergencyRequests"
                 ) || "[]"
             );

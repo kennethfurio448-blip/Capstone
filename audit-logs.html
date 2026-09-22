@@ -214,6 +214,14 @@
 
         </section>
 
+        <div class="security-alert" id="securityAlert" role="alert" hidden>
+            <i class="fa-solid fa-shield-halved"></i>
+            <div>
+                <strong>Repeated failed login activity detected</strong>
+                <p id="securityAlertText"></p>
+            </div>
+        </div>
+
         <section class="logs-card">
 
             <div class="logs-header">
@@ -251,7 +259,10 @@
                 <select id="actionFilter">
                     <option value="all">All Actions</option>
                     <option value="Login">Login</option>
+                    <option value="Login Failed">Login Failed</option>
                     <option value="Logout">Logout</option>
+                    <option value="MFA Enrolled">MFA Enrolled</option>
+                    <option value="MFA Verified">MFA Verified</option>
                     <option value="Created">Created</option>
                     <option value="Updated">Updated</option>
                     <option value="Deleted">Deleted</option>

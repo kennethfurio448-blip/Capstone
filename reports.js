@@ -96,7 +96,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     function getStoredArray(key) {
-        const value = localStorage.getItem(key);
+        const storage = key === "medtrackEmergencyRequests"
+            ? sessionStorage
+            : localStorage;
+        const value = storage.getItem(key);
 
         if (!value) {
             return [];
@@ -491,7 +494,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             return {
                 title: "Emergency Response Report",
                 description:
-                    "Emergency requests, priorities and response status.",
+                    "Emergency requests and response status.",
                 filename: "emergency-response-report",
                 headers: [
                     "Request ID",
@@ -501,7 +504,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     "Location",
                     "Contact Person",
                     "Assigned Team",
-                    "Priority",
                     "Status"
                 ],
                 rows: records.map(function (request) {
@@ -513,11 +515,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                         request.location,
                         request.contactPerson,
                         request.assignedTeam,
-                        request.priority,
                         request.status
                     ];
                 }),
-                statusColumn: 8
+                statusColumn: 7
             };
         }
 

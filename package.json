@@ -4,7 +4,8 @@
   "main": "admin-dashboard.js",
   "scripts": {
     "check": "node scripts/check-project.mjs",
-    "test": "npm run check"
+    "test": "npm run check",
+    "security:check": "npm audit --audit-level=high && npm test"
   },
   "repository": {
     "type": "git",

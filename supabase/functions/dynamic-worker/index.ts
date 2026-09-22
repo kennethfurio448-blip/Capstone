@@ -157,6 +157,16 @@ export default {
         );
       }
 
+      const assuranceLevel =
+        context.jwtClaims?.aal ?? context.userClaims?.aal;
+
+      if (assuranceLevel !== "aal2") {
+        return errorResponse(
+          "Administrator multi-factor authentication is required.",
+          403,
+        );
+      }
+
       const { data: callerProfile, error: callerError } =
         await supabaseAdmin
           .from("profiles")

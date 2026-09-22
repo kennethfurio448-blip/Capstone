@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdnjs.cloudflare.com; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob:; connect-src 'self' https://agztgijxasjypmrndvyj.supabase.co wss://agztgijxasjypmrndvyj.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' https://cdnjs.cloudflare.com; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob:; connect-src 'self' https://agztgijxasjypmrndvyj.supabase.co wss://agztgijxasjypmrndvyj.supabase.co https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Login | MedTrack</title>
@@ -91,6 +91,8 @@
                     </a>
                 </div>
 
+                <div id="turnstileContainer" class="turnstile-container" hidden></div>
+
                 <p class="form-message" id="formMessage"></p>
 
                 <button type="submit" class="login-button">
@@ -98,6 +100,39 @@
                     Sign In
                 </button>
 
+            </form>
+
+            <form id="mfaForm" class="mfa-form" hidden>
+                <div class="input-group">
+                    <label for="mfaCode">Authenticator Code</label>
+
+                    <div class="input-box">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <input
+                            type="text"
+                            id="mfaCode"
+                            inputmode="numeric"
+                            autocomplete="one-time-code"
+                            maxlength="6"
+                            pattern="[0-9]{6}"
+                            placeholder="000000"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <p class="form-message" id="mfaMessage">
+                    Enter the code from your authenticator app.
+                </p>
+
+                <button type="submit" class="login-button" id="verifyMfaButton">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    Verify &amp; Continue
+                </button>
+
+                <button type="button" class="mfa-cancel" id="cancelMfa">
+                    Cancel and Sign Out
+                </button>
             </form>
 
             <p class="create-account-link">
