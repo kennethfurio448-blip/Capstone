@@ -12,42 +12,6 @@ function requestOriginAllowed(request) {
     }
 }
 
-async function verifyTurnstile(token, clientIp) {
-    const secret = String(process.env.TURNSTILE_SECRET_KEY || "").trim();
-    if (!secret) return true;
-    if (!token || String(token).length > 2048) return false;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(function () {
-        controller.abort();
-    }, 5000);
-
-    try {
-        const verification = await fetch(
-            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: new URLSearchParams({
-                    secret: secret,
-                    response: String(token),
-                    remoteip: clientIp
-                }),
-                signal: controller.signal
-            }
-        );
-        const result = await verification.json();
-        return Boolean(result.success) && (!result.action || result.action === "login");
-    } catch (error) {
-        console.error("Turnstile validation failed:", error);
-        return false;
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
 module.exports = async function handler(request, response) {
     response.setHeader("Cache-Control", "no-store, max-age=0");
     response.setHeader("Referrer-Policy", "no-referrer");
@@ -82,12 +46,6 @@ module.exports = async function handler(request, response) {
     const region = String(request.headers["x-vercel-ip-country-region"] || "").trim();
     const city = String(request.headers["x-vercel-ip-city"] || "").trim();
     const approximateLocation = [city, region, country].filter(Boolean).join(", ") || "Unavailable";
-
-    if (!await verifyTurnstile(body.turnstileToken, clientIp)) {
-        return response.status(403).json({
-            error: "Human verification failed. Refresh the challenge and try again."
-        });
-    }
 
     try {
         const upstream = await fetch(`${SUPABASE_URL}/functions/v1/login-auth`, {

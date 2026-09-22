@@ -51,6 +51,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const emergencyTypeFilter =
         document.getElementById("emergencyTypeFilter");
 
+    const priorityFilter =
+        document.getElementById("priorityFilter");
+
     const statusFilter =
         document.getElementById("statusFilter");
 
@@ -83,6 +86,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const emergencyType =
         document.getElementById("emergencyType");
+
+    const requestPriority =
+        document.getElementById("requestPriority");
 
     const requestLocation =
         document.getElementById("requestLocation");
@@ -244,6 +250,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             date: "2026-08-28",
             time: "08:30",
             type: "Medical Emergency",
+            priority: "High",
             location: "Barangay Central",
             contactPerson: "Juan Dela Cruz",
             contactNumber: "09123456789",
@@ -261,6 +268,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             date: "2026-08-28",
             time: "09:15",
             type: "Flood Response",
+            priority: "Critical",
             location: "Riverside Area",
             contactPerson: "Maria Santos",
             contactNumber: "09987654321",
@@ -278,6 +286,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             date: "2026-08-27",
             time: "14:00",
             type: "Road Accident",
+            priority: "Medium",
             location: "National Highway",
             contactPerson: "Pedro Reyes",
             contactNumber: "09112223333",
@@ -293,44 +302,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     ];
 
 
-    function normalizeRequest(request) {
-        return {
-            id: request.id,
-            date: request.date,
-            time: request.time,
-            type: request.type,
-            location: request.location,
-            contactPerson: request.contactPerson,
-            contactNumber: request.contactNumber,
-            assignedTeam: request.assignedTeam,
-            status: request.status,
-            resources: request.resources,
-            description: request.description,
-            inventoryUsage:
-                request.inventoryUsage || null,
-            inventoryDeducted:
-                Boolean(request.inventoryDeducted),
-            inventoryDeductedAt:
-                request.inventoryDeductedAt || "",
-            completedAt:
-                request.completedAt || ""
-        };
-    }
-
-
     function getRequests() {
         const savedRequests =
-            sessionStorage.getItem(
+            localStorage.getItem(
                 "medtrackEmergencyRequests"
             );
 
         if (savedRequests === null) {
-            sessionStorage.setItem(
+            localStorage.setItem(
                 "medtrackEmergencyRequests",
                 JSON.stringify(defaultRequests)
             );
 
-            return defaultRequests.map(normalizeRequest);
+            return defaultRequests.map(function (request) {
+                return { ...request };
+            });
         }
 
         try {
@@ -338,7 +324,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 JSON.parse(savedRequests);
 
             return Array.isArray(parsedRequests)
-                ? parsedRequests.map(normalizeRequest)
+                ? parsedRequests
                 : [];
         } catch (error) {
             console.error(
@@ -352,7 +338,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function saveRequests(requests) {
         try {
-            sessionStorage.setItem(
+            localStorage.setItem(
                 "medtrackEmergencyRequests",
                 JSON.stringify(requests)
             );
@@ -467,6 +453,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         return "status-cancelled";
     }
+
+    function getPriorityClass(priority) {
+        if (priority === "Critical") {
+            return "priority-critical";
+        }
+
+        if (priority === "High") {
+            return "priority-high";
+        }
+
+        if (priority === "Medium") {
+            return "priority-medium";
+        }
+
+        return "priority-low";
+    }
+
 
     function generateRequestId(requests) {
         let highestNumber = 0;
@@ -936,6 +939,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const selectedType =
             emergencyTypeFilter.value;
 
+        const selectedPriority =
+            priorityFilter.value;
+
         const selectedStatus =
             statusFilter.value;
 
@@ -958,6 +964,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     selectedType === "all" ||
                     request.type === selectedType;
 
+                const matchesPriority =
+                    selectedPriority === "all" ||
+                    request.priority ===
+                        selectedPriority;
+
                 const matchesStatus =
                     selectedStatus === "all" ||
                     request.status ===
@@ -966,6 +977,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return (
                     matchesSearch &&
                     matchesType &&
+                    matchesPriority &&
                     matchesStatus
                 );
             });
@@ -982,6 +994,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const statusClass =
                     getStatusClass(
                         request.status
+                    );
+
+                const priorityClass =
+                    getPriorityClass(
+                        request.priority
                     );
 
                 const row =
@@ -1029,6 +1046,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                         ${escapeHTML(
                             request.assignedTeam
                         )}
+                    </td>
+
+                    <td>
+                        <span class="priority-badge ${priorityClass}">
+                            ${escapeHTML(
+                                request.priority
+                            )}
+                        </span>
                     </td>
 
                     <td>
@@ -1146,13 +1171,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
             }).length;
 
-        const activeEmergencyCount =
+        const urgentCount =
             requests.filter(function (request) {
                 return (
                     request.status !==
                         "Completed" &&
                     request.status !==
-                        "Cancelled"
+                        "Cancelled" &&
+                    (
+                        request.priority ===
+                            "Critical" ||
+                        request.priority ===
+                            "High"
+                    )
                 );
             }).length;
 
@@ -1169,7 +1200,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             completedCount;
 
         notificationCount.textContent =
-            activeEmergencyCount;
+            urgentCount;
     }
 
 
@@ -1227,6 +1258,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         emergencyType.value =
             selectedRequest.type;
+
+        requestPriority.value =
+            selectedRequest.priority;
 
         requestLocation.value =
             selectedRequest.location;
@@ -1334,6 +1368,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             const typeValue =
                 emergencyType.value;
 
+            const priorityValue =
+                requestPriority.value;
+
             const locationValue =
                 requestLocation.value.trim();
 
@@ -1359,6 +1396,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 !dateValue ||
                 !timeValue ||
                 !typeValue ||
+                !priorityValue ||
                 !locationValue ||
                 !contactPersonValue ||
                 !contactNumberValue ||
@@ -1429,6 +1467,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     date: dateValue,
                     time: timeValue,
                     type: typeValue,
+                    priority: priorityValue,
                     location: locationValue,
                     contactPerson:
                         contactPersonValue,
@@ -1499,6 +1538,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     date: dateValue,
                     time: timeValue,
                     type: typeValue,
+                    priority: priorityValue,
                     location: locationValue,
                     contactPerson:
                         contactPersonValue,
@@ -1783,6 +1823,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderRequests
     );
 
+    priorityFilter.addEventListener(
+        "change",
+        renderRequests
+    );
+
     statusFilter.addEventListener(
         "change",
         renderRequests
@@ -1882,28 +1927,34 @@ document.addEventListener("DOMContentLoaded", async function () {
         function () {
             const requests = getRequests();
 
-            const activeEmergencyRequests =
+            const urgentRequests =
                 requests.filter(
                     function (request) {
                         return (
                             request.status !==
                                 "Completed" &&
                             request.status !==
-                                "Cancelled"
+                                "Cancelled" &&
+                            (
+                                request.priority ===
+                                    "Critical" ||
+                                request.priority ===
+                                    "High"
+                            )
                         );
                     }
                 );
 
-            if (activeEmergencyRequests.length === 0) {
+            if (urgentRequests.length === 0) {
                 alert(
-                    "There are no active emergency response requests."
+                    "There are no urgent response requests."
                 );
 
                 return;
             }
 
             alert(
-                `There are ${activeEmergencyRequests.length} active emergency response requests.`
+                `There are ${urgentRequests.length} urgent response requests.`
             );
         }
     );

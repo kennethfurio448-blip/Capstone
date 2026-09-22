@@ -42,7 +42,6 @@
     let sessionTimeoutTimer = null;
     let lastActivityWrite = 0;
     let pendingLoginReason = "";
-    let pendingMfaChallenge = null;
 
     function projectUrl(path) {
         return new URL(path, projectRootUrl).href;
@@ -75,12 +74,6 @@
             role: profile.role,
             status: profile.status
         };
-    }
-
-    function currentPageName() {
-        return decodeURIComponent(
-            window.location.pathname.split("/").pop() || ""
-        ).toLowerCase();
     }
 
     function withTimeout(promise, timeoutMs, message) {
@@ -328,7 +321,9 @@
     }
 
     function currentPageRoles(requestedRoles) {
-        const pageName = currentPageName();
+        const pageName = decodeURIComponent(
+            window.location.pathname.split("/").pop() || ""
+        ).toLowerCase();
         const configuredRoles = PAGE_ROLE_RULES[pageName];
 
         if (configuredRoles) {
@@ -401,98 +396,6 @@
         return "";
     }
 
-    async function getMfaStatus() {
-        const factorsResult = await client.auth.mfa.listFactors();
-        if (factorsResult.error) throw factorsResult.error;
-
-        const assuranceResult =
-            await client.auth.mfa.getAuthenticatorAssuranceLevel();
-        if (assuranceResult.error) throw assuranceResult.error;
-
-        const verifiedFactors = (factorsResult.data?.totp || [])
-            .filter(function (factor) {
-                return factor.status === "verified";
-            });
-
-        return {
-            verifiedFactors: verifiedFactors,
-            currentLevel:
-                assuranceResult.data?.currentLevel || "aal1",
-            nextLevel:
-                assuranceResult.data?.nextLevel || "aal1"
-        };
-    }
-
-    async function beginMfaChallenge() {
-        const status = await getMfaStatus();
-        const factor = status.verifiedFactors[0];
-
-        if (!factor) {
-            pendingMfaChallenge = null;
-            return null;
-        }
-
-        const challengeResult = await client.auth.mfa.challenge({
-            factorId: factor.id
-        });
-        if (challengeResult.error) throw challengeResult.error;
-
-        pendingMfaChallenge = {
-            factorId: factor.id,
-            challengeId: challengeResult.data.id
-        };
-        return { required: true };
-    }
-
-    async function verifyMfa(code) {
-        const normalizedCode = String(code || "").trim();
-        if (!/^\d{6}$/.test(normalizedCode)) {
-            throw new Error("Enter the six-digit authenticator code.");
-        }
-
-        if (!pendingMfaChallenge) {
-            await beginMfaChallenge();
-        }
-        if (!pendingMfaChallenge) {
-            throw new Error("No verified authenticator is available.");
-        }
-
-        const verification = await client.auth.mfa.verify({
-            factorId: pendingMfaChallenge.factorId,
-            challengeId: pendingMfaChallenge.challengeId,
-            code: normalizedCode
-        });
-        if (verification.error) {
-            pendingMfaChallenge = null;
-            throw new Error(
-                verification.error.message ||
-                "The authenticator code is invalid or expired."
-            );
-        }
-
-        pendingMfaChallenge = null;
-        const profile = await getAuthenticatedProfile();
-        if (!profile || profile.role !== "admin") {
-            throw new Error("Administrator authentication is required.");
-        }
-
-        try {
-            const auditResult = await client.rpc("medtrack_record_mfa_event", {
-                p_action: "MFA Verified"
-            });
-            if (auditResult.error) {
-                console.error(
-                    "Unable to record MFA verification:",
-                    auditResult.error
-                );
-            }
-        } catch (auditError) {
-            console.error("Unable to record MFA verification:", auditError);
-        }
-
-        return profile;
-    }
-
     async function requireRoles(allowedRoles) {
         const permittedRoles = currentPageRoles(allowedRoles);
         guardedRoles = permittedRoles;
@@ -516,24 +419,6 @@
             if (!permittedRoles.includes(profile.role)) {
                 redirectToDashboard(profile);
                 return null;
-            }
-
-            if (profile.role === "admin") {
-                const mfaStatus = await getMfaStatus();
-
-                if (mfaStatus.verifiedFactors.length === 0) {
-                    if (currentPageName() !== "settings.html") {
-                        window.location.replace(
-                            projectUrl("settings.html?reason=mfa-enrollment-required")
-                        );
-                        return null;
-                    }
-                } else if (mfaStatus.currentLevel !== "aal2") {
-                    window.location.replace(
-                        loginRedirectUrl("mfa-required")
-                    );
-                    return null;
-                }
             }
 
             preparePageShell(profile);
@@ -562,16 +447,12 @@
         });
     }
 
-    async function signIn(identifier, password, rememberUser, turnstileToken) {
+    async function signIn(identifier, password, rememberUser) {
         const response = await fetch("/api/login", {
             method: "POST",
             credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                identifier: identifier,
-                password: password,
-                turnstileToken: turnstileToken || ""
-            })
+            body: JSON.stringify({ identifier: identifier, password: password })
         });
         const data = await response.json().catch(function () {
             return { error: "The login service returned an invalid response." };
@@ -601,25 +482,7 @@
             if (profile.status !== "active" || !["admin", "staff"].includes(profile.role)) {
                 throw new Error("This account is unavailable.");
             }
-
-            if (profile.role === "admin") {
-                const mfaStatus = await getMfaStatus();
-                if (mfaStatus.verifiedFactors.length === 0) {
-                    return {
-                        profile: profile,
-                        mfaEnrollmentRequired: true
-                    };
-                }
-                if (mfaStatus.currentLevel !== "aal2") {
-                    await beginMfaChallenge();
-                    return {
-                        profile: profile,
-                        mfaRequired: true
-                    };
-                }
-            }
-
-            return { profile: profile };
+            return profile;
         } catch (error) {
             await signOut();
             throw error;
@@ -635,22 +498,8 @@
                 profile.status === "active" &&
                 ["admin", "staff"].includes(profile.role)
             ) {
-                if (profile.role === "admin") {
-                    const mfaStatus = await getMfaStatus();
-                    if (mfaStatus.verifiedFactors.length === 0) {
-                        window.location.replace(
-                            projectUrl("settings.html?reason=mfa-enrollment-required")
-                        );
-                        return { redirected: true };
-                    }
-                    if (mfaStatus.currentLevel !== "aal2") {
-                        await beginMfaChallenge();
-                        return { redirected: false, mfaRequired: true };
-                    }
-                }
-
                 redirectToDashboard(profile);
-                return { redirected: true };
+                return true;
             }
 
             if (profile) {
@@ -664,7 +513,7 @@
             await clearSensitiveBrowserData();
         }
 
-        return { redirected: false, mfaRequired: false };
+        return false;
     }
 
     client.auth.onAuthStateChange(async function (event) {
@@ -688,9 +537,6 @@
         redirectToDashboard: redirectToDashboard,
         redirectAuthenticatedUser: redirectAuthenticatedUser,
         getAuthenticatedProfile: getAuthenticatedProfile,
-        getMfaStatus: getMfaStatus,
-        beginMfaChallenge: beginMfaChallenge,
-        verifyMfa: verifyMfa,
         passwordPolicyError: passwordPolicyError
     };
 })();

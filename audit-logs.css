@@ -856,23 +856,3 @@ a {
         width: 100%;
     }
 }
-.security-alert {
-    margin-bottom: 20px;
-    padding: 15px 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #8a1010;
-    background: #ffebee;
-    border: 1px solid #ef9a9a;
-    border-radius: 10px;
-}
-
-.security-alert[hidden] {
-    display: none;
-}
-
-.security-alert p {
-    margin-top: 3px;
-    font-size: 12px;
-}

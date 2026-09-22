@@ -110,12 +110,6 @@
             : null;
     }
 
-    async function removeSnapshot(storageKey) {
-        await useStore("snapshots", "readwrite", function (store) {
-            store.delete(storageKey);
-        });
-    }
-
     async function saveProfile(profile) {
         if (!profile || !profile.id) return;
         await useStore("profiles", "readwrite", function (store) {
@@ -221,7 +215,6 @@
     window.medtrackOfflineStore = Object.freeze({
         saveSnapshot: saveSnapshot,
         loadSnapshot: loadSnapshot,
-        removeSnapshot: removeSnapshot,
         saveProfile: saveProfile,
         loadProfile: loadProfile,
         enqueue: enqueue,

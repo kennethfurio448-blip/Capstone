@@ -77,36 +77,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const confirmNewPassword =
         document.getElementById("confirmNewPassword");
 
-    const mfaStatusText =
-        document.getElementById("mfaStatusText");
-
-    const mfaStatusBadge =
-        document.getElementById("mfaStatusBadge");
-
-    const startMfaEnrollment =
-        document.getElementById("startMfaEnrollment");
-
-    const mfaEnrollment =
-        document.getElementById("mfaEnrollment");
-
-    const mfaQrCode =
-        document.getElementById("mfaQrCode");
-
-    const mfaSecret =
-        document.getElementById("mfaSecret");
-
-    const mfaEnrollmentCode =
-        document.getElementById("mfaEnrollmentCode");
-
-    const mfaCurrentPassword =
-        document.getElementById("mfaCurrentPassword");
-
-    const cancelMfaEnrollment =
-        document.getElementById("cancelMfaEnrollment");
-
-    const confirmMfaEnrollment =
-        document.getElementById("confirmMfaEnrollment");
-
     const downloadBackup =
         document.getElementById("downloadBackup");
 
@@ -135,7 +105,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("restorePassword");
 
     let selectedBackup = null;
-    let mfaEnrollmentFactorId = "";
 
 
     const currentUser =
@@ -145,16 +114,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
-    const initialMfaStatus =
-        await window.medtrackAuth.getMfaStatus();
-    let adminMfaReady =
-        initialMfaStatus.verifiedFactors.length > 0 &&
-        initialMfaStatus.currentLevel === "aal2";
-
-    if (
-        window.medtrackData &&
-        initialMfaStatus.currentLevel === "aal2"
-    ) {
+    if (window.medtrackData) {
         await window.medtrackData.refresh();
     }
 
@@ -285,14 +245,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const sectionId =
                 tab.dataset.section;
 
-            if (!adminMfaReady && sectionId !== "securitySection") {
-                showMessage(
-                    "Set up the authenticator before changing other settings.",
-                    "error"
-                );
-                return;
-            }
-
             settingsTabs.forEach(function (item) {
                 item.classList.remove("active");
             });
@@ -328,162 +280,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         settingsMessage.textContent = "";
         settingsMessage.className = "settings-message";
     }
-
-
-    async function renderMfaStatus() {
-        const status = await window.medtrackAuth.getMfaStatus();
-        const enabled = status.verifiedFactors.length > 0;
-
-        mfaStatusBadge.textContent = enabled ? "Enabled" : "Required";
-        mfaStatusBadge.classList.toggle("enabled", enabled);
-        mfaStatusText.textContent = enabled
-            ? "Authenticator verification is required for every new Admin session."
-            : "Set up an authenticator before using Admin features.";
-        startMfaEnrollment.hidden = enabled;
-
-        return status;
-    }
-
-    async function cancelPendingMfaEnrollment() {
-        if (mfaEnrollmentFactorId) {
-            const result = await window.medtrackAuth.client.auth.mfa.unenroll({
-                factorId: mfaEnrollmentFactorId
-            });
-            if (result.error) {
-                console.error("Unable to discard MFA enrollment:", result.error);
-            }
-        }
-
-        mfaEnrollmentFactorId = "";
-        mfaEnrollment.hidden = true;
-        mfaEnrollmentCode.value = "";
-        mfaCurrentPassword.value = "";
-        mfaQrCode.removeAttribute("src");
-        mfaSecret.textContent = "";
-    }
-
-    startMfaEnrollment.addEventListener("click", async function () {
-        startMfaEnrollment.disabled = true;
-        clearMessage();
-
-        try {
-            const existing = await window.medtrackAuth.client.auth.mfa.listFactors();
-            if (existing.error) throw existing.error;
-
-            for (const factor of (existing.data?.totp || [])) {
-                if (factor.status !== "verified") {
-                    await window.medtrackAuth.client.auth.mfa.unenroll({
-                        factorId: factor.id
-                    });
-                }
-            }
-
-            const enrollment =
-                await window.medtrackAuth.client.auth.mfa.enroll({
-                    factorType: "totp",
-                    friendlyName: "MedTrack Administrator"
-                });
-            if (enrollment.error) throw enrollment.error;
-
-            mfaEnrollmentFactorId = enrollment.data.id;
-            mfaQrCode.src = enrollment.data.totp.qr_code;
-            mfaSecret.textContent = enrollment.data.totp.secret;
-            mfaEnrollment.hidden = false;
-            mfaEnrollmentCode.focus();
-        } catch (error) {
-            showMessage(
-                error.message || "Unable to start authenticator setup.",
-                "error"
-            );
-        } finally {
-            startMfaEnrollment.disabled = false;
-        }
-    });
-
-    cancelMfaEnrollment.addEventListener("click", async function () {
-        await cancelPendingMfaEnrollment();
-    });
-
-    confirmMfaEnrollment.addEventListener("click", async function () {
-        const code = mfaEnrollmentCode.value.trim();
-        const password = mfaCurrentPassword.value;
-
-        if (!mfaEnrollmentFactorId || !/^\d{6}$/.test(code)) {
-            showMessage("Enter the six-digit authenticator code.", "error");
-            return;
-        }
-        if (!password) {
-            showMessage("Enter your current Admin password.", "error");
-            return;
-        }
-
-        confirmMfaEnrollment.disabled = true;
-
-        try {
-            const verificationClient = window.supabase.createClient(
-                window.medtrackSupabaseConfig.url,
-                window.medtrackSupabaseConfig.publishableKey,
-                {
-                    auth: {
-                        persistSession: false,
-                        autoRefreshToken: false,
-                        detectSessionInUrl: false
-                    }
-                }
-            );
-            const reauthentication =
-                await verificationClient.auth.signInWithPassword({
-                    email: currentUser.email,
-                    password: password
-                });
-            if (reauthentication.error) {
-                throw new Error("Current Admin password is incorrect.");
-            }
-            await verificationClient.auth.signOut();
-
-            const challenge =
-                await window.medtrackAuth.client.auth.mfa.challenge({
-                    factorId: mfaEnrollmentFactorId
-                });
-            if (challenge.error) throw challenge.error;
-
-            const verification =
-                await window.medtrackAuth.client.auth.mfa.verify({
-                    factorId: mfaEnrollmentFactorId,
-                    challengeId: challenge.data.id,
-                    code: code
-                });
-            if (verification.error) throw verification.error;
-
-            mfaEnrollmentFactorId = "";
-            mfaEnrollment.hidden = true;
-            await renderMfaStatus();
-            adminMfaReady = true;
-
-            await window.medtrackAuth.client.rpc(
-                "medtrack_record_mfa_event",
-                { p_action: "MFA Enrolled" }
-            );
-
-            if (window.medtrackData) {
-                await window.medtrackData.refresh();
-            }
-
-            window.history.replaceState({}, "", window.location.pathname);
-            showMessage(
-                "Authenticator protection is now enabled.",
-                "success"
-            );
-        } catch (error) {
-            showMessage(
-                error.message || "Unable to verify the authenticator code.",
-                "error"
-            );
-            mfaEnrollmentCode.select();
-        } finally {
-            confirmMfaEnrollment.disabled = false;
-        }
-    });
 
 
     generalSection.addEventListener("submit", function (event) {
@@ -814,13 +610,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         backupKeys.forEach(function (key) {
             const fallback = key === "medtrackSettings" ? {} : [];
-            const storage = key === "medtrackEmergencyRequests"
-                ? sessionStorage
-                : localStorage;
 
             try {
                 data[key] = JSON.parse(
-                    storage.getItem(key) || JSON.stringify(fallback)
+                    localStorage.getItem(key) || JSON.stringify(fallback)
                 );
             } catch (error) {
                 throw new Error(`Unable to read ${key}. Refresh and try again.`);
@@ -948,6 +741,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     request_date: item.date,
                     request_time: item.time,
                     request_type: item.type,
+                    priority: item.priority,
                     location: item.location,
                     contact_person: item.contactPerson,
                     contact_number: item.contactNumber,
@@ -1247,16 +1041,4 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     loadSettings();
-    await renderMfaStatus();
-
-    if (!adminMfaReady) {
-        const securityTab = document.querySelector(
-            '[data-section="securitySection"]'
-        );
-        if (securityTab) securityTab.click();
-        showMessage(
-            "Set up the authenticator before continuing to Admin features.",
-            "error"
-        );
-    }
 });

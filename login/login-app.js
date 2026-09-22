@@ -30,75 +30,10 @@ const confirmNewPasswordInput = document.getElementById("confirmNewPassword");
 const recoveryVerifyMessage = document.getElementById("recoveryVerifyMessage");
 const resendRecoveryButton = document.getElementById("resendRecoveryCode");
 const resetPasswordButton = document.getElementById("resetPasswordButton");
-const mfaForm = document.getElementById("mfaForm");
-const mfaCodeInput = document.getElementById("mfaCode");
-const mfaMessage = document.getElementById("mfaMessage");
-const verifyMfaButton = document.getElementById("verifyMfaButton");
-const cancelMfaButton = document.getElementById("cancelMfa");
-const turnstileContainer = document.getElementById("turnstileContainer");
 
 let recoveryChallengeId = "";
 let recoveryCooldownTimer = null;
 let authenticationReady = null;
-let turnstileRequired = false;
-let turnstileToken = "";
-let turnstileWidgetId = null;
-
-async function initializeTurnstile() {
-    try {
-        const response = await fetch("/api/security-config", {
-            credentials: "same-origin",
-            cache: "no-store"
-        });
-        const config = await response.json();
-        const siteKey = String(config.turnstileSiteKey || "");
-        if (!siteKey) return;
-
-        turnstileRequired = true;
-        turnstileContainer.hidden = false;
-
-        await new Promise(function (resolve, reject) {
-            const script = document.createElement("script");
-            script.src =
-                "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-            script.async = true;
-            script.defer = true;
-            script.onload = resolve;
-            script.onerror = function () {
-                reject(new Error("Human verification could not be loaded."));
-            };
-            document.head.appendChild(script);
-        });
-
-        turnstileWidgetId = window.turnstile.render(turnstileContainer, {
-            sitekey: siteKey,
-            action: "login",
-            theme: "light",
-            callback: function (token) {
-                turnstileToken = token;
-            },
-            "expired-callback": function () {
-                turnstileToken = "";
-            },
-            "error-callback": function () {
-                turnstileToken = "";
-            }
-        });
-    } catch (error) {
-        turnstileRequired = true;
-        showMessage(
-            error.message || "Human verification is unavailable. Refresh the page.",
-            "error"
-        );
-    }
-}
-
-function resetTurnstile() {
-    turnstileToken = "";
-    if (window.turnstile && turnstileWidgetId !== null) {
-        window.turnstile.reset(turnstileWidgetId);
-    }
-}
 
 function getAuthenticationServices() {
     if (authenticationReady) return authenticationReady;
@@ -141,16 +76,6 @@ function showMessage(message, type) {
     formMessage.className = `form-message ${type}`;
 }
 
-function showMfaForm() {
-    loginForm.hidden = true;
-    mfaForm.hidden = false;
-    mfaMessage.textContent =
-        "Enter the six-digit code from your authenticator app.";
-    mfaMessage.className = "form-message";
-    mfaCodeInput.value = "";
-    mfaCodeInput.focus();
-}
-
 if (new URLSearchParams(window.location.search).get("reason") === "session-expired") {
     showMessage(
         "Your session ended after 30 minutes of inactivity. Please sign in again.",
@@ -184,39 +109,19 @@ loginForm.addEventListener("submit", async function (event) {
         return;
     }
 
-    if (turnstileRequired && !turnstileToken) {
-        showMessage("Complete the human verification before signing in.", "error");
-        return;
-    }
-
     submitButton.disabled = true;
     showMessage("Signing in...", "success");
     try {
         const services = await getAuthenticationServices();
-        const result = await services.auth.signIn(
+        const profile = await services.auth.signIn(
             identifier,
             password,
-            rememberMe,
-            turnstileToken
+            rememberMe
         );
         passwordInput.value = "";
-
-        if (result.mfaRequired) {
-            showMfaForm();
-            return;
-        }
-
-        if (result.mfaEnrollmentRequired) {
-            window.location.replace(
-                "../settings.html?reason=mfa-enrollment-required"
-            );
-            return;
-        }
-
         showMessage("Login successful. Redirecting...", "success");
-        services.auth.redirectToDashboard(result.profile);
+        services.auth.redirectToDashboard(profile);
     } catch (error) {
-        resetTurnstile();
         showMessage(
             error instanceof TypeError
                 ? "The secure login service is temporarily unavailable. " +
@@ -226,36 +131,6 @@ loginForm.addEventListener("submit", async function (event) {
         );
         submitButton.disabled = false;
     }
-});
-
-mfaForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
-    verifyMfaButton.disabled = true;
-    mfaMessage.textContent = "Verifying authenticator code...";
-    mfaMessage.className = "form-message success";
-
-    try {
-        const services = await getAuthenticationServices();
-        const profile = await services.auth.verifyMfa(mfaCodeInput.value);
-        mfaMessage.textContent = "Verification successful. Redirecting...";
-        services.auth.redirectToDashboard(profile);
-    } catch (error) {
-        mfaMessage.textContent =
-            error.message || "Unable to verify the authenticator code.";
-        mfaMessage.className = "form-message error";
-        mfaCodeInput.select();
-        verifyMfaButton.disabled = false;
-    }
-});
-
-cancelMfaButton.addEventListener("click", async function () {
-    const services = await getAuthenticationServices();
-    await services.auth.signOut();
-    mfaForm.hidden = true;
-    loginForm.hidden = false;
-    loginForm.querySelector("button[type='submit']").disabled = false;
-    resetTurnstile();
-    emailInput.focus();
 });
 
 async function functionErrorMessage(error) {
@@ -340,22 +215,11 @@ recoveryRequestForm.addEventListener("submit", async function (event) {
         return;
     }
 
-    if (turnstileRequired && !turnstileToken) {
-        recoveryRequestMessage.textContent =
-            "Complete the human verification before requesting a code.";
-        recoveryRequestMessage.className = "form-message error";
-        return;
-    }
-
     button.disabled = true;
     recoveryRequestMessage.textContent = "Sending a secure verification code...";
     recoveryRequestMessage.className = "form-message success";
     try {
-        const response = await invokeOtp("request-password-reset", {
-            email: email,
-            turnstileToken: turnstileToken
-        });
-        resetTurnstile();
+        const response = await invokeOtp("request-password-reset", { email });
         recoveryChallengeId = response.challengeId;
         recoveryDestination.textContent = response.maskedDestination;
         recoveryRequestForm.hidden = true;
@@ -363,7 +227,6 @@ recoveryRequestForm.addEventListener("submit", async function (event) {
         startRecoveryCooldown(response.resendAfter);
         recoveryOtpInput.focus();
     } catch (error) {
-        resetTurnstile();
         recoveryRequestMessage.textContent = error.message || "Unable to send the code.";
         recoveryRequestMessage.className = "form-message error";
     } finally {
@@ -440,15 +303,10 @@ document.addEventListener("keydown", function (event) {
 });
 
 getAuthenticationServices()
-    .then(async function (services) {
-        const result = await services.auth.redirectAuthenticatedUser();
-        if (result && result.mfaRequired) {
-            showMfaForm();
-        }
+    .then(function (services) {
+        return services.auth.redirectAuthenticatedUser();
     })
     .catch(function (error) {
         console.error("MedTrack authentication startup failed:", error);
         showMessage(error.message, "error");
     });
-
-initializeTurnstile();

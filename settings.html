@@ -516,70 +516,7 @@
 
                         <div>
                             <h3>Security Settings</h3>
-                            <p>Protect the Admin account and update its password.</p>
-                        </div>
-                    </div>
-
-                    <div class="mfa-card" id="mfaCard">
-                        <div class="mfa-card-header">
-                            <div>
-                                <h4>Administrator Authenticator</h4>
-                                <p id="mfaStatusText">
-                                    Checking multi-factor authentication status...
-                                </p>
-                            </div>
-
-                            <span class="mfa-status" id="mfaStatusBadge">
-                                Checking
-                            </span>
-                        </div>
-
-                        <button type="button" class="save-button" id="startMfaEnrollment" hidden>
-                            <i class="fa-solid fa-qrcode"></i>
-                            Set Up Authenticator
-                        </button>
-
-                        <div class="mfa-enrollment" id="mfaEnrollment" hidden>
-                            <p>
-                                Scan this QR code with an authenticator app, then enter its six-digit code.
-                            </p>
-
-                            <img id="mfaQrCode" alt="Authenticator enrollment QR code">
-
-                            <p class="mfa-secret-label">Manual setup key</p>
-                            <code id="mfaSecret"></code>
-
-                            <div class="input-group">
-                                <label for="mfaCurrentPassword">Current Admin Password</label>
-                                <input
-                                    type="password"
-                                    id="mfaCurrentPassword"
-                                    autocomplete="current-password"
-                                    placeholder="Confirm your current password"
-                                >
-                            </div>
-
-                            <div class="input-group">
-                                <label for="mfaEnrollmentCode">Authenticator Code</label>
-                                <input
-                                    type="text"
-                                    id="mfaEnrollmentCode"
-                                    inputmode="numeric"
-                                    autocomplete="one-time-code"
-                                    maxlength="6"
-                                    pattern="[0-9]{6}"
-                                    placeholder="000000"
-                                >
-                            </div>
-
-                            <div class="section-actions mfa-actions">
-                                <button type="button" class="restore-button" id="cancelMfaEnrollment">
-                                    Cancel
-                                </button>
-                                <button type="button" class="save-button" id="confirmMfaEnrollment">
-                                    Verify &amp; Enable
-                                </button>
-                            </div>
+                            <p>Update the current Admin password.</p>
                         </div>
                     </div>
 

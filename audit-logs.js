@@ -19,8 +19,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const dateFilter = document.getElementById("dateFilter");
     const refreshLogs = document.getElementById("refreshLogs");
     const exportLogs = document.getElementById("exportLogs");
-    const securityAlert = document.getElementById("securityAlert");
-    const securityAlertText = document.getElementById("securityAlertText");
     const CSV_FORMULA_PATTERN = /^[\t\r\n ]*[=+\-@]/;
 
     const currentUser = await window.medtrackAuth.requireRoles(["admin"]);
@@ -155,19 +153,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         updatedLogs.textContent = auditLogs.filter(function (log) {
             return log.action === "Updated";
         }).length;
-
-        const recentCutoff = Date.now() - 15 * 60 * 1000;
-        const recentFailures = auditLogs.filter(function (log) {
-            return (
-                log.action === "Login Failed" &&
-                new Date(log.timestamp).getTime() >= recentCutoff
-            );
-        }).length;
-
-        securityAlert.hidden = recentFailures < 5;
-        securityAlertText.textContent = recentFailures >= 5
-            ? `${recentFailures} failed login attempts were recorded in the last 15 minutes.`
-            : "";
     }
 
     function renderLogs() {

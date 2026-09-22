@@ -557,7 +557,7 @@ a {
 
 .response-table {
     width: 100%;
-    min-width: 1120px;
+    min-width: 1250px;
 
     border-collapse: collapse;
     text-align: left;
@@ -589,7 +589,8 @@ a {
 }
 
 
-.status-badge {
+.status-badge,
+.priority-badge {
     display: inline-block;
     padding: 6px 10px;
 
@@ -618,6 +619,27 @@ a {
     color: var(--gray);
     background-color: #eeeeee;
 }
+
+.priority-critical {
+    color: var(--white);
+    background-color: var(--red);
+}
+
+.priority-high {
+    color: var(--red);
+    background-color: #ffebee;
+}
+
+.priority-medium {
+    color: var(--orange);
+    background-color: #fff3e0;
+}
+
+.priority-low {
+    color: var(--green);
+    background-color: #e8f5e9;
+}
+
 
 .table-actions {
     display: flex;

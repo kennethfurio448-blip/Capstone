@@ -92,9 +92,7 @@ function publicErrorMessage(error: unknown) {
     /^The verified Gmail address was changed\.$/,
     /^The resend limit was reached\./,
     /^Please wait \d+ seconds /,
-    /^Human verification /,
     /^Administrator authentication is required\.$/,
-    /^Administrator multi-factor authentication is required\.$/,
     /^An active administrator account is required\.$/,
   ];
 
@@ -169,45 +167,6 @@ function clientAddress(request: Request) {
   );
 }
 
-async function verifyTurnstile(token: unknown, address: string) {
-  const secret = String(Deno.env.get("TURNSTILE_SECRET_KEY") || "").trim();
-  if (!secret) return;
-
-  const responseToken = String(token || "");
-  if (!responseToken || responseToken.length > 2048) {
-    throw new Error("Human verification failed. Refresh the challenge and try again.");
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-  try {
-    const response = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret,
-          response: responseToken,
-          remoteip: address,
-        }),
-        signal: controller.signal,
-      },
-    );
-    const result = await response.json();
-    if (!result.success || (result.action && result.action !== "login")) {
-      throw new Error("Human verification failed. Refresh the challenge and try again.");
-    }
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith("Human verification")) {
-      throw error;
-    }
-    throw new Error("Human verification is temporarily unavailable.");
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 async function enforceRateLimit(
   supabase: ReturnType<typeof adminClient>,
   action: string,
@@ -279,25 +238,6 @@ async function requireAdmin(request: Request, supabase: ReturnType<typeof adminC
   const token = bearer.startsWith("Bearer ") ? bearer.slice(7) : "";
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) throw new Error("Administrator authentication is required.");
-  try {
-    const encodedPayload = token.split(".")[1] || "";
-    const paddedPayload = encodedPayload
-      .replace(/-/g, "+")
-      .replace(/_/g, "/")
-      .padEnd(Math.ceil(encodedPayload.length / 4) * 4, "=");
-    const claims = JSON.parse(atob(paddedPayload));
-    if (claims.aal !== "aal2") {
-      throw new Error("Administrator multi-factor authentication is required.");
-    }
-  } catch (claimError) {
-    if (
-      claimError instanceof Error &&
-      claimError.message.includes("multi-factor")
-    ) {
-      throw claimError;
-    }
-    throw new Error("Administrator authentication is required.");
-  }
   const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", data.user.id).maybeSingle();
   if (profile?.role !== "admin" || profile?.status !== "active") {
     throw new Error("An active administrator account is required.");
@@ -483,7 +423,6 @@ Deno.serve(async (request) => {
     if (action === "request-password-reset") {
       const email = cleanEmail(body.email);
       validateEmail(email);
-      await verifyTurnstile(body.turnstileToken, address);
       await enforceRateLimit(supabase, action, `client:${address}`, 10, 900, 900);
       await enforceRateLimit(supabase, action, `destination:${email}`, 5, 900, 900);
       await enforceRateLimit(supabase, action, "global", 100, 900, 900);
