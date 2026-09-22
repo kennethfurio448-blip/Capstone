@@ -531,39 +531,6 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
-.password-field {
-    position: relative;
-}
-
-.password-field input {
-    padding-right: 46px;
-}
-
-.password-visibility-toggle {
-    position: absolute;
-    top: 50%;
-    right: 12px;
-    transform: translateY(-50%);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    color: var(--muted);
-    background: transparent;
-    border: 0;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.password-visibility-toggle:hover,
-.password-visibility-toggle:focus-visible {
-    color: var(--primary);
-    background: rgba(183, 28, 28, 0.08);
-    outline: none;
-}
-
 
 .input-with-text {
     position: relative;

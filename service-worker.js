@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v10-password-visibility";
+const CACHE_NAME = "medtrack-shell-v9-security-hardening";
 const APP_SHELL = [
     "/",
     "/index.html",
