@@ -551,12 +551,24 @@
 
                             <div class="input-group">
                                 <label for="mfaCurrentPassword">Current Admin Password</label>
-                                <input
-                                    type="password"
-                                    id="mfaCurrentPassword"
-                                    autocomplete="current-password"
-                                    placeholder="Confirm your current password"
-                                >
+                                <div class="password-field">
+                                    <input
+                                        type="password"
+                                        id="mfaCurrentPassword"
+                                        autocomplete="current-password"
+                                        placeholder="Confirm your current password"
+                                    >
+                                    <button
+                                        type="button"
+                                        class="password-visibility-toggle"
+                                        id="toggleMfaCurrentPassword"
+                                        aria-label="Show current password"
+                                        aria-pressed="false"
+                                        title="Show password"
+                                    >
+                                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="input-group">

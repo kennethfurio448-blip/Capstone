@@ -101,6 +101,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const mfaCurrentPassword =
         document.getElementById("mfaCurrentPassword");
 
+    const toggleMfaCurrentPassword =
+        document.getElementById("toggleMfaCurrentPassword");
+
     const cancelMfaEnrollment =
         document.getElementById("cancelMfaEnrollment");
 
@@ -358,9 +361,36 @@ document.addEventListener("DOMContentLoaded", async function () {
         mfaEnrollment.hidden = true;
         mfaEnrollmentCode.value = "";
         mfaCurrentPassword.value = "";
+        mfaCurrentPassword.type = "password";
+        toggleMfaCurrentPassword.setAttribute("aria-pressed", "false");
+        toggleMfaCurrentPassword.setAttribute("aria-label", "Show current password");
+        toggleMfaCurrentPassword.title = "Show password";
+        toggleMfaCurrentPassword.querySelector("i").className =
+            "fa-solid fa-eye";
         mfaQrCode.removeAttribute("src");
         mfaSecret.textContent = "";
     }
+
+    toggleMfaCurrentPassword.addEventListener("click", function () {
+        const passwordIsVisible = mfaCurrentPassword.type === "text";
+        const willShowPassword = !passwordIsVisible;
+
+        mfaCurrentPassword.type = willShowPassword ? "text" : "password";
+        toggleMfaCurrentPassword.setAttribute(
+            "aria-pressed",
+            String(willShowPassword)
+        );
+        toggleMfaCurrentPassword.setAttribute(
+            "aria-label",
+            passwordIsVisible ? "Show current password" : "Hide current password"
+        );
+        toggleMfaCurrentPassword.title =
+            passwordIsVisible ? "Show password" : "Hide password";
+        toggleMfaCurrentPassword.querySelector("i").className =
+            passwordIsVisible
+                ? "fa-solid fa-eye"
+                : "fa-solid fa-eye-slash";
+    });
 
     startMfaEnrollment.addEventListener("click", async function () {
         startMfaEnrollment.disabled = true;
