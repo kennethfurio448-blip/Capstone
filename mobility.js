@@ -191,21 +191,28 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     function normalizeVehicleStatus(status) {
-        if (["Maintenance", "Unavailable", "For Repair"].includes(status)) {
+        if (["Maintenance", "Under Maintenance"].includes(status)) {
+            return "Under Maintenance";
+        }
+
+        if (["Unavailable", "For Repair", "Damaged", "Missing"].includes(status)) {
             return "For Repair";
         }
 
-        if (["Assigned", "Deployed", "In Use"].includes(status)) {
-            return "Borrowed";
+        if (["Borrowed", "Deployed", "In Use"].includes(status)) {
+            return "Deployed";
+        }
+
+        if (status === "Returned") {
+            return "Available";
         }
 
         return [
             "Available",
-            "Borrowed",
-            "Returned",
-            "Missing",
-            "Damaged",
-            "For Repair"
+            "Deployed",
+            "Assigned",
+            "For Repair",
+            "Under Maintenance"
         ].includes(status)
             ? status
             : "For Repair";
@@ -246,12 +253,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             return "status-available";
         }
 
-        if (status === "Borrowed") {
+        if (["Deployed", "Assigned"].includes(status)) {
             return "status-deployed";
         }
 
-        if (status === "Returned") {
-            return "status-available";
+        if (status === "Under Maintenance") {
+            return "status-maintenance";
         }
 
         return "status-for-repair";
@@ -435,18 +442,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                 availableCount++;
             }
 
-            if (vehicle.status === "Borrowed") {
+            if (["Deployed", "Assigned"].includes(vehicle.status)) {
                 deployedCount++;
             }
 
-            if (["Missing", "Damaged", "For Repair"].includes(vehicle.status)) {
+            if (["For Repair", "Under Maintenance"].includes(vehicle.status)) {
                 forRepairCount++;
                 alertsCount++;
             }
 
             if (
                 isMaintenanceOverdue(vehicle.maintenanceDate) &&
-                vehicle.status !== "For Repair"
+                !["For Repair", "Under Maintenance"].includes(vehicle.status)
             ) {
                 alertsCount++;
             }
@@ -766,7 +773,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const alerts = vehicles.filter(function (vehicle) {
             return (
-                ["Missing", "Damaged", "For Repair"].includes(
+                ["For Repair", "Under Maintenance"].includes(
                     vehicle.status
                 ) ||
                 isMaintenanceOverdue(vehicle.maintenanceDate)

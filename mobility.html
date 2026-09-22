@@ -195,9 +195,9 @@
                 </div>
 
                 <div>
-                    <p>Borrowed</p>
+                    <p>Deployed / Assigned</p>
                     <h3 id="deployedVehicles">0</h3>
-                    <small>Currently borrowed</small>
+                    <small>Currently in active use</small>
                 </div>
 
             </article>
@@ -209,7 +209,7 @@
                 </div>
 
                 <div>
-                    <p>For Repair</p>
+                    <p>Repair / Maintenance</p>
                     <h3 id="forRepairVehicles">0</h3>
                     <small>Unavailable for use</small>
                 </div>
@@ -265,11 +265,10 @@
                 <select id="statusFilter">
                     <option value="all">All Status</option>
                     <option value="Available">Available</option>
-                    <option value="Borrowed">Borrowed</option>
-                    <option value="Returned">Returned</option>
-                    <option value="Missing">Missing</option>
-                    <option value="Damaged">Damaged</option>
+                    <option value="Deployed">Deployed</option>
+                    <option value="Assigned">Assigned</option>
                     <option value="For Repair">For Repair</option>
+                    <option value="Under Maintenance">Under Maintenance</option>
                 </select>
 
             </div>
@@ -416,12 +415,13 @@
                         <option value="Available">
                             Available
                         </option>
-                        <option value="Borrowed">Borrowed</option>
-                        <option value="Returned">Returned</option>
-                        <option value="Missing">Missing</option>
-                        <option value="Damaged">Damaged</option>
+                        <option value="Deployed">Deployed</option>
+                        <option value="Assigned">Assigned</option>
                         <option value="For Repair">
                             For Repair
+                        </option>
+                        <option value="Under Maintenance">
+                            Under Maintenance
                         </option>
                     </select>
 

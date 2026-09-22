@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v7-page-favicons";
+const CACHE_NAME = "medtrack-shell-v8-mobility-statuses";
 const APP_SHELL = [
     "/",
     "/index.html",
