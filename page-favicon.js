@@ -11,5 +11,5 @@
         document.head.appendChild(favicon);
     }
 
-    favicon.href = "/assets/pdrrmo-logo.png?v=20260923-pdrrmo";
+    favicon.href = "/assets/pdrrmo-logo-transparent.png?v=20260923-transparent";
 })();

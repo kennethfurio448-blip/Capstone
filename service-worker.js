@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v10-pdrrmo-icons";
+const CACHE_NAME = "medtrack-shell-v11-transparent-favicon";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -8,6 +8,7 @@ const APP_SHELL = [
     "/app-shell.css",
     "/brand-theme.css",
     "/assets/pdrrmo-logo.png",
+    "/assets/pdrrmo-logo-transparent.png",
     "/manifest.webmanifest",
     "/medtrack-icon.svg",
     "/page-favicon.js",

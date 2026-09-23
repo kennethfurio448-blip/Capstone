@@ -11,13 +11,13 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/assets/pdrrmo-logo.png",
+      "src": "/assets/pdrrmo-logo-transparent.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/pdrrmo-logo.png",
+      "src": "/assets/pdrrmo-logo-transparent.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
