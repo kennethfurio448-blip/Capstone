@@ -24,6 +24,7 @@ body {
     background: #ffffff;
     border: 1px solid #dfe4ea;
     border-top: 5px solid #d5a021;
+    border-bottom: 5px solid #d5a021;
     border-radius: 18px;
     text-align: center;
     box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
