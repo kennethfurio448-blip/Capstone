@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v9-pdrrmo-brand";
+const CACHE_NAME = "medtrack-shell-v10-pdrrmo-icons";
 const APP_SHELL = [
     "/",
     "/index.html",
