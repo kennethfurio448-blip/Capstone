@@ -2,8 +2,8 @@
     --primary: #c91f2c;
     --primary-dark: #9f1721;
     --primary-light: #fff1f2;
-    --sidebar: #071a4f;
-    --sidebar-hover: #102c68;
+    --sidebar: #030a1e;
+    --sidebar-hover: #10234a;
     --background: #f3f5f7;
     --white: #ffffff;
     --text: #172033;
@@ -25,7 +25,7 @@ body {
 }
 
 .sidebar {
-    background: linear-gradient(180deg, #071a4f 0%, #06143c 100%);
+    background: linear-gradient(180deg, #050f2d 0%, #020611 100%);
 }
 
 .sidebar .brand {
