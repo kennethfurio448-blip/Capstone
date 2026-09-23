@@ -20,145 +20,124 @@
 <body>
 
     <main class="login-container">
-
-        <section class="login-card">
-
-            <div class="brand">
-                <img class="brand-logo" src="../assets/pdrrmo-logo.png" alt="Quezon PDRRMO official logo">
-
-                <h1>MedTrack</h1>
-                <p>PDRRMO Inventory Management System</p>
-            </div>
-
-            <div class="form-heading">
-                <h2>Welcome Back</h2>
-                <p>Sign in using your MedTrack account.</p>
-            </div>
-
-            <form id="loginForm">
-
-                <div class="input-group">
-                    <label for="email">Email or Username</label>
-
-                    <div class="input-box">
-                        <i class="fa-solid fa-user"></i>
-
-                        <input
-                            type="text"
-                            id="email"
-                            placeholder="Enter your email or username"
-                            autocomplete="username"
-                            required
-                        >
+        <section class="login-card" id="authCard">
+            <div class="auth-track">
+                <section class="auth-panel login-panel" id="loginPanel" aria-hidden="false">
+                    <div class="brand-pane">
+                        <img class="brand-logo" src="../assets/pdrrmo-logo.png" alt="Quezon PDRRMO official logo">
+                        <h1>MedTrack</h1>
+                        <p>PDRRMO Inventory Management System</p>
                     </div>
-                </div>
 
-                <div class="input-group">
-                    <label for="password">Password</label>
+                    <div class="form-pane">
+                        <div class="form-heading">
+                            <h2>Welcome Back</h2>
+                            <p>Sign in using your MedTrack account.</p>
+                        </div>
 
-                    <div class="input-box">
-                        <i class="fa-solid fa-lock"></i>
+                        <form id="loginForm">
+                            <div class="input-group">
+                                <label for="email">Email or Username</label>
+                                <div class="input-box">
+                                    <i class="fa-solid fa-user"></i>
+                                    <input type="text" id="email" placeholder="Enter your email or username" autocomplete="username" required>
+                                </div>
+                            </div>
 
-                        <input
-                            type="password"
-                            id="password"
-                            placeholder="Enter your password"
-                            autocomplete="current-password"
-                            required
-                        >
+                            <div class="input-group">
+                                <label for="password">Password</label>
+                                <div class="input-box">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+                                    <button type="button" class="password-toggle" id="togglePassword" aria-label="Show or hide password">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
 
-                        <button
-                            type="button"
-                            class="password-toggle"
-                            id="togglePassword"
-                            aria-label="Show or hide password"
-                        >
-                            <i class="fa-solid fa-eye"></i>
+                            <div class="login-options">
+                                <label class="remember-me">
+                                    <input type="checkbox" id="rememberMe">
+                                    Remember me
+                                </label>
+                                <a href="#" class="forgot-password" id="forgotPasswordLink">Forgot password?</a>
+                            </div>
+
+                            <p class="form-message" id="formMessage"></p>
+                            <button type="submit" class="login-button">
+                                <i class="fa-solid fa-right-to-bracket"></i>
+                                Sign In
+                            </button>
+                        </form>
+
+                        <p class="create-account-link">Accounts are created by an administrator.</p>
+                    </div>
+                </section>
+
+                <section class="auth-panel recovery-panel" id="recoveryModal" aria-hidden="true" aria-labelledby="recoveryTitle">
+                    <div class="form-pane recovery-form-pane">
+                        <div class="form-heading recovery-heading">
+                            <h2 id="recoveryTitle">Forgot Password?</h2>
+                            <p>Enter your registered Gmail address to receive a verification code and reset your password.</p>
+                        </div>
+
+                        <form id="recoveryRequestForm">
+                            <div class="input-group">
+                                <label for="recoveryEmail">Registered Gmail Address</label>
+                                <div class="input-box">
+                                    <i class="fa-solid fa-envelope"></i>
+                                    <input type="email" id="recoveryEmail" placeholder="name@gmail.com" autocomplete="email" required>
+                                </div>
+                            </div>
+                            <p class="form-message" id="recoveryRequestMessage"></p>
+                            <button type="submit" class="login-button" id="sendRecoveryCode">Send Verification Code</button>
+                        </form>
+
+                        <form id="recoveryVerifyForm" hidden>
+                            <p class="recovery-instruction">Enter the code sent to <strong id="recoveryDestination"></strong>. It expires in 10 minutes.</p>
+                            <div class="input-group">
+                                <label for="recoveryOtp">Verification Code</label>
+                                <div class="input-box">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    <input type="text" id="recoveryOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="newPassword">New Password</label>
+                                <div class="input-box">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <input type="password" id="newPassword" autocomplete="new-password" minlength="12" maxlength="128" placeholder="12+ characters, mixed case and number" required>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="confirmNewPassword">Confirm New Password</label>
+                                <div class="input-box">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <input type="password" id="confirmNewPassword" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Repeat new password" required>
+                                </div>
+                            </div>
+                            <button type="button" class="recovery-resend" id="resendRecoveryCode" disabled>
+                                Resend Code (<span id="recoveryCooldown">60</span>s)
+                            </button>
+                            <p class="form-message" id="recoveryVerifyMessage"></p>
+                            <button type="submit" class="login-button" id="resetPasswordButton">Verify &amp; Reset Password</button>
+                        </form>
+
+                        <button type="button" class="back-login-button" id="closeRecovery">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            Back to Login
                         </button>
                     </div>
-                </div>
 
-                <div class="login-options">
-                    <label class="remember-me">
-                        <input type="checkbox" id="rememberMe">
-                        Remember me
-                    </label>
-
-                    <a href="#" class="forgot-password" id="forgotPasswordLink">
-                        Forgot password?
-                    </a>
-                </div>
-
-                <p class="form-message" id="formMessage"></p>
-
-                <button type="submit" class="login-button">
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    Sign In
-                </button>
-
-            </form>
-
-            <p class="create-account-link">
-                Accounts are created by an administrator.
-            </p>
-
+                    <div class="brand-pane">
+                        <img class="brand-logo" src="../assets/pdrrmo-logo.png" alt="Quezon PDRRMO official logo">
+                        <h1>MedTrack</h1>
+                        <p>PDRRMO Inventory Management System</p>
+                    </div>
+                </section>
+            </div>
         </section>
-
     </main>
-
-    <div class="recovery-overlay" id="recoveryModal" aria-hidden="true">
-        <section class="recovery-modal" role="dialog" aria-modal="true" aria-labelledby="recoveryTitle">
-            <button type="button" class="recovery-close" id="closeRecovery" aria-label="Close password recovery">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-
-            <div class="recovery-icon"><i class="fa-solid fa-key"></i></div>
-            <h2 id="recoveryTitle">Reset Password</h2>
-
-            <form id="recoveryRequestForm">
-                <p>Enter your registered Gmail address to receive a verification code.</p>
-                <div class="input-group">
-                    <label for="recoveryEmail">Registered Gmail Address</label>
-                    <div class="input-box">
-                        <i class="fa-solid fa-envelope"></i>
-                        <input type="email" id="recoveryEmail" placeholder="name@gmail.com" autocomplete="email" required>
-                    </div>
-                </div>
-                <p class="form-message" id="recoveryRequestMessage"></p>
-                <button type="submit" class="login-button" id="sendRecoveryCode">Send Verification Code</button>
-            </form>
-
-            <form id="recoveryVerifyForm" hidden>
-                <p>Enter the code sent to <strong id="recoveryDestination"></strong>. It expires in 10 minutes.</p>
-                <div class="input-group">
-                    <label for="recoveryOtp">Verification Code</label>
-                    <div class="input-box">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <input type="text" id="recoveryOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="newPassword">New Password</label>
-                    <div class="input-box">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" id="newPassword" autocomplete="new-password" minlength="12" maxlength="128" placeholder="12+ characters, mixed case and number" required>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="confirmNewPassword">Confirm New Password</label>
-                    <div class="input-box">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" id="confirmNewPassword" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Repeat new password" required>
-                    </div>
-                </div>
-                <button type="button" class="recovery-resend" id="resendRecoveryCode" disabled>
-                    Resend Code (<span id="recoveryCooldown">60</span>s)
-                </button>
-                <p class="form-message" id="recoveryVerifyMessage"></p>
-                <button type="submit" class="login-button" id="resetPasswordButton">Verify &amp; Reset Password</button>
-            </form>
-        </section>
-    </div>
 
     <script src="/api/supabase-js" integrity="sha384-JBR+x8blGwjDRO63aHCGiZMD4VNiTR4ZUGA+N6ZKLf3zNt1fK8IBpcgPaMrxqWBp"></script>
     <script src="../auth/supabase-client.js"></script>

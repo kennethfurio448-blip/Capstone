@@ -17,6 +17,8 @@ const passwordInput = document.getElementById("password");
 const rememberMeInput = document.getElementById("rememberMe");
 const togglePasswordButton = document.getElementById("togglePassword");
 const forgotPasswordLink = document.querySelector(".forgot-password");
+const authCard = document.getElementById("authCard");
+const loginPanel = document.getElementById("loginPanel");
 const recoveryModal = document.getElementById("recoveryModal");
 const closeRecoveryButton = document.getElementById("closeRecovery");
 const recoveryRequestForm = document.getElementById("recoveryRequestForm");
@@ -30,6 +32,8 @@ const confirmNewPasswordInput = document.getElementById("confirmNewPassword");
 const recoveryVerifyMessage = document.getElementById("recoveryVerifyMessage");
 const resendRecoveryButton = document.getElementById("resendRecoveryCode");
 const resetPasswordButton = document.getElementById("resetPasswordButton");
+
+recoveryModal.inert = true;
 
 let recoveryChallengeId = "";
 let recoveryCooldownTimer = null;
@@ -175,6 +179,10 @@ function startRecoveryCooldown(seconds) {
 
 function closeRecovery() {
     clearInterval(recoveryCooldownTimer);
+    authCard.classList.remove("recovery-active");
+    loginPanel.inert = false;
+    recoveryModal.inert = true;
+    loginPanel.setAttribute("aria-hidden", "false");
     recoveryModal.classList.remove("show");
     recoveryModal.setAttribute("aria-hidden", "true");
     recoveryRequestForm.reset();
@@ -188,21 +196,23 @@ function closeRecovery() {
     recoveryRequestMessage.textContent = "";
     recoveryVerifyMessage.textContent = "";
     recoveryChallengeId = "";
+    forgotPasswordLink.focus();
 }
 
 forgotPasswordLink.addEventListener("click", function (event) {
     event.preventDefault();
     const currentIdentifier = emailInput.value.trim().toLowerCase();
     recoveryEmailInput.value = currentIdentifier.includes("@") ? currentIdentifier : "";
+    authCard.classList.add("recovery-active");
+    loginPanel.inert = true;
+    recoveryModal.inert = false;
+    loginPanel.setAttribute("aria-hidden", "true");
     recoveryModal.classList.add("show");
     recoveryModal.setAttribute("aria-hidden", "false");
     recoveryEmailInput.focus();
 });
 
 closeRecoveryButton.addEventListener("click", closeRecovery);
-recoveryModal.addEventListener("click", function (event) {
-    if (event.target === recoveryModal) closeRecovery();
-});
 
 recoveryRequestForm.addEventListener("submit", async function (event) {
     event.preventDefault();
