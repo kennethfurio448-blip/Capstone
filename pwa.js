@@ -12,7 +12,7 @@
         if (!document.querySelector("meta[name='theme-color']")) {
             const theme = document.createElement("meta");
             theme.name = "theme-color";
-            theme.content = "#b91c1c";
+            theme.content = "#071a4f";
             document.head.appendChild(theme);
         }
     }

@@ -1,11 +1,13 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v8-mobility-statuses";
+const CACHE_NAME = "medtrack-shell-v9-pdrrmo-brand";
 const APP_SHELL = [
     "/",
     "/index.html",
     "/landing.css",
     "/app-shell.css",
+    "/brand-theme.css",
+    "/assets/pdrrmo-logo.png",
     "/manifest.webmanifest",
     "/medtrack-icon.svg",
     "/page-favicon.js",
@@ -150,6 +152,16 @@ self.addEventListener("fetch", function (event) {
         url.pathname.startsWith("/auth/") ||
         url.pathname.startsWith("/login/") ||
         url.pathname === "/pwa.js"
+    ) {
+        event.respondWith(networkFirst(request));
+        return;
+    }
+
+    if (
+        request.destination === "style" ||
+        request.destination === "script" ||
+        request.destination === "image" ||
+        request.destination === "font"
     ) {
         event.respondWith(networkFirst(request));
         return;
