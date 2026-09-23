@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v11-transparent-favicon";
+const CACHE_NAME = "medtrack-shell-v12-auth-slide-focus";
 const APP_SHELL = [
     "/",
     "/index.html",

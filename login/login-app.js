@@ -18,6 +18,7 @@ const rememberMeInput = document.getElementById("rememberMe");
 const togglePasswordButton = document.getElementById("togglePassword");
 const forgotPasswordLink = document.querySelector(".forgot-password");
 const authCard = document.getElementById("authCard");
+const authTrack = document.querySelector(".auth-track");
 const loginPanel = document.getElementById("loginPanel");
 const recoveryModal = document.getElementById("recoveryModal");
 const closeRecoveryButton = document.getElementById("closeRecovery");
@@ -38,6 +39,20 @@ recoveryModal.inert = true;
 let recoveryChallengeId = "";
 let recoveryCooldownTimer = null;
 let authenticationReady = null;
+
+function focusAfterSlide(target) {
+    let fallbackTimer = null;
+
+    function finish(event) {
+        if (event && event.propertyName !== "transform") return;
+        authTrack.removeEventListener("transitionend", finish);
+        window.clearTimeout(fallbackTimer);
+        target.focus({ preventScroll: true });
+    }
+
+    authTrack.addEventListener("transitionend", finish);
+    fallbackTimer = window.setTimeout(finish, 900);
+}
 
 function getAuthenticationServices() {
     if (authenticationReady) return authenticationReady;
@@ -196,7 +211,7 @@ function closeRecovery() {
     recoveryRequestMessage.textContent = "";
     recoveryVerifyMessage.textContent = "";
     recoveryChallengeId = "";
-    forgotPasswordLink.focus();
+    focusAfterSlide(forgotPasswordLink);
 }
 
 forgotPasswordLink.addEventListener("click", function (event) {
@@ -209,7 +224,7 @@ forgotPasswordLink.addEventListener("click", function (event) {
     loginPanel.setAttribute("aria-hidden", "true");
     recoveryModal.classList.add("show");
     recoveryModal.setAttribute("aria-hidden", "false");
-    recoveryEmailInput.focus();
+    focusAfterSlide(recoveryEmailInput);
 });
 
 closeRecoveryButton.addEventListener("click", closeRecovery);
