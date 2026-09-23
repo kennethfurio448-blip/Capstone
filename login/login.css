@@ -59,7 +59,7 @@ input {
     left: 0;
     z-index: 5;
     height: 6px;
-    background: var(--brand-navy);
+    background: var(--brand-gold);
 }
 
 .auth-track {
