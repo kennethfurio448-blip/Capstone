@@ -524,36 +524,126 @@ a {
     min-width: 0;
 }
 
+.inventory-distribution .card-heading {
+    align-items: flex-start;
+}
+
+.distribution-total {
+    min-width: 170px;
+    padding: 13px 16px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: #08245f;
+    background: #f1faf6;
+    border: 1px solid #cfe8db;
+    border-radius: 14px;
+}
+
+.distribution-total-icon {
+    width: 45px;
+    height: 45px;
+    flex: 0 0 45px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    background: #20a767;
+    border-radius: 50%;
+    font-size: 20px;
+}
+
+.distribution-total strong,
+.distribution-total small {
+    display: block;
+}
+
+.distribution-total strong {
+    font-size: 27px;
+    line-height: 1;
+}
+
+.distribution-total small {
+    margin-top: 4px;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.distribution-content {
+    min-height: 310px;
+    display: grid;
+    grid-template-columns: minmax(270px, 1fr) minmax(260px, 0.95fr);
+    align-items: center;
+    gap: 24px;
+}
+
 .distribution-chart {
-    min-height: 230px;
+    min-height: 310px;
     display: grid;
     place-items: center;
 }
 
 .distribution-chart svg {
-    width: min(100%, 280px);
-    height: 230px;
+    width: min(100%, 340px);
+    height: auto;
     display: block;
+    filter: drop-shadow(0 8px 12px rgba(15, 35, 75, 0.12));
 }
 
 .distribution-legend {
     display: grid;
-    gap: 8px;
+    gap: 0;
+    align-self: stretch;
+    align-content: center;
+    padding: 4px 18px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
 }
 
 .distribution-legend-item {
     display: grid;
-    grid-template-columns: 10px 1fr auto;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 8px;
-    color: #4b5563;
-    font-size: 12px;
+    gap: 12px;
+    padding: 17px 0;
+    color: #08245f;
+    font-size: 13px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.distribution-legend-item:last-child {
+    border-bottom: 0;
 }
 
 .distribution-swatch {
-    width: 10px;
-    height: 10px;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
     border-radius: 50%;
+    font-size: 18px;
+    box-shadow: 0 6px 14px rgba(15, 35, 75, 0.13);
+}
+
+.distribution-category {
+    overflow: hidden;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.distribution-value {
+    display: grid;
+    justify-items: end;
+    gap: 3px;
+    font-size: 15px;
+}
+
+.distribution-value small {
+    padding: 3px 7px;
+    border-radius: 7px;
+    font-size: 11px;
 }
 
 .dashboard-alerts-grid {
@@ -831,6 +921,10 @@ a {
         grid-template-columns: 1fr;
     }
 
+    .distribution-content {
+        grid-template-columns: minmax(270px, 0.9fr) minmax(280px, 1.1fr);
+    }
+
     .action-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -866,6 +960,10 @@ a {
 
     .search-box input {
         width: 100%;
+    }
+
+    .distribution-content {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -905,5 +1003,22 @@ a {
 
     .dashboard-grid {
         grid-template-columns: 1fr;
+    }
+
+    .distribution-content {
+        grid-template-columns: 1fr;
+    }
+
+    .inventory-distribution .card-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .distribution-total {
+        width: 100%;
+    }
+
+    .distribution-chart {
+        min-height: 270px;
     }
 }

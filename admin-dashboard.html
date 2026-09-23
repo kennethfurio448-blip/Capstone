@@ -204,10 +204,21 @@
                         <h3>Inventory Distribution</h3>
                         <p>Current registered inventory records</p>
                     </div>
+                    <div class="distribution-total" aria-label="Total registered inventory items">
+                        <span class="distribution-total-icon" aria-hidden="true">
+                            <i class="fa-solid fa-cube"></i>
+                        </span>
+                        <span>
+                            <strong id="inventoryDistributionTotal">&mdash;</strong>
+                            <small>Total Items</small>
+                        </span>
+                    </div>
                 </div>
                 <div id="inventoryDistributionStatus" class="trend-status" role="status" aria-live="polite">Loading inventory totals...</div>
-                <div id="inventoryDistributionChart" class="distribution-chart" role="img" aria-label="Inventory distribution doughnut chart"></div>
-                <div id="inventoryDistributionLegend" class="distribution-legend"></div>
+                <div class="distribution-content">
+                    <div id="inventoryDistributionChart" class="distribution-chart" role="img" aria-label="Inventory distribution pie chart"></div>
+                    <div id="inventoryDistributionLegend" class="distribution-legend"></div>
+                </div>
             </article>
 
             <article class="dashboard-card inventory-trends">

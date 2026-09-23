@@ -182,40 +182,65 @@ document.addEventListener("DOMContentLoaded", function () {
         const chart = document.getElementById("inventoryDistributionChart");
         const legend = document.getElementById("inventoryDistributionLegend");
         const status = document.getElementById("inventoryDistributionStatus");
-        if (!chart || !legend || !status || !window.medtrackData) return;
+        const totalElement = document.getElementById("inventoryDistributionTotal");
+        if (!chart || !legend || !status || !totalElement || !window.medtrackData) return;
 
         try {
             const totals = await window.medtrackData.loadInventoryDistribution();
             const segments = [
-                ["Medical Supplies", totals.medicalSupplies, "#c62828"],
-                ["Medical Equipment", totals.medicalEquipment, "#ef6c00"],
-                ["Mobility Assets", totals.mobilityAssets, "#1565c0"]
+                ["Medical Supplies", Number(totals.medicalSupplies || 0), "#d9252a", "fa-kit-medical"],
+                ["Medical Equipment", Number(totals.medicalEquipment || 0), "#ff7900", "fa-stethoscope"],
+                ["Mobility Assets", Number(totals.mobilityAssets || 0), "#176fd1", "fa-wheelchair"]
             ];
             const total = segments.reduce((sum, item) => sum + item[1], 0);
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute("viewBox", "0 0 260 230");
-            let offset = 0;
+            svg.setAttribute("viewBox", "0 0 340 340");
+            let startAngle = -90;
 
             segments.forEach(function (segment) {
                 const percentage = total ? segment[1] / total * 100 : 0;
-                const circle = appendSvg(svg, "circle", {
-                    cx: 130, cy: 104, r: 72, fill: "none",
-                    stroke: segment[2], "stroke-width": 34,
-                    "stroke-dasharray": `${percentage} ${100 - percentage}`,
-                    "stroke-dashoffset": -offset,
-                    "pathLength": 100,
-                    transform: "rotate(-90 130 104)"
+                if (!percentage) return;
+
+                const endAngle = startAngle + percentage * 3.6;
+                const path = appendSvg(svg, "path", {
+                    d: createPieSlicePath(170, 170, 145, startAngle, endAngle),
+                    fill: segment[2],
+                    stroke: "#ffffff",
+                    "stroke-width": 2
                 });
                 const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
                 title.textContent = `${segment[0]}: ${segment[1]} (${percentage.toFixed(1)}%)`;
-                circle.appendChild(title);
-                offset += percentage;
+                path.appendChild(title);
+
+                if (percentage >= 8) {
+                    const labelAngle = startAngle + (endAngle - startAngle) / 2;
+                    const labelPosition = polarPoint(170, 170, 92, labelAngle);
+                    const label = appendSvg(svg, "text", {
+                        x: labelPosition.x,
+                        y: labelPosition.y,
+                        "text-anchor": "middle",
+                        "dominant-baseline": "middle",
+                        "font-size": 22,
+                        "font-weight": 800,
+                        fill: "#ffffff"
+                    });
+                    label.textContent = `${percentage.toFixed(1)}%`;
+                }
+
+                startAngle = endAngle;
             });
 
-            const totalText = appendSvg(svg, "text", { x: 130, y: 101, "text-anchor": "middle", "font-size": 28, "font-weight": 700, fill: "#111827" });
-            totalText.textContent = String(total);
-            const labelText = appendSvg(svg, "text", { x: 130, y: 122, "text-anchor": "middle", "font-size": 11, fill: "#6b7280" });
-            labelText.textContent = "total records";
+            if (!total) {
+                appendSvg(svg, "circle", { cx: 170, cy: 170, r: 145, fill: "#e5e7eb" });
+                const emptyLabel = appendSvg(svg, "text", {
+                    x: 170, y: 170, "text-anchor": "middle",
+                    "dominant-baseline": "middle", "font-size": 18,
+                    "font-weight": 700, fill: "#6b7280"
+                });
+                emptyLabel.textContent = "No inventory data";
+            }
+
+            totalElement.textContent = total.toLocaleString();
             chart.replaceChildren(svg);
             chart.setAttribute(
                 "aria-label",
@@ -231,10 +256,22 @@ document.addEventListener("DOMContentLoaded", function () {
                 const swatch = document.createElement("span");
                 swatch.className = "distribution-swatch";
                 swatch.style.backgroundColor = segment[2];
+                const icon = document.createElement("i");
+                icon.className = `fa-solid ${segment[3]}`;
+                icon.setAttribute("aria-hidden", "true");
+                swatch.appendChild(icon);
                 const name = document.createElement("span");
+                name.className = "distribution-category";
                 name.textContent = segment[0];
                 const value = document.createElement("strong");
-                value.textContent = `${segment[1]} (${percentage.toFixed(1)}%)`;
+                value.className = "distribution-value";
+                const count = document.createElement("span");
+                count.textContent = segment[1].toLocaleString();
+                const percentageLabel = document.createElement("small");
+                percentageLabel.textContent = `${percentage.toFixed(1)}%`;
+                percentageLabel.style.color = segment[2];
+                percentageLabel.style.backgroundColor = `${segment[2]}14`;
+                value.append(count, percentageLabel);
                 row.append(swatch, name, value);
                 return row;
             }));
@@ -245,6 +282,36 @@ document.addEventListener("DOMContentLoaded", function () {
             status.classList.add("error");
             status.textContent = "Inventory totals could not be loaded.";
         }
+    }
+
+    function polarPoint(centerX, centerY, radius, angle) {
+        const radians = angle * Math.PI / 180;
+        return {
+            x: centerX + radius * Math.cos(radians),
+            y: centerY + radius * Math.sin(radians)
+        };
+    }
+
+    function createPieSlicePath(centerX, centerY, radius, startAngle, endAngle) {
+        const start = polarPoint(centerX, centerY, radius, startAngle);
+        const end = polarPoint(centerX, centerY, radius, endAngle);
+        if (endAngle - startAngle >= 359.999) {
+            const midpoint = polarPoint(centerX, centerY, radius, startAngle + 180);
+            return [
+                `M ${centerX} ${centerY}`,
+                `L ${start.x} ${start.y}`,
+                `A ${radius} ${radius} 0 1 1 ${midpoint.x} ${midpoint.y}`,
+                `A ${radius} ${radius} 0 1 1 ${end.x} ${end.y}`,
+                "Z"
+            ].join(" ");
+        }
+        const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+        return [
+            `M ${centerX} ${centerY}`,
+            `L ${start.x} ${start.y}`,
+            `A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`,
+            "Z"
+        ].join(" ");
     }
 
     function renderTrendChart(container, rows) {
