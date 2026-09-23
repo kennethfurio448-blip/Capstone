@@ -13,7 +13,7 @@ body {
     color: #172033;
     background:
         radial-gradient(circle at top, rgba(213, 160, 33, 0.18), transparent 34%),
-        linear-gradient(145deg, #071a4f 0%, #0b2868 68%, #8f1722 100%);
+        linear-gradient(145deg, #071a4f 0%, #0b2868 68%, #24478f 100%);
     font-family: Arial, Helvetica, sans-serif;
 }
 
