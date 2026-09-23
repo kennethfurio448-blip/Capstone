@@ -5,6 +5,16 @@
     box-sizing: border-box;
 }
 
+:root {
+    --brand-navy: #071a4f;
+    --brand-red: #c91f2c;
+    --brand-red-dark: #9f1721;
+    --brand-gold: #d5a021;
+    --brand-green: #1b7f3b;
+    --brand-gray: #f3f5f7;
+    --brand-text: #172033;
+}
+
 body {
     min-height: 100vh;
     padding: 30px 15px;
@@ -12,9 +22,8 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 
     background:
-        linear-gradient(
-            rgba(110, 0, 0, 0.82),
-            rgba(110, 0, 0, 0.82));
+        radial-gradient(circle at top, rgba(213, 160, 33, 0.2), transparent 36%),
+        linear-gradient(145deg, #071a4f 0%, #0b2868 58%, #8f1722 100%);
 
     display: flex;
     justify-content: center;
@@ -38,7 +47,8 @@ body {
 
     background-color: #ffffff;
     border-radius: 18px;
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+    border-top: 5px solid var(--brand-gold);
+    box-shadow: 0 18px 45px rgba(3, 13, 43, 0.38);
 }
 
 
@@ -64,9 +74,20 @@ body {
     font-size: 31px;
 }
 
+.brand-logo {
+    display: block;
+    width: 116px;
+    height: 116px;
+    margin: 0 auto 13px;
+    object-fit: contain;
+    border-radius: 50%;
+    background-color: #ffffff;
+    box-shadow: 0 8px 24px rgba(7, 26, 79, 0.2);
+}
+
 .brand h1 {
     margin-bottom: 5px;
-    color: #b71c1c;
+    color: var(--brand-navy);
     font-size: 30px;
 }
 
@@ -83,7 +104,7 @@ body {
 
 .form-heading h2 {
     margin-bottom: 7px;
-    color: #222222;
+    color: var(--brand-text);
     font-size: 24px;
 }
 
@@ -143,8 +164,8 @@ body {
 
 .input-box input:focus {
     background-color: #ffffff;
-    border-color: #b71c1c;
-    box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.12);
+    border-color: var(--brand-navy);
+    box-shadow: 0 0 0 3px rgba(7, 26, 79, 0.12);
 }
 
 
@@ -164,7 +185,7 @@ body {
 }
 
 .password-toggle:hover {
-    color: #b71c1c;
+    color: var(--brand-red);
 }
 
 
@@ -191,12 +212,12 @@ body {
 .remember-me input {
     width: 15px;
     height: 15px;
-    accent-color: #b71c1c;
+    accent-color: var(--brand-red);
     cursor: pointer;
 }
 
 .forgot-password {
-    color: #b71c1c;
+    color: var(--brand-navy);
     font-weight: 600;
     text-decoration: none;
 }
@@ -216,11 +237,11 @@ body {
 }
 
 .form-message.error {
-    color: #d32f2f;
+    color: var(--brand-red);
 }
 
 .form-message.success {
-    color: #2e7d32;
+    color: var(--brand-green);
 }
 
 
@@ -229,7 +250,7 @@ body {
     height: 50px;
 
     color: #ffffff;
-    background-color: #b71c1c;
+    background-color: var(--brand-red);
     border: none;
     border-radius: 9px;
 
@@ -244,7 +265,7 @@ body {
 }
 
 .login-button:hover {
-    background-color: #8e1111;
+    background-color: var(--brand-red-dark);
     transform: translateY(-1px);
     box-shadow: 0 7px 18px rgba(183, 28, 28, 0.3);
 }
@@ -263,7 +284,7 @@ body {
 }
 
 .create-account-link a {
-    color: #b71c1c;
+    color: var(--brand-navy);
     font-weight: bold;
     text-decoration: none;
 }
@@ -300,8 +321,8 @@ body {
 .recovery-modal h2 { margin-bottom: 8px; text-align: center; color: #222; }
 .recovery-modal form > p { margin-bottom: 20px; color: #777; font-size: 14px; line-height: 1.5; text-align: center; }
 .recovery-close { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border: 0; border-radius: 8px; color: #666; background: #f1f1f1; cursor: pointer; }
-.recovery-icon { width: 56px; height: 56px; margin: 0 auto 12px; display: grid; place-items: center; border-radius: 50%; color: #b71c1c; background: #ffebee; font-size: 22px; }
-.recovery-resend { display: block; margin: -5px auto 12px; border: 0; color: #b71c1c; background: transparent; font-weight: 600; cursor: pointer; }
+.recovery-icon { width: 56px; height: 56px; margin: 0 auto 12px; display: grid; place-items: center; border-radius: 50%; color: var(--brand-navy); background: #eef2fb; font-size: 22px; }
+.recovery-resend { display: block; margin: -5px auto 12px; border: 0; color: var(--brand-navy); background: transparent; font-weight: 600; cursor: pointer; }
 .recovery-resend:disabled { color: #999; cursor: not-allowed; }
 
 @media (max-width: 600px) {
