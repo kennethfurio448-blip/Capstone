@@ -3,9 +3,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const currentUserName =
         document.getElementById("currentUserName");
 
-    const welcomeName =
-        document.getElementById("welcomeName");
-
     const logoutButton =
         document.getElementById("logoutButton");
 
@@ -65,10 +62,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (currentUserName) {
         currentUserName.textContent = displayName;
-    }
-
-    if (welcomeName) {
-        welcomeName.textContent = displayName;
     }
 
     if (searchInput) {

@@ -384,73 +384,6 @@ a {
 }
 
 
-.welcome-banner {
-    position: relative;
-
-    min-height: 155px;
-    margin-bottom: 25px;
-    padding: 30px 35px;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    color: var(--white);
-    background: linear-gradient(
-        120deg,
-        var(--primary-dark),
-        var(--primary),
-        var(--red)
-    );
-
-    border-radius: 16px;
-    box-shadow: 0 10px 28px rgba(183, 28, 28, 0.22);
-    overflow: hidden;
-}
-
-.welcome-banner::after {
-    content: "";
-
-    position: absolute;
-    top: -85px;
-    right: 80px;
-
-    width: 220px;
-    height: 220px;
-
-    border: 35px solid rgba(255, 255, 255, 0.08);
-    border-radius: 50%;
-}
-
-.welcome-label {
-    margin-bottom: 8px;
-
-    color: #ffcdd2;
-    font-size: 11px;
-    font-weight: bold;
-    letter-spacing: 1.5px;
-}
-
-.welcome-banner h2 {
-    margin-bottom: 8px;
-    font-size: 26px;
-}
-
-.welcome-banner > div > p:last-child {
-    color: #f9dada;
-    font-size: 14px;
-}
-
-.banner-icon {
-    position: relative;
-    z-index: 2;
-
-    margin-right: 25px;
-    color: rgba(255, 255, 255, 0.25);
-    font-size: 75px;
-}
-
-
 .statistics-grid {
     margin-bottom: 25px;
 
@@ -958,14 +891,6 @@ a {
     .statistics-grid,
     .action-grid {
         grid-template-columns: 1fr;
-    }
-
-    .welcome-banner {
-        padding: 25px;
-    }
-
-    .banner-icon {
-        display: none;
     }
 
     .topbar-actions {
