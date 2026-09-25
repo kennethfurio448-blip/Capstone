@@ -161,7 +161,7 @@
 
         <section class="statistics-grid">
 
-            <article class="stat-card red">
+            <article class="stat-card red" data-filter-target="statusFilter" data-filter-value="all" data-action-label="Show all Mobility Assets">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-truck-medical"></i>
@@ -175,7 +175,7 @@
 
             </article>
 
-            <article class="stat-card green">
+            <article class="stat-card green" data-filter-target="statusFilter" data-filter-value="Available" data-action-label="Show available Mobility Assets">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-circle-check"></i>
@@ -189,7 +189,7 @@
 
             </article>
 
-            <article class="stat-card blue">
+            <article class="stat-card blue" data-filter-target="statusFilter" data-filter-value="Deployed|Assigned" data-filter-label="Deployed / Assigned" data-action-label="Show deployed or assigned Mobility Assets">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-route"></i>
@@ -203,7 +203,7 @@
 
             </article>
 
-            <article class="stat-card yellow">
+            <article class="stat-card yellow" data-filter-target="statusFilter" data-filter-value="For Repair|Under Maintenance" data-filter-label="Repair / Maintenance" data-action-label="Show Mobility Assets under repair or maintenance">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-screwdriver-wrench"></i>
@@ -543,6 +543,7 @@
 <script src="auth/supabase-auth.js"></script>
 <script src="auth/supabase-data.js?v=20260915-sync-fix"></script>
 <script src="pwa.js"></script>
+<script src="card-navigation.js"></script>
 <script src="mobility.js?v=20260915-sync-fix"></script>
 
 </body>

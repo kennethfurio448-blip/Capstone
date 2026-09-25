@@ -252,13 +252,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         const search = text(elements.transactionSearch.value).toLowerCase();
         const typeFilter = elements.itemTypeFilter.value;
         const statusFilter = elements.statusFilter.value;
+        const selectedStatuses = statusFilter.split("|");
         const filtered = records.filter(function (record) {
             const haystack = [record.id, record.borrower, record.department,
                 record.itemType, record.itemName, record.purpose, record.status]
                 .join(" ").toLowerCase();
             return haystack.includes(search) &&
                 (typeFilter === "all" || record.itemType === typeFilter) &&
-                (statusFilter === "all" || record.status === statusFilter);
+                (statusFilter === "all" || selectedStatuses.includes(record.status));
         });
 
         elements.transactionTableBody.innerHTML = "";

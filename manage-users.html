@@ -147,7 +147,7 @@
 
         <section class="statistics-grid">
 
-            <article class="stat-card red">
+            <article class="stat-card red" data-filter-target="roleFilter" data-filter-value="all" data-action-label="Show all System Users">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-users"></i>
@@ -161,7 +161,7 @@
 
             </article>
 
-            <article class="stat-card blue">
+            <article class="stat-card blue" data-filter-target="roleFilter" data-filter-value="admin" data-action-label="Show administrator accounts">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-user-shield"></i>
@@ -175,7 +175,7 @@
 
             </article>
 
-            <article class="stat-card green">
+            <article class="stat-card green" data-filter-target="roleFilter" data-filter-value="staff" data-action-label="Show staff accounts">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-user"></i>
@@ -189,7 +189,7 @@
 
             </article>
 
-            <article class="stat-card yellow">
+            <article class="stat-card yellow" data-filter-target="accountStatusFilter" data-filter-value="active" data-action-label="Show active accounts">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-user-check"></i>
@@ -524,6 +524,7 @@
 <script src="auth/offline-store.js"></script>
 <script src="auth/supabase-auth.js"></script>
 <script src="pwa.js"></script>
+<script src="card-navigation.js"></script>
 <script src="manage-users.js"></script>
 
 </body>

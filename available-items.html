@@ -124,7 +124,7 @@
             </header>
 
             <section class="statistics-grid">
-                <article class="stat-card orange">
+                <article class="stat-card orange" data-filter-target="availableItemType" data-filter-value="Medical Equipment" data-action-label="Show available Medical Equipment">
                     <div class="stat-icon">
                         <i class="fa-solid fa-suitcase-medical"></i>
                     </div>
@@ -136,7 +136,7 @@
                     </div>
                 </article>
 
-                <article class="stat-card blue">
+                <article class="stat-card blue" data-filter-target="availableItemType" data-filter-value="Mobility Asset" data-action-label="Show available Mobility Assets">
                     <div class="stat-icon">
                         <i class="fa-solid fa-truck-medical"></i>
                     </div>
@@ -148,7 +148,7 @@
                     </div>
                 </article>
 
-                <article class="stat-card green">
+                <article class="stat-card green" data-filter-target="availableItemType" data-filter-value="all" data-action-label="Show all available items">
                     <div class="stat-icon">
                         <i class="fa-solid fa-box-open"></i>
                     </div>
@@ -327,6 +327,7 @@
     <script src="auth/supabase-auth.js"></script>
     <script src="auth/supabase-data.js?v=20260915-sync-fix"></script>
     <script src="pwa.js"></script>
+    <script src="card-navigation.js"></script>
     <script src="available-items.js?v=20260915-borrowable-only"></script>
 </body>
 </html>

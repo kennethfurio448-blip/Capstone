@@ -344,6 +344,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const selectedStatus =
             statusFilter.value;
 
+        const selectedStatuses =
+            selectedStatus.split("|");
+
         const filteredEquipment =
             equipment.filter(function (item) {
                 const itemId =
@@ -379,7 +382,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const matchesStatus =
                     selectedStatus === "all" ||
-                    itemStatus === selectedStatus;
+                    selectedStatuses.includes(itemStatus);
 
                 return (
                     matchesSearch &&

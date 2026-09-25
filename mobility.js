@@ -310,6 +310,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const selectedStatus =
             statusFilter.value;
 
+        const selectedStatuses =
+            selectedStatus.split("|");
+
         const filteredVehicles = vehicles.filter(function (vehicle) {
             const matchesSearch =
                 vehicle.name.toLowerCase().includes(searchValue) ||
@@ -325,7 +328,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const matchesStatus =
                 selectedStatus === "all" ||
-                vehicle.status === selectedStatus;
+                selectedStatuses.includes(vehicle.status);
 
             return (
                 matchesSearch &&

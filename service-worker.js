@@ -1,12 +1,13 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v12-auth-slide-focus";
+const CACHE_NAME = "medtrack-shell-v13-clickable-cards";
 const APP_SHELL = [
     "/",
     "/index.html",
     "/landing.css",
     "/app-shell.css",
     "/brand-theme.css",
+    "/card-navigation.js",
     "/assets/pdrrmo-logo.png",
     "/assets/pdrrmo-logo-transparent.png",
     "/manifest.webmanifest",

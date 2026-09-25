@@ -146,7 +146,7 @@
 
         <section class="statistics-grid">
 
-            <article class="stat-card red">
+            <a class="stat-card red" href="medical-supplies.html?filter=statusFilter&amp;value=all" aria-label="Open all Medical Supplies">
                 <div class="stat-icon">
                     <i class="fa-solid fa-pills"></i>
                 </div>
@@ -156,9 +156,9 @@
                     <h3 id="supplyTotal"></h3>
                     <small>Total supply categories</small>
                 </div>
-            </article>
+            </a>
 
-            <article class="stat-card orange">
+            <a class="stat-card orange" href="medical-equipment.html?filter=statusFilter&amp;value=all" aria-label="Open all Medical Equipment">
                 <div class="stat-icon">
                     <i class="fa-solid fa-suitcase-medical"></i>
                 </div>
@@ -168,9 +168,9 @@
                     <h3 id="equipmentTotal"></h3>
                     <small>Registered equipment</small>
                 </div>
-            </article>
+            </a>
 
-            <article class="stat-card blue">
+            <a class="stat-card blue" href="mobility.html?filter=statusFilter&amp;value=Available" aria-label="Open available Mobility Assets">
                 <div class="stat-icon">
                     <i class="fa-solid fa-truck-medical"></i>
                 </div>
@@ -180,9 +180,9 @@
                     <h3 id="mobilityTotal"></h3>
                     <small>Available vehicles</small>
                 </div>
-            </article>
+            </a>
 
-            <article class="stat-card green">
+            <a class="stat-card green" href="manage-users.html?filter=roleFilter&amp;value=all" aria-label="Open all System Users">
                 <div class="stat-icon">
                     <i class="fa-solid fa-users"></i>
                 </div>
@@ -192,7 +192,7 @@
                     <h3 id="userTotal" aria-live="polite">&mdash;</h3>
                     <small>Admin and staff accounts</small>
                 </div>
-            </article>
+            </a>
 
         </section>
 
@@ -328,6 +328,7 @@
 <script src="auth/supabase-data.js?v=20260915-sync-fix"></script>
 <script src="pwa.js"></script>
 <script src="analytics.js"></script>
+<script src="card-navigation.js"></script>
 <script src="admin-dashboard.js"></script>
 
 </body>

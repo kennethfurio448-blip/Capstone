@@ -157,7 +157,7 @@
 
         <section class="statistics-grid">
 
-            <article class="stat-card red">
+            <article class="stat-card red" data-filter-target="actionFilter" data-filter-value="all" data-action-label="Show all recorded activities">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-list"></i>
@@ -171,7 +171,7 @@
 
             </article>
 
-            <article class="stat-card blue">
+            <article class="stat-card blue" data-filter-target="moduleFilter" data-filter-value="Authentication" data-action-label="Show login and logout activities">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-right-to-bracket"></i>
@@ -185,7 +185,7 @@
 
             </article>
 
-            <article class="stat-card green">
+            <article class="stat-card green" data-filter-target="actionFilter" data-filter-value="Created" data-action-label="Show created records">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-plus"></i>
@@ -199,7 +199,7 @@
 
             </article>
 
-            <article class="stat-card yellow">
+            <article class="stat-card yellow" data-filter-target="actionFilter" data-filter-value="Updated" data-action-label="Show updated records">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-pen"></i>
@@ -334,6 +334,7 @@
 <script src="auth/offline-store.js"></script>
 <script src="auth/supabase-auth.js"></script>
 <script src="pwa.js"></script>
+<script src="card-navigation.js"></script>
 <script src="audit-logs.js"></script>
 
 </body>

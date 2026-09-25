@@ -134,7 +134,7 @@
 
         <section class="statistics-grid">
 
-            <article class="stat-card red">
+            <a class="stat-card red" href="medical-supplies.html?filter=statusFilter&amp;value=all" aria-label="Open all Medical Supplies">
                 <div class="stat-icon">
                     <i class="fa-solid fa-pills"></i>
                 </div>
@@ -144,9 +144,9 @@
                     <h3 id="supplyTotal">0</h3>
                     <small>Total supply categories</small>
                 </div>
-            </article>
+            </a>
 
-            <article class="stat-card orange">
+            <a class="stat-card orange" href="medical-equipment.html?filter=statusFilter&amp;value=all" aria-label="Open all Medical Equipment">
                 <div class="stat-icon">
                     <i class="fa-solid fa-suitcase-medical"></i>
                 </div>
@@ -156,9 +156,9 @@
                     <h3 id="equipmentTotal">0</h3>
                     <small>Registered equipment</small>
                 </div>
-            </article>
+            </a>
 
-            <article class="stat-card blue">
+            <a class="stat-card blue" href="mobility.html?filter=statusFilter&amp;value=Available" aria-label="Open available Mobility Assets">
                 <div class="stat-icon">
                     <i class="fa-solid fa-truck-medical"></i>
                 </div>
@@ -168,9 +168,9 @@
                     <h3 id="availableMobilityTotal">0</h3>
                     <small>Ready for deployment</small>
                 </div>
-            </article>
+            </a>
 
-            <article class="stat-card yellow">
+            <a class="stat-card yellow" href="medical-supplies.html?filter=statusFilter&amp;value=Low%20Stock" aria-label="Open low-stock Medical Supplies">
                 <div class="stat-icon">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
@@ -180,7 +180,7 @@
                     <h3 id="lowStockTotal">0</h3>
                     <small>Needs restocking</small>
                 </div>
-            </article>
+            </a>
 
         </section>
 
@@ -283,6 +283,7 @@
 <script src="auth/supabase-data.js?v=20260915-sync-fix"></script>
 <script src="pwa.js"></script>
 <script src="analytics.js"></script>
+<script src="card-navigation.js"></script>
 <script src="staff-dashboard.js"></script>
 
 </body>
