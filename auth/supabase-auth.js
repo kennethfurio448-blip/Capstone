@@ -396,6 +396,233 @@
         return "";
     }
 
+    function createMfaGate(mode, enrollment) {
+        document.body.hidden = false;
+
+        const gate = document.createElement("div");
+        gate.className = "mfa-gate";
+        gate.setAttribute("role", "dialog");
+        gate.setAttribute("aria-modal", "true");
+        gate.setAttribute("aria-labelledby", "mfaGateTitle");
+
+        const dialog = document.createElement("section");
+        dialog.className = "mfa-dialog";
+
+        const icon = document.createElement("div");
+        icon.className = "mfa-dialog-icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = "\u2713";
+
+        const title = document.createElement("h2");
+        title.id = "mfaGateTitle";
+        title.textContent = mode === "enroll"
+            ? "Secure your administrator account"
+            : "Administrator verification required";
+
+        const description = document.createElement("p");
+        description.textContent = mode === "enroll"
+            ? "Scan this QR code with an authenticator app, then enter its 6-digit code."
+            : "Enter the 6-digit code from your authenticator app to continue.";
+
+        dialog.append(icon, title, description);
+
+        if (mode === "enroll" && enrollment) {
+            const qr = document.createElement("img");
+            qr.className = "mfa-qr-code";
+            qr.src = enrollment.totp.qr_code;
+            qr.alt = "Authenticator enrollment QR code";
+            dialog.appendChild(qr);
+
+            const secretLabel = document.createElement("p");
+            secretLabel.className = "mfa-secret-label";
+            secretLabel.textContent = "Cannot scan? Enter this setup key:";
+
+            const secret = document.createElement("code");
+            secret.className = "mfa-secret";
+            secret.textContent = enrollment.totp.secret;
+            dialog.append(secretLabel, secret);
+        }
+
+        const form = document.createElement("form");
+        form.className = "mfa-form";
+        form.noValidate = true;
+
+        const label = document.createElement("label");
+        label.htmlFor = "mfaVerificationCode";
+        label.textContent = "Verification code";
+
+        const input = document.createElement("input");
+        input.id = "mfaVerificationCode";
+        input.name = "mfaVerificationCode";
+        input.type = "text";
+        input.inputMode = "numeric";
+        input.autocomplete = "one-time-code";
+        input.pattern = "[0-9]{6}";
+        input.maxLength = 6;
+        input.placeholder = "000000";
+        input.required = true;
+
+        const error = document.createElement("p");
+        error.className = "mfa-error";
+        error.setAttribute("role", "alert");
+        error.hidden = true;
+
+        const actions = document.createElement("div");
+        actions.className = "mfa-actions";
+
+        const verify = document.createElement("button");
+        verify.type = "submit";
+        verify.className = "mfa-primary-action";
+        verify.textContent = mode === "enroll" ? "Enable and Continue" : "Verify and Continue";
+
+        const signOutButton = document.createElement("button");
+        signOutButton.type = "button";
+        signOutButton.className = "mfa-secondary-action";
+        signOutButton.textContent = "Sign Out";
+
+        actions.append(verify, signOutButton);
+        form.append(label, input, error, actions);
+        dialog.appendChild(form);
+        gate.appendChild(dialog);
+        document.body.appendChild(gate);
+
+        const pageLayout = document.querySelector(".page-layout");
+        if (pageLayout) {
+            pageLayout.inert = true;
+            pageLayout.setAttribute("aria-hidden", "true");
+        }
+
+        function release() {
+            if (pageLayout) {
+                pageLayout.inert = false;
+                pageLayout.removeAttribute("aria-hidden");
+            }
+            gate.remove();
+        }
+
+        return {
+            gate,
+            form,
+            input,
+            error,
+            verify,
+            signOutButton,
+            release
+        };
+    }
+
+    async function recordMfaEvent(action) {
+        try {
+            const result = await client.rpc("medtrack_record_mfa_event", {
+                p_action: action
+            });
+            if (result.error) {
+                console.error("Unable to record MFA audit event:", result.error);
+            }
+        } catch (error) {
+            console.error("Unable to record MFA audit event:", error);
+        }
+    }
+
+    async function completeMfaChallenge(factorId, mode, enrollment) {
+        return new Promise(function (resolve) {
+            const controls = createMfaGate(mode, enrollment);
+
+            controls.signOutButton.addEventListener("click", async function () {
+                controls.signOutButton.disabled = true;
+                controls.verify.disabled = true;
+                await signOutAndRedirect();
+                resolve(false);
+            });
+
+            controls.form.addEventListener("submit", async function (event) {
+                event.preventDefault();
+                const code = controls.input.value.replace(/\D/g, "");
+
+                if (!/^\d{6}$/.test(code)) {
+                    controls.error.textContent = "Enter the complete 6-digit code.";
+                    controls.error.hidden = false;
+                    controls.input.focus();
+                    return;
+                }
+
+                controls.error.hidden = true;
+                controls.verify.disabled = true;
+                controls.signOutButton.disabled = true;
+                controls.verify.textContent = "Verifying...";
+
+                let result;
+                try {
+                    result = await client.auth.mfa.challengeAndVerify({
+                        factorId: factorId,
+                        code: code
+                    });
+                } catch (verificationError) {
+                    console.error("MFA verification failed:", verificationError);
+                    result = { error: verificationError };
+                }
+
+                if (result.error) {
+                    controls.error.textContent = "That code is invalid or expired. Try again.";
+                    controls.error.hidden = false;
+                    controls.verify.disabled = false;
+                    controls.signOutButton.disabled = false;
+                    controls.verify.textContent = mode === "enroll"
+                        ? "Enable and Continue"
+                        : "Verify and Continue";
+                    controls.input.select();
+                    return;
+                }
+
+                await recordMfaEvent(mode === "enroll" ? "MFA Enrolled" : "MFA Verified");
+                controls.input.value = "";
+                controls.release();
+                resolve(true);
+            });
+
+            controls.input.addEventListener("input", function () {
+                controls.input.value = controls.input.value.replace(/\D/g, "").slice(0, 6);
+            });
+
+            controls.input.focus();
+        });
+    }
+
+    async function ensureAdminMfa(profile) {
+        if (!profile || profile.role !== "admin") return true;
+
+        if (!navigator.onLine) {
+            throw new Error("Administrator MFA verification requires an internet connection.");
+        }
+
+        const assurance = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (assurance.error) throw assurance.error;
+        if (assurance.data.currentLevel === "aal2") return true;
+
+        const factors = await client.auth.mfa.listFactors();
+        if (factors.error) throw factors.error;
+
+        const verifiedFactor = (factors.data.totp || []).find(function (factor) {
+            return factor.status === "verified";
+        });
+
+        if (verifiedFactor) {
+            return completeMfaChallenge(verifiedFactor.id, "verify");
+        }
+
+        const enrollment = await client.auth.mfa.enroll({
+            factorType: "totp",
+            friendlyName: "MedTrack Administrator"
+        });
+        if (enrollment.error) throw enrollment.error;
+
+        return completeMfaChallenge(
+            enrollment.data.id,
+            "enroll",
+            enrollment.data
+        );
+    }
+
     async function requireRoles(allowedRoles) {
         const permittedRoles = currentPageRoles(allowedRoles);
         guardedRoles = permittedRoles;
@@ -420,6 +647,9 @@
                 redirectToDashboard(profile);
                 return null;
             }
+
+            const mfaComplete = await ensureAdminMfa(profile);
+            if (!mfaComplete) return null;
 
             preparePageShell(profile);
             document.body.hidden = false;

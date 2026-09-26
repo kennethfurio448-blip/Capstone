@@ -140,6 +140,12 @@ const offlineMigrationPath = join(
   "migrations",
   "20260917150000_offline_borrow_idempotency.sql",
 );
+const mfaMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20260926090000_safe_admin_mfa_enforcement.sql",
+);
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
 
@@ -278,6 +284,7 @@ try {
 
 try {
   const authGuard = readFileSync(authGuardPath, "utf8");
+  const mfaMigration = readFileSync(mfaMigrationPath, "utf8");
 
   if (
     !authGuard.includes("SENSITIVE_CACHE_KEYS") ||
@@ -288,8 +295,32 @@ try {
   ) {
     failures.push("supabase-auth: sensitive browser data cleanup is incomplete");
   }
+
+  for (const requiredMfaControl of [
+    "getAuthenticatorAssuranceLevel",
+    "listFactors",
+    "challengeAndVerify",
+    'factorType: "totp"',
+    "ensureAdminMfa",
+  ]) {
+    if (!authGuard.includes(requiredMfaControl)) {
+      failures.push(`supabase-auth: missing administrator MFA control ${requiredMfaControl}`);
+    }
+  }
+
+  for (const requiredMfaDatabaseControl of [
+    "medtrack_admin_mfa_satisfied",
+    "auth.mfa_factors",
+    "medtrack_mfa_access_allowed",
+    'policyname = \'Admin MFA is required\'',
+    "medtrack_record_mfa_event",
+  ]) {
+    if (!mfaMigration.includes(requiredMfaDatabaseControl)) {
+      failures.push(`MFA migration: missing database control ${requiredMfaDatabaseControl}`);
+    }
+  }
 } catch (error) {
-  failures.push(`supabase-auth: unable to inspect session cleanup controls (${error.message})`);
+  failures.push(`supabase-auth: unable to inspect session and MFA controls (${error.message})`);
 }
 
 try {
@@ -324,6 +355,19 @@ try {
     failures.push("service-worker: offline app-shell caching is incomplete");
   }
 
+  const appShellBlock = serviceWorker.match(
+    /const APP_SHELL = \[([\s\S]*?)\];/,
+  )?.[1] || "";
+  const appShellPaths = [...appShellBlock.matchAll(/["'](\/[^"]*?)["']/g)]
+    .map((match) => match[1]);
+
+  for (const assetPath of appShellPaths) {
+    if (assetPath === "/" || assetPath.startsWith("/api/")) continue;
+    if (!existsSync(join(root, assetPath.slice(1)))) {
+      failures.push(`service-worker: missing pre-cached asset ${assetPath}`);
+    }
+  }
+
   const iconSizes = new Set(
     (manifest.icons || []).map((icon) => icon.sizes),
   );
@@ -333,6 +377,13 @@ try {
     !iconSizes.has("512x512")
   ) {
     failures.push("manifest: installable PWA metadata is incomplete");
+  }
+
+  for (const icon of manifest.icons || []) {
+    const iconPath = String(icon.src || "").replace(/^\//, "");
+    if (iconPath && !existsSync(join(root, iconPath))) {
+      failures.push(`manifest: missing icon asset ${icon.src}`);
+    }
   }
 
   if (

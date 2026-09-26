@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v13-clickable-cards";
+const CACHE_NAME = "medtrack-shell-v14-security-hardening";
 const APP_SHELL = [
     "/",
     "/index.html",
