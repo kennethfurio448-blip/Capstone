@@ -66,21 +66,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    if (notificationButton) {
-        notificationButton.addEventListener("click", function () {
-            const alertsSection =
-                document.getElementById("inventoryAlertsSection");
-
-            if (alertsSection) {
-                alertsSection.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
-                });
-                alertsSection.focus({ preventScroll: true });
-            }
-        });
-    }
-
     if (logoutButton) {
         logoutButton.addEventListener("click", async function () {
             const confirmLogout = confirm(

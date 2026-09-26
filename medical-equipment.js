@@ -995,38 +995,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     );
 
 
-    notificationButton.addEventListener(
-        "click",
-        function () {
-            const equipment = getEquipment();
-
-            const alerts =
-                equipment.filter(function (item) {
-                    return (
-                        ["Missing", "Damaged", "For Repair"].includes(
-                            item.status
-                        ) ||
-                        isMaintenanceOverdue(
-                            item.maintenanceDate
-                        )
-                    );
-                });
-
-            if (alerts.length === 0) {
-                alert(
-                    "There are no equipment alerts."
-                );
-
-                return;
-            }
-
-            alert(
-                `There are ${alerts.length} equipment items requiring attention.`
-            );
-        }
-    );
-
-
     window.addEventListener(
         "storage",
         function (event) {

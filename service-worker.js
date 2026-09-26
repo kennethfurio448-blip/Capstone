@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v14-security-hardening";
+const CACHE_NAME = "medtrack-shell-v15-notifications";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -8,6 +8,7 @@ const APP_SHELL = [
     "/app-shell.css",
     "/brand-theme.css",
     "/card-navigation.js",
+    "/notification-center.js",
     "/assets/pdrrmo-logo.png",
     "/assets/pdrrmo-logo-transparent.png",
     "/manifest.webmanifest",

@@ -558,13 +558,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape" && elements.statusModal.classList.contains("show")) closeModal();
     });
-    elements.notificationButton.addEventListener("click", function () {
-        const count = getStatusRecords().filter(function (record) {
-            return record.recordKind !== "history" &&
-                ["Missing", "Damaged", "For Repair"].includes(record.status);
-        }).length;
-        window.alert(count ? `${count} items currently need attention.` : "No items currently need attention.");
-    });
     elements.logoutButton.addEventListener("click", async function () {
         if (window.confirm("Are you sure you want to log out?")) {
             await window.medtrackAuth.signOutAndRedirect();

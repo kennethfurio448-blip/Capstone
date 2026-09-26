@@ -1421,34 +1421,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     );
 
 
-    notificationButton.addEventListener(
-        "click",
-        function () {
-            const supplies = getSupplies();
-
-            const alerts =
-                supplies.filter(function (supply) {
-                    return (
-                        getSupplyStatus(supply) !==
-                        "Available"
-                    );
-                });
-
-            if (alerts.length === 0) {
-                alert(
-                    "There are no medical supply alerts."
-                );
-
-                return;
-            }
-
-            alert(
-                `There are ${alerts.length} medical supplies requiring attention.`
-            );
-        }
-    );
-
-
     window.addEventListener(
         "storage",
         function (event) {

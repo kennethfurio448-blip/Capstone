@@ -78,6 +78,12 @@ for (const file of files.filter((path) => extname(path) === ".html")) {
   if (/<style(?:\s|>)/i.test(html)) {
     failures.push(`${displayPath}: inline style blocks are not allowed`);
   }
+  if (
+    html.includes("notification-button") &&
+    !html.includes('src="notification-center.js"')
+  ) {
+    failures.push(`${displayPath}: notification bell is missing the shared dropdown`);
+  }
 
   for (const [url, integrity] of approvedExternalAssets) {
     if (!html.includes(url)) continue;
@@ -133,6 +139,7 @@ const authGuardPath = join(root, "auth", "supabase-auth.js");
 const dataSyncPath = join(root, "auth", "supabase-data.js");
 const offlineStorePath = join(root, "auth", "offline-store.js");
 const serviceWorkerPath = join(root, "service-worker.js");
+const notificationCenterPath = join(root, "notification-center.js");
 const manifestPath = join(root, "manifest.webmanifest");
 const offlineMigrationPath = join(
   root,
@@ -148,6 +155,27 @@ const mfaMigrationPath = join(
 );
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
+
+try {
+  const notificationCenter = readFileSync(notificationCenterPath, "utf8");
+
+  for (const requiredNotificationControl of [
+    "medtrackMedicalSupplies",
+    "medtrackBorrowTransactions",
+    "low-stock",
+    "expired",
+    "overdue",
+    "supplySearch",
+    "transactionSearch",
+    "notification.timestamp.toISOString()",
+  ]) {
+    if (!notificationCenter.includes(requiredNotificationControl)) {
+      failures.push(`notification center: missing ${requiredNotificationControl}`);
+    }
+  }
+} catch (error) {
+  failures.push(`notification center: unable to inspect shared dropdown (${error.message})`);
+}
 
 try {
   const vercelConfig = JSON.parse(readFileSync(vercelConfigPath, "utf8"));

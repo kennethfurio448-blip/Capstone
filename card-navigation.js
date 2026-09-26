@@ -135,23 +135,34 @@
         const parameters = new URLSearchParams(window.location.search);
         const filterId = parameters.get("filter");
         const value = parameters.get("value");
+        const searchId = parameters.get("search");
+        const query = parameters.get("query");
+        let relatedControl = null;
 
-        if (!filterId || !value) {
-            return;
+        if (filterId && value) {
+            const filter = document.getElementById(filterId);
+            if (filter) {
+                ensureFilterOption(filter, value, parameters.get("label") || value);
+                filter.value = value;
+                filter.dispatchEvent(new Event("change", { bubbles: true }));
+                relatedControl = filter;
+            }
         }
 
-        const filter = document.getElementById(filterId);
-
-        if (!filter) {
-            return;
+        if (searchId && query) {
+            const search = document.getElementById(searchId);
+            if (search) {
+                search.value = query;
+                search.dispatchEvent(new Event("input", { bubbles: true }));
+                search.dispatchEvent(new Event("change", { bubbles: true }));
+                relatedControl = search;
+            }
         }
 
-        ensureFilterOption(filter, value, parameters.get("label") || value);
-        filter.value = value;
-        filter.dispatchEvent(new Event("change", { bubbles: true }));
+        if (!relatedControl) return;
 
         window.setTimeout(function () {
-            scrollToRelatedSection({ dataset: {} }, filter);
+            scrollToRelatedSection({ dataset: {} }, relatedControl);
         }, 100);
     }
 

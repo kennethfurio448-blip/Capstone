@@ -1922,44 +1922,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     );
 
 
-    notificationButton.addEventListener(
-        "click",
-        function () {
-            const requests = getRequests();
-
-            const urgentRequests =
-                requests.filter(
-                    function (request) {
-                        return (
-                            request.status !==
-                                "Completed" &&
-                            request.status !==
-                                "Cancelled" &&
-                            (
-                                request.priority ===
-                                    "Critical" ||
-                                request.priority ===
-                                    "High"
-                            )
-                        );
-                    }
-                );
-
-            if (urgentRequests.length === 0) {
-                alert(
-                    "There are no urgent response requests."
-                );
-
-                return;
-            }
-
-            alert(
-                `There are ${urgentRequests.length} urgent response requests.`
-            );
-        }
-    );
-
-
     logoutButton.addEventListener(
         "click",
         async function () {

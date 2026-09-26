@@ -771,28 +771,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
 
-    notificationButton.addEventListener("click", function () {
-        const vehicles = getVehicles();
-
-        const alerts = vehicles.filter(function (vehicle) {
-            return (
-                ["For Repair", "Under Maintenance"].includes(
-                    vehicle.status
-                ) ||
-                isMaintenanceOverdue(vehicle.maintenanceDate)
-            );
-        });
-
-        if (alerts.length === 0) {
-            alert("There are no mobility alerts.");
-            return;
-        }
-
-        alert(
-            `There are ${alerts.length} mobility assets requiring attention.`
-        );
-    });
-
     window.addEventListener("medtrack:data-ready", renderVehicles);
     window.addEventListener("medtrack:inventory-changed", renderVehicles);
     window.addEventListener("storage", function (event) {
