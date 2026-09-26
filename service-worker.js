@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v19-filter-legacy-overdue";
+const CACHE_NAME = "medtrack-shell-v20-supply-out-of-stock-card";
 const APP_SHELL = [
     "/",
     "/index.html",

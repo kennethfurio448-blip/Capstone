@@ -25,6 +25,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const lowStockSupplies =
         document.getElementById("lowStockSupplies");
 
+    const outOfStockSupplies =
+        document.getElementById("outOfStockSupplies");
+
     const expiredSupplies =
         document.getElementById("expiredSupplies");
 
@@ -143,6 +146,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         totalSupplies,
         availableSupplies,
         lowStockSupplies,
+        outOfStockSupplies,
         expiredSupplies,
         supplyTableBody,
         emptyState,
@@ -533,6 +537,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function updateStatistics(supplies) {
         let availableCount = 0;
         let lowStockCount = 0;
+        let outOfStockCount = 0;
         let expiredCount = 0;
         let notificationTotal = 0;
 
@@ -555,6 +560,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             if (status === "Out of Stock") {
+                outOfStockCount++;
                 notificationTotal++;
             }
         });
@@ -567,6 +573,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         lowStockSupplies.textContent =
             String(lowStockCount);
+
+        outOfStockSupplies.textContent =
+            String(outOfStockCount);
 
         expiredSupplies.textContent =
             String(expiredCount);
