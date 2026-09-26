@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v16-logout-dialog";
+const CACHE_NAME = "medtrack-shell-v17-status-chart";
 const APP_SHELL = [
     "/",
     "/index.html",

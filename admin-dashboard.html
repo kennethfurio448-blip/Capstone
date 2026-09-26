@@ -225,35 +225,33 @@
 
                 <div class="card-heading">
                     <div>
-                        <h3>Inventory Activity Trends</h3>
-                        <p>Verified inventory transactions and status changes</p>
+                        <h3>Inventory Status by Category</h3>
+                        <p>Live operational status across all inventory modules</p>
                     </div>
 
-                    <select id="inventoryTrendPeriod"
-                            aria-label="Inventory activity period">
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                        <option value="year">This Year</option>
-                    </select>
+                    <span class="inventory-status-live">
+                        <span aria-hidden="true"></span>
+                        Live Data
+                    </span>
                 </div>
 
                 <div id="inventoryTrendStatus"
                      class="trend-status"
                      role="status"
                      aria-live="polite">
-                    Loading inventory activity...
+                    Loading current inventory status...
                 </div>
 
                 <div class="trend-chart-scroll">
                     <div id="inventoryTrendChart"
                          class="trend-chart"
                          role="img"
-                         aria-label="Inventory activity chart"></div>
+                         aria-label="Inventory status by category chart"></div>
                 </div>
 
                 <div id="inventoryTrendLegend"
                      class="trend-legend"
-                     aria-label="Inventory activity legend"></div>
+                     aria-label="Inventory status legend"></div>
 
             </article>
 
