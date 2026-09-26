@@ -755,7 +755,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             await loadAccounts();
         } catch (error) {
-            alert(
+            window.medtrackDialog.alert(
                 error.message ||
                 "Unable to change the account status."
             );
@@ -785,7 +785,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             deleteModal.classList.remove("show");
             await loadAccounts();
         } catch (error) {
-            alert(
+            window.medtrackDialog.alert(
                 error.message ||
                 "Unable to delete the account."
             );
@@ -854,7 +854,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     logoutButton.addEventListener("click", async function () {
-        const confirmLogout = confirm(
+        const confirmLogout = await window.medtrackDialog.confirm(
             "Are you sure you want to log out?"
         );
 
@@ -870,7 +870,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         await loadAccounts();
     } catch (error) {
         console.error("Unable to load Supabase accounts:", error);
-        alert(
+        window.medtrackDialog.alert(
             error.message ||
             "Unable to load the account list."
         );

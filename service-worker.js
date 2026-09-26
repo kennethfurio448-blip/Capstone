@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v21-remove-admin-controls";
+const CACHE_NAME = "medtrack-shell-v22-reliability-controls";
 const APP_SHELL = [
     "/",
     "/index.html",

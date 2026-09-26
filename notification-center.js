@@ -2,6 +2,7 @@
     "use strict";
 
     const DROPDOWN_ID = "medtrackNotificationDropdown";
+    const STATE_KEY = "medtrackNotificationState";
     const BORROWABLE_ITEM_TYPES = new Set([
         "Medical Equipment",
         "Mobility Asset"
@@ -9,6 +10,7 @@
     let dropdown = null;
     let activeButton = null;
     let refreshTimer = null;
+    let activeView = "active";
 
     function storedArray(key) {
         try {
@@ -28,6 +30,25 @@
     function number(value) {
         const normalized = Number(value);
         return Number.isFinite(normalized) ? normalized : 0;
+    }
+
+    function notificationState() {
+        try {
+            const state = JSON.parse(localStorage.getItem(STATE_KEY) || "{}");
+            return {
+                readIds: Array.isArray(state.readIds) ? state.readIds : [],
+                dismissed: Array.isArray(state.dismissed) ? state.dismissed : []
+            };
+        } catch (error) {
+            return { readIds: [], dismissed: [] };
+        }
+    }
+
+    function saveNotificationState(state) {
+        localStorage.setItem(STATE_KEY, JSON.stringify({
+            readIds: Array.from(new Set(state.readIds)).slice(-250),
+            dismissed: state.dismissed.slice(-100)
+        }));
     }
 
     function localDate(value, endOfDay) {
@@ -75,11 +96,21 @@
                 id || name
             );
 
-            if (quantity <= threshold) {
+            if (quantity <= 0) {
+                notifications.push({
+                    id: `out-of-stock:${id || name}`,
+                    type: "out-of-stock",
+                    icon: "fa-box-open",
+                    label: "Out of stock",
+                    message: `${name} has no ${unit} remaining and needs immediate replenishment.`,
+                    timestamp: detectionTimestamp(supply),
+                    href: href
+                });
+            } else if (quantity <= threshold) {
                 notifications.push({
                     id: `low-stock:${id || name}`,
                     type: "low-stock",
-                    icon: "fa-box-open",
+                    icon: "fa-arrow-trend-down",
                     label: "Low stock",
                     message: `${name} has ${quantity} ${unit} remaining (minimum ${threshold}).`,
                     timestamp: detectionTimestamp(supply),
@@ -135,7 +166,12 @@
         });
 
         return notifications.sort(function (left, right) {
-            const priority = { expired: 3, overdue: 2, "low-stock": 1 };
+            const priority = {
+                "out-of-stock": 4,
+                expired: 3,
+                overdue: 2,
+                "low-stock": 1
+            };
             const priorityDifference = priority[right.type] - priority[left.type];
             return priorityDifference || right.timestamp - left.timestamp;
         });
@@ -164,6 +200,11 @@
             '  <div><strong>Notifications</strong><span id="notificationDropdownSummary"></span></div>',
             '  <button type="button" class="notification-close" aria-label="Close notifications">&times;</button>',
             '</div>',
+            '<div class="notification-toolbar">',
+            '  <button type="button" data-notification-view="active" class="is-active">Active</button>',
+            '  <button type="button" data-notification-view="history">History</button>',
+            '  <button type="button" data-notification-action="read-all">Mark all read</button>',
+            '</div>',
             '<div class="notification-list" id="notificationDropdownList"></div>'
         ].join("");
         document.body.appendChild(dropdown);
@@ -172,30 +213,74 @@
             "click",
             closeDropdown
         );
+        dropdown.addEventListener("click", handleDropdownAction);
         return dropdown;
     }
 
-    function renderDropdown(notifications) {
+    function activeNotifications(notifications, state) {
+        const dismissedVersions = new Set(state.dismissed.map(function (item) {
+            return `${item.id}@${item.timestamp}`;
+        }));
+        return notifications.filter(function (notification) {
+            return !dismissedVersions.has(notificationVersion(notification));
+        });
+    }
+
+    function notificationVersion(notification) {
+        return `${notification.id}@${notification.timestamp.toISOString()}`;
+    }
+
+    function historyNotifications(state) {
+        return state.dismissed.map(function (item) {
+            return {
+                ...item,
+                timestamp: localDate(item.timestamp, false) || new Date()
+            };
+        }).reverse();
+    }
+
+    function renderDropdown() {
         const panel = ensureDropdown();
         const summary = panel.querySelector("#notificationDropdownSummary");
         const list = panel.querySelector("#notificationDropdownList");
-        summary.textContent = notifications.length
-            ? `${notifications.length} item${notifications.length === 1 ? "" : "s"} need attention`
-            : "You're all caught up";
+        const state = notificationState();
+        const active = activeNotifications(buildNotifications(), state);
+        const notifications = activeView === "history"
+            ? historyNotifications(state)
+            : active;
+        const unread = active.filter(function (notification) {
+            return !state.readIds.includes(notificationVersion(notification));
+        }).length;
+        summary.textContent = activeView === "history"
+            ? `${notifications.length} dismissed notification${notifications.length === 1 ? "" : "s"}`
+            : (active.length
+                ? `${active.length} active, ${unread} unread`
+                : "You're all caught up");
+        panel.querySelectorAll("[data-notification-view]").forEach(function (button) {
+            button.classList.toggle("is-active", button.dataset.notificationView === activeView);
+        });
+        panel.querySelector('[data-notification-action="read-all"]').hidden =
+            activeView === "history" || unread === 0;
         list.replaceChildren();
 
         if (notifications.length === 0) {
             const empty = document.createElement("div");
             empty.className = "notification-empty";
-            empty.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i><p>No current notifications.</p>';
+            empty.innerHTML = activeView === "history"
+                ? '<i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><p>No notification history.</p>'
+                : '<i class="fa-solid fa-circle-check" aria-hidden="true"></i><p>No current notifications.</p>';
             list.appendChild(empty);
             return;
         }
 
         notifications.forEach(function (notification) {
+            const row = document.createElement("div");
+            row.className = "notification-row";
+
             const link = document.createElement("a");
             link.className = `notification-item notification-${notification.type}`;
             link.href = notification.href;
+            link.dataset.notificationId = notification.id;
 
             const icon = document.createElement("span");
             icon.className = "notification-item-icon";
@@ -217,8 +302,74 @@
 
             content.append(label, message, timestamp);
             link.append(icon, content);
-            list.appendChild(link);
+
+            const action = document.createElement("button");
+            action.type = "button";
+            action.className = "notification-item-action";
+            action.dataset.notificationAction = activeView === "history" ? "restore" : "dismiss";
+            action.dataset.notificationId = notification.id;
+            action.setAttribute(
+                "aria-label",
+                activeView === "history" ? "Restore notification" : "Dismiss notification"
+            );
+            action.innerHTML = activeView === "history"
+                ? '<i class="fa-solid fa-rotate-left" aria-hidden="true"></i>'
+                : '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+            row.append(link, action);
+            list.appendChild(row);
         });
+    }
+
+    function dismissNotification(notificationId) {
+        const state = notificationState();
+        const notification = buildNotifications().find(function (item) {
+            return item.id === notificationId;
+        });
+        if (!notification) return;
+        state.dismissed = state.dismissed.filter(function (item) {
+            return item.id !== notificationId;
+        });
+        state.dismissed.push({
+            ...notification,
+            timestamp: notification.timestamp.toISOString(),
+            dismissedAt: new Date().toISOString()
+        });
+        saveNotificationState(state);
+    }
+
+    function restoreNotification(notificationId) {
+        const state = notificationState();
+        state.dismissed = state.dismissed.filter(function (item) {
+            return item.id !== notificationId;
+        });
+        saveNotificationState(state);
+    }
+
+    function markAllRead() {
+        const state = notificationState();
+        const active = activeNotifications(buildNotifications(), state);
+        state.readIds.push(...active.map(notificationVersion));
+        saveNotificationState(state);
+    }
+
+    function handleDropdownAction(event) {
+        const control = event.target instanceof Element
+            ? event.target.closest("[data-notification-action], [data-notification-view]")
+            : null;
+        if (!control) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (control.dataset.notificationView) {
+            activeView = control.dataset.notificationView;
+        } else if (control.dataset.notificationAction === "read-all") {
+            markAllRead();
+        } else if (control.dataset.notificationAction === "dismiss") {
+            dismissNotification(control.dataset.notificationId);
+        } else if (control.dataset.notificationAction === "restore") {
+            restoreNotification(control.dataset.notificationId);
+        }
+        renderDropdown();
+        refreshBadges();
     }
 
     function positionDropdown() {
@@ -256,7 +407,8 @@
         }
 
         activeButton = button;
-        renderDropdown(buildNotifications());
+        activeView = "active";
+        renderDropdown();
         panel.hidden = false;
         button.setAttribute("aria-expanded", "true");
         positionDropdown();
@@ -264,12 +416,16 @@
     }
 
     function refreshBadges() {
-        const notifications = buildNotifications();
+        const state = notificationState();
+        const notifications = activeNotifications(buildNotifications(), state);
+        const unread = notifications.filter(function (notification) {
+            return !state.readIds.includes(notificationVersion(notification));
+        });
         document.querySelectorAll(".notification-button").forEach(function (button) {
             const badge = button.querySelector("span");
             if (badge) {
-                badge.textContent = String(notifications.length);
-                badge.hidden = notifications.length === 0;
+                badge.textContent = String(unread.length);
+                badge.hidden = unread.length === 0;
             }
             button.type = "button";
             button.setAttribute("aria-haspopup", "dialog");
@@ -277,14 +433,14 @@
             button.setAttribute("aria-expanded", "false");
             button.setAttribute(
                 "aria-label",
-                notifications.length
-                    ? `Open ${notifications.length} notifications`
+                unread.length
+                    ? `Open ${unread.length} unread notifications`
                     : "Open notifications"
             );
         });
 
         if (dropdown && !dropdown.hidden) {
-            renderDropdown(notifications);
+            renderDropdown();
             positionDropdown();
         }
     }

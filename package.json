@@ -4,7 +4,9 @@
   "main": "admin-dashboard.js",
   "scripts": {
     "check": "node scripts/check-project.mjs",
-    "test": "npm run check"
+    "test": "npm run check && npm run test:e2e",
+    "test:e2e": "playwright test",
+    "verify:deployment": "node scripts/verify-deployment.mjs"
   },
   "repository": {
     "type": "git",
@@ -17,8 +19,9 @@
     "url": "https://github.com/kennethfurio448-blip/Capstone/issues"
   },
   "homepage": "https://github.com/kennethfurio448-blip/Capstone#readme",
-  "description": "",
+  "description": "Secure medical inventory and emergency resource management system for PDRRMO.",
   "devDependencies": {
+    "@playwright/test": "^1.55.1",
     "supabase": "^2.117.0"
   }
 }

@@ -140,6 +140,11 @@ const dataSyncPath = join(root, "auth", "supabase-data.js");
 const offlineStorePath = join(root, "auth", "offline-store.js");
 const serviceWorkerPath = join(root, "service-worker.js");
 const notificationCenterPath = join(root, "notification-center.js");
+const readmePath = join(root, "README.md");
+const workflowPath = join(root, ".github", "workflows", "quality.yml");
+const browserTestPath = join(root, "tests", "public-workflows.spec.js");
+const playwrightConfigPath = join(root, "playwright.config.js");
+const deploymentCheckPath = join(root, "scripts", "verify-deployment.mjs");
 const manifestPath = join(root, "manifest.webmanifest");
 const offlineMigrationPath = join(
   root,
@@ -165,6 +170,10 @@ try {
     "low-stock",
     "expired",
     "overdue",
+    "out-of-stock",
+    "readIds",
+    "dismissed",
+    'data-notification-view="history"',
     "supplySearch",
     "transactionSearch",
     "BORROWABLE_ITEM_TYPES",
@@ -178,6 +187,25 @@ try {
   }
 } catch (error) {
   failures.push(`notification center: unable to inspect shared dropdown (${error.message})`);
+}
+
+for (const [label, path] of [
+  ["project documentation", readmePath],
+  ["continuous integration workflow", workflowPath],
+  ["browser workflow tests", browserTestPath],
+  ["Playwright configuration", playwrightConfigPath],
+  ["deployment verification", deploymentCheckPath],
+]) {
+  if (!existsSync(path)) failures.push(`${label}: required file is missing`);
+}
+
+for (const scriptPath of files.filter(
+  (path) => extname(path) === ".js" && !path.includes(`${join(root, "node_modules")}\\`),
+)) {
+  const script = readFileSync(scriptPath, "utf8");
+  if (/(^|[^\w.])(alert|confirm)\s*\(/m.test(script)) {
+    failures.push(`${relative(root, scriptPath)}: native browser dialogs are not allowed`);
+  }
 }
 
 try {

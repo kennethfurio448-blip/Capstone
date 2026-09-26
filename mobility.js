@@ -686,7 +686,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             !window.medtrackData ||
             typeof window.medtrackData.deleteInventoryItem !== "function"
         ) {
-            alert("The secure database delete service is unavailable.");
+            window.medtrackDialog.alert("The secure database delete service is unavailable.");
             return;
         }
 
@@ -699,7 +699,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             );
         } catch (error) {
             console.error("Unable to delete mobility asset:", error);
-            alert(error.message || "Unable to delete the selected mobility asset.");
+            window.medtrackDialog.alert(error.message || "Unable to delete the selected mobility asset.");
             return;
         } finally {
             confirmDelete.disabled = false;
@@ -779,7 +779,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     logoutButton.addEventListener("click", async function () {
-        const confirmLogout = confirm(
+        const confirmLogout = await window.medtrackDialog.confirm(
             "Are you sure you want to log out?"
         );
 

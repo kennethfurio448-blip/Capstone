@@ -735,7 +735,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await window.medtrackDialog.confirm(
             `Confirm borrowing ${quantity} ${selectedItem.name}?\n` +
             `Borrower: ${normalizeText(borrowerName.value)}\n` +
             `Expected return: ${expectedReturnDate.value}`
@@ -776,7 +776,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             closeBorrowModal();
             refreshAvailableItems();
 
-            window.alert(
+            window.medtrackDialog.alert(
                 newTransaction.queued
                     ? `${selectedItem.name} was recorded offline.\n` +
                         "It will be finalized automatically when the connection returns.\n" +
@@ -872,7 +872,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         "click",
         async function () {
             const confirmLogout =
-                window.confirm(
+                await window.medtrackDialog.confirm(
                     "Are you sure you want to log out?"
                 );
 

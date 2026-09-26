@@ -588,6 +588,97 @@
         });
     }
 
+    function installSystemDialogs() {
+        let backdrop = null;
+        let resolver = null;
+        let returnFocus = null;
+
+        function ensureDialog() {
+            if (backdrop) return backdrop;
+            backdrop = document.createElement("div");
+            backdrop.className = "system-dialog-backdrop";
+            backdrop.hidden = true;
+            backdrop.innerHTML = [
+                '<section class="system-dialog" role="alertdialog" aria-modal="true" aria-labelledby="systemDialogTitle" aria-describedby="systemDialogMessage">',
+                '  <div class="system-dialog-icon" aria-hidden="true"><i class="fa-solid fa-circle-info"></i></div>',
+                '  <h2 id="systemDialogTitle">MedTrack</h2>',
+                '  <p id="systemDialogMessage"></p>',
+                '  <div class="system-dialog-actions">',
+                '    <button type="button" class="system-dialog-cancel">Cancel</button>',
+                '    <button type="button" class="system-dialog-confirm">OK</button>',
+                '  </div>',
+                '</section>'
+            ].join("");
+            document.body.appendChild(backdrop);
+
+            backdrop.querySelector(".system-dialog-cancel").addEventListener(
+                "click",
+                function () { finish(false); }
+            );
+            backdrop.querySelector(".system-dialog-confirm").addEventListener(
+                "click",
+                function () { finish(true); }
+            );
+            backdrop.addEventListener("click", function (event) {
+                if (event.target === backdrop) finish(false);
+            });
+            return backdrop;
+        }
+
+        function finish(result) {
+            if (!backdrop || backdrop.hidden) return;
+            backdrop.hidden = true;
+            document.body.classList.remove("system-dialog-open");
+            const complete = resolver;
+            resolver = null;
+            if (returnFocus && document.contains(returnFocus)) {
+                returnFocus.focus({ preventScroll: true });
+            }
+            returnFocus = null;
+            if (complete) complete(result);
+        }
+
+        function open(message, options) {
+            const panel = ensureDialog();
+            const settings = options || {};
+            if (resolver) finish(false);
+            returnFocus = document.activeElement;
+            panel.querySelector("#systemDialogTitle").textContent =
+                settings.title || "MedTrack";
+            panel.querySelector("#systemDialogMessage").textContent =
+                String(message || "");
+            const cancel = panel.querySelector(".system-dialog-cancel");
+            const confirm = panel.querySelector(".system-dialog-confirm");
+            cancel.hidden = settings.cancelText === null;
+            cancel.textContent = settings.cancelText || "Cancel";
+            confirm.textContent = settings.confirmText || "OK";
+            panel.dataset.tone = settings.tone || "info";
+            panel.hidden = false;
+            document.body.classList.add("system-dialog-open");
+            return new Promise(function (resolve) {
+                resolver = resolve;
+                confirm.focus();
+            });
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (!backdrop || backdrop.hidden) return;
+            if (event.key === "Escape") {
+                event.preventDefault();
+                finish(false);
+            }
+        });
+
+        return {
+            alert: function (message, options) {
+                return open(message, { ...options, cancelText: null });
+            },
+            confirm: function (message, options) {
+                return open(message, options);
+            }
+        };
+    }
+
     function installLogoutDialog() {
         let dialog = null;
         let triggerButton = null;
@@ -863,6 +954,7 @@
 
     installNavigationOptimizations();
     installLogoutDialog();
+    window.medtrackDialog = installSystemDialogs();
 
     window.medtrackAuth = {
         client: client,

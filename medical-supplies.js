@@ -768,7 +768,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
 
         if (!supply) {
-            alert("The selected supply could not be found.");
+            window.medtrackDialog.alert("The selected supply could not be found.");
             return;
         }
 
@@ -950,7 +950,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 closeSupplyModal();
                 renderSupplies();
                 if (saveResult.queued) {
-                    window.alert(
+                    window.medtrackDialog.alert(
                         "The supply change was saved offline and will sync automatically."
                     );
                 }
@@ -1062,7 +1062,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 closeConsumeModal();
                 renderSupplies();
                 if (consumeResult.queued) {
-                    window.alert(
+                    window.medtrackDialog.alert(
                         "The consumption was saved offline and will sync automatically."
                     );
                 }
@@ -1148,7 +1148,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 supplyToDelete = null;
                 deleteModal.classList.remove("show");
 
-                alert(
+                window.medtrackDialog.alert(
                     "The selected supply could not be found."
                 );
 
@@ -1160,7 +1160,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 typeof window.medtrackData.deleteInventoryItem !==
                     "function"
             ) {
-                alert(
+                window.medtrackDialog.alert(
                     "The secure database delete service is unavailable."
                 );
                 return;
@@ -1175,7 +1175,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
             } catch (error) {
                 console.error("Unable to delete supply:", error);
-                alert(error.message || "Unable to delete the selected supply.");
+                window.medtrackDialog.alert(error.message || "Unable to delete the selected supply.");
                 return;
             } finally {
                 confirmDelete.disabled = false;
@@ -1321,7 +1321,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         "click",
         async function () {
             const confirmLogout =
-                window.confirm(
+                await window.medtrackDialog.confirm(
                     "Are you sure you want to log out?"
                 );
 

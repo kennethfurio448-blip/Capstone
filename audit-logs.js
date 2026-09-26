@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const logs = getFilteredLogs();
 
         if (logs.length === 0) {
-            alert("There are no audit logs to export.");
+            window.medtrackDialog.alert("There are no audit logs to export.");
             return;
         }
 
@@ -265,7 +265,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     logoutButton.addEventListener("click", async function () {
-        if (!confirm("Are you sure you want to log out?")) {
+        if (!await window.medtrackDialog.confirm("Are you sure you want to log out?")) {
             return;
         }
 

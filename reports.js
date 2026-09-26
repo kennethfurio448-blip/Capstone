@@ -768,7 +768,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     logoutButton.addEventListener("click", async function () {
-        const confirmLogout = confirm(
+        const confirmLogout = await window.medtrackDialog.confirm(
             "Are you sure you want to log out?"
         );
 

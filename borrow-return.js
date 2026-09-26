@@ -559,7 +559,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (event.key === "Escape" && elements.statusModal.classList.contains("show")) closeModal();
     });
     elements.logoutButton.addEventListener("click", async function () {
-        if (window.confirm("Are you sure you want to log out?")) {
+        if (await window.medtrackDialog.confirm("Are you sure you want to log out?")) {
             await window.medtrackAuth.signOutAndRedirect();
         }
     });

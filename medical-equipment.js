@@ -615,7 +615,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
 
         if (!selectedEquipment) {
-            alert(
+            window.medtrackDialog.alert(
                 "The selected equipment could not be found."
             );
 
@@ -864,7 +864,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 equipmentToDelete = null;
                 deleteModal.classList.remove("show");
 
-                alert(
+                window.medtrackDialog.alert(
                     "The selected equipment could not be found."
                 );
 
@@ -876,7 +876,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 typeof window.medtrackData.deleteInventoryItem !==
                     "function"
             ) {
-                alert(
+                window.medtrackDialog.alert(
                     "The secure database delete service is unavailable."
                 );
                 return;
@@ -891,7 +891,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
             } catch (error) {
                 console.error("Unable to delete equipment:", error);
-                alert(error.message || "Unable to delete the selected equipment.");
+                window.medtrackDialog.alert(error.message || "Unable to delete the selected equipment.");
                 return;
             } finally {
                 confirmDelete.disabled = false;
@@ -1015,7 +1015,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         "click",
         async function () {
             const confirmLogout =
-                window.confirm(
+                await window.medtrackDialog.confirm(
                     "Are you sure you want to log out?"
                 );
 

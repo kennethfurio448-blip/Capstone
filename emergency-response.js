@@ -1637,7 +1637,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         );
 
                     if (!deductionResult.ok) {
-                        alert(
+                        window.medtrackDialog.alert(
                             deductionResult.message
                         );
 
@@ -1726,7 +1726,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
 
             if (!deductionResult.ok) {
-                alert(deductionResult.message);
+                window.medtrackDialog.alert(deductionResult.message);
                 return;
             }
 
@@ -1926,7 +1926,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         "click",
         async function () {
             const confirmLogout =
-                window.confirm(
+                await window.medtrackDialog.confirm(
                     "Are you sure you want to log out?"
                 );
 
