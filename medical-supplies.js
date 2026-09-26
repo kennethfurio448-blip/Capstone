@@ -43,12 +43,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const statusFilter =
         document.getElementById("statusFilter");
 
-    const supplyHistoryBody =
-        document.getElementById("supplyHistoryBody");
-
-    const historyMessage =
-        document.getElementById("historyMessage");
-
     const consumeModal =
         document.getElementById("consumeModal");
 
@@ -137,9 +131,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("confirmDelete");
 
     let supplyToDelete = null;
-    let supplyTransactions = [];
-
-
     const requiredElements = [
         dashboardLink,
         adminNavigation,
@@ -158,8 +149,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         supplySearch,
         categoryFilter,
         statusFilter,
-        supplyHistoryBody,
-        historyMessage,
         consumeModal,
         openConsumeModalButton,
         closeConsumeModalButton,
@@ -395,22 +384,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    function formatDateTime(dateValue) {
-        const date = new Date(dateValue);
-
-        if (Number.isNaN(date.getTime())) {
-            return "\u2014";
-        }
-
-        return date.toLocaleString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit"
-        });
-    }
-
     function getLocalDateTimeValue() {
         const now = new Date();
         const offset = now.getTimezoneOffset() * 60000;
@@ -430,104 +403,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     .slice(2)}`;
 
         return `${prefix}:${uniquePart}`;
-    }
-
-    async function loadSupplyTransactions() {
-        historyMessage.textContent = "";
-
-        if (
-            !window.medtrackData ||
-            typeof window.medtrackData
-                .loadSupplyTransactions !== "function"
-        ) {
-            supplyTransactions = [];
-            historyMessage.textContent =
-                "Supply activity is currently unavailable.";
-            renderSupplyTransactions();
-            return;
-        }
-
-        try {
-            supplyTransactions =
-                await window.medtrackData
-                    .loadSupplyTransactions();
-            openAddModalButton.disabled = false;
-            openConsumeModalButton.disabled = false;
-            renderSupplyTransactions();
-        } catch (error) {
-            console.error(
-                "Unable to load supply activity:",
-                error
-            );
-            supplyTransactions = [];
-            const databaseUpdateMissing =
-                /schema cache|medical_supply_transactions|could not find/i
-                    .test(error.message || "");
-
-            historyMessage.textContent = databaseUpdateMissing
-                ? "Database setup required: apply the latest Supabase " +
-                    "migration to enable supply additions and consumption."
-                : "Unable to load supply activity. Please refresh and " +
-                    "try again.";
-
-            openAddModalButton.disabled = databaseUpdateMissing;
-            openConsumeModalButton.disabled = databaseUpdateMissing;
-            renderSupplyTransactions();
-        }
-    }
-
-    function renderSupplyTransactions() {
-        if (supplyTransactions.length === 0) {
-            supplyHistoryBody.innerHTML = `
-                <tr>
-                    <td colspan="6">No supply activity recorded yet.</td>
-                </tr>
-            `;
-            return;
-        }
-
-        supplyHistoryBody.innerHTML = supplyTransactions
-            .map(function (transaction) {
-                const consumed =
-                    transaction.type === "consumed";
-
-                return `
-                    <tr>
-                        <td>
-                            <span class="movement-badge ${
-                                consumed ? "consumed" : "added"
-                            }">
-                                ${consumed ? "Consumed" : "Added"}
-                            </span>
-                        </td>
-                        <td>
-                            <strong>${escapeHTML(
-                                transaction.supplyName
-                            )}</strong>
-                            <small>${escapeHTML(
-                                transaction.supplyId
-                            )}</small>
-                        </td>
-                        <td>
-                            ${escapeHTML(transaction.quantity)}
-                            ${escapeHTML(transaction.unit)}
-                        </td>
-                        <td>${escapeHTML(
-                            transaction.emergencyLabel
-                        )}</td>
-                        <td>${escapeHTML(
-                            formatDateTime(transaction.occurredAt)
-                        )}</td>
-                        <td>
-                            <strong>${escapeHTML(
-                                transaction.remainingStock
-                            )}</strong>
-                            ${escapeHTML(transaction.unit)}
-                        </td>
-                    </tr>
-                `;
-            })
-            .join("");
     }
 
     function getEmergencyResponses() {
@@ -1069,8 +944,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     window.alert(
                         "The supply change was saved offline and will sync automatically."
                     );
-                } else {
-                    await loadSupplyTransactions();
                 }
             } catch (error) {
                 console.error("Unable to save supply:", error);
@@ -1183,8 +1056,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     window.alert(
                         "The consumption was saved offline and will sync automatically."
                     );
-                } else {
-                    await loadSupplyTransactions();
                 }
             } catch (error) {
                 console.error(
@@ -1437,12 +1308,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
-    window.addEventListener(
-        "focus",
-        loadSupplyTransactions
-    );
-
-
     logoutButton.addEventListener(
         "click",
         async function () {
@@ -1462,5 +1327,4 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     renderSupplies();
-    await loadSupplyTransactions();
 });

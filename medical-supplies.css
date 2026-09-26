@@ -590,51 +590,6 @@ a {
     background-color: #fffafa;
 }
 
-.supply-history-card {
-    margin-top: 24px;
-}
-
-.history-table {
-    min-width: 1000px;
-}
-
-.history-table td strong,
-.history-table td small {
-    display: block;
-}
-
-.history-table td small {
-    margin-top: 4px;
-    color: var(--muted);
-}
-
-.movement-badge {
-    display: inline-block;
-    padding: 6px 10px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.movement-badge.added {
-    color: var(--green);
-    background-color: #e8f5e9;
-}
-
-.movement-badge.consumed {
-    color: var(--red);
-    background-color: var(--primary-light);
-}
-
-.history-message {
-    margin-top: 14px;
-    color: var(--red);
-    font-size: 13px;
-    font-weight: bold;
-}
-
-
 .status-badge {
     display: inline-block;
     padding: 6px 10px;
