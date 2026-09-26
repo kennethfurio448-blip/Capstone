@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v20-supply-out-of-stock-card";
+const CACHE_NAME = "medtrack-shell-v21-remove-admin-controls";
 const APP_SHELL = [
     "/",
     "/index.html",
