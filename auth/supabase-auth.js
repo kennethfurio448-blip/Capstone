@@ -588,6 +588,111 @@
         });
     }
 
+    function installLogoutDialog() {
+        let dialog = null;
+        let triggerButton = null;
+
+        function closeDialog() {
+            if (!dialog || dialog.hidden) return;
+            dialog.hidden = true;
+            document.body.classList.remove("logout-dialog-open");
+            if (triggerButton) {
+                triggerButton.focus({ preventScroll: true });
+            }
+            triggerButton = null;
+        }
+
+        function ensureDialog() {
+            if (dialog) return dialog;
+
+            dialog = document.createElement("div");
+            dialog.className = "logout-dialog-backdrop";
+            dialog.hidden = true;
+            dialog.innerHTML = [
+                '<section class="logout-dialog" role="alertdialog" aria-modal="true" aria-labelledby="logoutDialogTitle" aria-describedby="logoutDialogDescription">',
+                '  <div class="logout-dialog-icon" aria-hidden="true"><i class="fa-solid fa-right-from-bracket"></i></div>',
+                '  <h2 id="logoutDialogTitle">Log out of MedTrack?</h2>',
+                '  <p id="logoutDialogDescription">Are you sure you want to end your session?</p>',
+                '  <div class="logout-dialog-actions">',
+                '    <button type="button" class="logout-cancel-button">Cancel</button>',
+                '    <button type="button" class="logout-confirm-button">Log Out</button>',
+                '  </div>',
+                '</section>'
+            ].join("");
+            document.body.appendChild(dialog);
+
+            const cancelButton = dialog.querySelector(".logout-cancel-button");
+            const confirmButton = dialog.querySelector(".logout-confirm-button");
+
+            cancelButton.addEventListener("click", closeDialog);
+            confirmButton.addEventListener("click", async function () {
+                cancelButton.disabled = true;
+                confirmButton.disabled = true;
+                confirmButton.textContent = "Logging Out...";
+
+                try {
+                    await signOutAndRedirect();
+                } catch (error) {
+                    console.error("Unable to complete logout:", error);
+                    cancelButton.disabled = false;
+                    confirmButton.disabled = false;
+                    confirmButton.textContent = "Log Out";
+                }
+            });
+
+            dialog.addEventListener("click", function (event) {
+                if (event.target === dialog) closeDialog();
+            });
+
+            return dialog;
+        }
+
+        function openDialog(button) {
+            const panel = ensureDialog();
+            triggerButton = button;
+            panel.hidden = false;
+            document.body.classList.add("logout-dialog-open");
+            panel.querySelector(".logout-cancel-button").focus();
+        }
+
+        document.addEventListener("click", function (event) {
+            const button = event.target instanceof Element
+                ? event.target.closest(".logout-button")
+                : null;
+
+            if (!button) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            openDialog(button);
+        }, true);
+
+        document.addEventListener("keydown", function (event) {
+            if (!dialog || dialog.hidden) return;
+
+            if (event.key === "Escape") {
+                event.preventDefault();
+                closeDialog();
+                return;
+            }
+
+            if (event.key !== "Tab") return;
+            const controls = Array.from(
+                dialog.querySelectorAll("button:not(:disabled)")
+            );
+            if (controls.length === 0) return;
+            const first = controls[0];
+            const last = controls[controls.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
+    }
+
     async function ensureAdminMfa(profile) {
         if (!profile || profile.role !== "admin") return true;
 
@@ -757,6 +862,7 @@
     });
 
     installNavigationOptimizations();
+    installLogoutDialog();
 
     window.medtrackAuth = {
         client: client,

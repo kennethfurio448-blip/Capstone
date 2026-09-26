@@ -324,6 +324,18 @@ try {
     failures.push("supabase-auth: sensitive browser data cleanup is incomplete");
   }
 
+  for (const requiredLogoutControl of [
+    "installLogoutDialog",
+    "logout-dialog-backdrop",
+    "logout-cancel-button",
+    "logout-confirm-button",
+    "event.stopImmediatePropagation()",
+  ]) {
+    if (!authGuard.includes(requiredLogoutControl)) {
+      failures.push(`supabase-auth: missing logout dialog control ${requiredLogoutControl}`);
+    }
+  }
+
   for (const requiredMfaControl of [
     "getAuthenticatorAssuranceLevel",
     "listFactors",
