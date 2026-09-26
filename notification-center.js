@@ -2,6 +2,10 @@
     "use strict";
 
     const DROPDOWN_ID = "medtrackNotificationDropdown";
+    const BORROWABLE_ITEM_TYPES = new Set([
+        "Medical Equipment",
+        "Mobility Asset"
+    ]);
     let dropdown = null;
     let activeButton = null;
     let refreshTimer = null;
@@ -98,6 +102,10 @@
         });
 
         storedArray("medtrackBorrowTransactions").forEach(function (record) {
+            if (!BORROWABLE_ITEM_TYPES.has(text(record.itemType))) {
+                return;
+            }
+
             const status = text(record.status).toLowerCase();
             const dueDate = localDate(record.dueDate, true);
             if (

@@ -167,6 +167,9 @@ try {
     "overdue",
     "supplySearch",
     "transactionSearch",
+    "BORROWABLE_ITEM_TYPES",
+    '"Medical Equipment"',
+    '"Mobility Asset"',
     "notification.timestamp.toISOString()",
   ]) {
     if (!notificationCenter.includes(requiredNotificationControl)) {

@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v18-remove-supply-example";
+const CACHE_NAME = "medtrack-shell-v19-filter-legacy-overdue";
 const APP_SHELL = [
     "/",
     "/index.html",
