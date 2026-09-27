@@ -11,6 +11,8 @@
     let activeButton = null;
     let refreshTimer = null;
     let activeView = "active";
+    let notificationUserId = null;
+    let remoteSaveTimer = null;
 
     function storedArray(key) {
         try {
@@ -45,10 +47,75 @@
     }
 
     function saveNotificationState(state) {
-        localStorage.setItem(STATE_KEY, JSON.stringify({
+        const normalized = {
             readIds: Array.from(new Set(state.readIds)).slice(-250),
             dismissed: state.dismissed.slice(-100)
-        }));
+        };
+        localStorage.setItem(STATE_KEY, JSON.stringify(normalized));
+        scheduleRemoteStateSave(normalized);
+    }
+
+    function mergeNotificationStates(localState, remoteState) {
+        const dismissed = new Map();
+        [...remoteState.dismissed, ...localState.dismissed].forEach(function (item) {
+            if (!item || !item.id || !item.timestamp) return;
+            dismissed.set(`${item.id}@${item.timestamp}`, item);
+        });
+        return {
+            readIds: Array.from(new Set([
+                ...remoteState.readIds,
+                ...localState.readIds
+            ])).slice(-250),
+            dismissed: Array.from(dismissed.values()).slice(-100)
+        };
+    }
+
+    function scheduleRemoteStateSave(state) {
+        window.clearTimeout(remoteSaveTimer);
+        if (!notificationUserId || !navigator.onLine || !window.medtrackSupabase) return;
+        remoteSaveTimer = window.setTimeout(async function () {
+            const result = await window.medtrackSupabase
+                .from("notification_preferences")
+                .upsert({
+                    user_id: notificationUserId,
+                    state: state,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: "user_id" });
+            if (result.error) {
+                console.error("Unable to synchronize notification preferences:", result.error);
+            }
+        }, 350);
+    }
+
+    async function loadRemoteNotificationState() {
+        if (!window.medtrackSupabase || !navigator.onLine) return;
+        const userResult = await window.medtrackSupabase.auth.getUser();
+        const user = userResult.data && userResult.data.user;
+        if (!user) return;
+        notificationUserId = user.id;
+
+        const result = await window.medtrackSupabase
+            .from("notification_preferences")
+            .select("state")
+            .eq("user_id", user.id)
+            .maybeSingle();
+        if (result.error) {
+            console.error("Unable to load synchronized notification preferences:", result.error);
+            return;
+        }
+
+        const remote = result.data && result.data.state
+            ? result.data.state
+            : { readIds: [], dismissed: [] };
+        const merged = mergeNotificationStates(
+            notificationState(),
+            {
+                readIds: Array.isArray(remote.readIds) ? remote.readIds : [],
+                dismissed: Array.isArray(remote.dismissed) ? remote.dismissed : []
+            }
+        );
+        saveNotificationState(merged);
+        scheduleRefresh();
     }
 
     function localDate(value, endOfDay) {
@@ -482,10 +549,12 @@
     window.addEventListener("resize", positionDropdown);
     window.addEventListener("scroll", positionDropdown, true);
     window.addEventListener("storage", scheduleRefresh);
+    window.addEventListener("online", loadRemoteNotificationState);
     window.addEventListener("medtrack:data-ready", scheduleRefresh);
     window.addEventListener("medtrack:inventory-changed", scheduleRefresh);
     document.addEventListener("DOMContentLoaded", function () {
         refreshBadges();
         window.setTimeout(refreshBadges, 750);
+        window.setTimeout(loadRemoteNotificationState, 900);
     });
 })();

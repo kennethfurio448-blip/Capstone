@@ -679,6 +679,57 @@
         };
     }
 
+    function installClientErrorMonitoring() {
+        const reported = new Set();
+        let reportsThisSession = 0;
+
+        function sanitize(value) {
+            return String(value || "Unknown client error")
+                .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")
+                .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "[token]")
+                .slice(0, 1000);
+        }
+
+        async function report(error, context) {
+            if (!navigator.onLine || reportsThisSession >= 10) return;
+            const name = sanitize(error && error.name || "Error").slice(0, 100);
+            const message = sanitize(error && error.message || error);
+            const fingerprint = `${window.location.pathname}|${name}|${message}`;
+            if (reported.has(fingerprint)) return;
+            reported.add(fingerprint);
+            reportsThisSession++;
+
+            try {
+                const userResult = await client.auth.getUser();
+                const user = userResult.data && userResult.data.user;
+                if (!user) return;
+                await client.from("client_error_events").insert({
+                    user_id: user.id,
+                    page: window.location.pathname.slice(0, 240) || "/",
+                    error_name: name,
+                    message: message,
+                    context: {
+                        online: navigator.onLine,
+                        source: String(context && context.source || "runtime").slice(0, 80)
+                    }
+                });
+            } catch (monitoringError) {
+                // Monitoring must never interrupt the user's current task.
+            }
+        }
+
+        window.addEventListener("error", function (event) {
+            report(event.error || new Error(event.message), { source: "window.error" });
+        });
+        window.addEventListener("unhandledrejection", function (event) {
+            const reason = event.reason instanceof Error
+                ? event.reason
+                : new Error(String(event.reason || "Unhandled promise rejection"));
+            report(reason, { source: "unhandledrejection" });
+        });
+        window.medtrackErrorMonitor = Object.freeze({ report: report });
+    }
+
     function installLogoutDialog() {
         let dialog = null;
         let triggerButton = null;
@@ -954,6 +1005,7 @@
 
     installNavigationOptimizations();
     installLogoutDialog();
+    installClientErrorMonitoring();
     window.medtrackDialog = installSystemDialogs();
 
     window.medtrackAuth = {

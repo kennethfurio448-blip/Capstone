@@ -145,6 +145,22 @@ const workflowPath = join(root, ".github", "workflows", "quality.yml");
 const browserTestPath = join(root, "tests", "public-workflows.spec.js");
 const playwrightConfigPath = join(root, "playwright.config.js");
 const deploymentCheckPath = join(root, "scripts", "verify-deployment.mjs");
+const backupCheckPath = join(root, "scripts", "verify-backup.mjs");
+const reliabilityMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20260927100000_notification_sync_error_monitoring.sql",
+);
+const retentionMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20260927103000_schedule_client_error_retention.sql",
+);
+const accessibilityTestPath = join(root, "tests", "accessibility-mobile.spec.js");
+const authenticatedTestPath = join(root, "tests", "authenticated-access.spec.js");
+const dependabotPath = join(root, ".github", "dependabot.yml");
 const manifestPath = join(root, "manifest.webmanifest");
 const offlineMigrationPath = join(
   root,
@@ -195,8 +211,52 @@ for (const [label, path] of [
   ["browser workflow tests", browserTestPath],
   ["Playwright configuration", playwrightConfigPath],
   ["deployment verification", deploymentCheckPath],
+  ["encrypted backup verification", backupCheckPath],
+  ["notification and monitoring migration", reliabilityMigrationPath],
+  ["client-error retention migration", retentionMigrationPath],
+  ["accessibility and mobile tests", accessibilityTestPath],
+  ["authenticated access tests", authenticatedTestPath],
+  ["dependency update configuration", dependabotPath],
 ]) {
   if (!existsSync(path)) failures.push(`${label}: required file is missing`);
+}
+
+try {
+  const reliabilityMigration = readFileSync(reliabilityMigrationPath, "utf8");
+  const retentionMigration = readFileSync(retentionMigrationPath, "utf8");
+  const authGuard = readFileSync(authGuardPath, "utf8");
+  for (const requiredControl of [
+    "notification_preferences",
+    "client_error_events",
+    "medtrack_purge_client_errors",
+    "medtrack_admin_mfa_satisfied",
+  ]) {
+    if (!reliabilityMigration.includes(requiredControl)) {
+      failures.push(`reliability migration: missing ${requiredControl}`);
+    }
+  }
+  for (const requiredMonitorControl of [
+    "installClientErrorMonitoring",
+    "unhandledrejection",
+    "medtrackErrorMonitor",
+    "[email]",
+    "[token]",
+  ]) {
+    if (!authGuard.includes(requiredMonitorControl)) {
+      failures.push(`client error monitoring: missing ${requiredMonitorControl}`);
+    }
+  }
+  for (const requiredRetentionControl of [
+    "medtrack_cleanup_client_errors_job",
+    "interval '90 days'",
+    "cron.schedule",
+  ]) {
+    if (!retentionMigration.includes(requiredRetentionControl)) {
+      failures.push(`retention migration: missing ${requiredRetentionControl}`);
+    }
+  }
+} catch (error) {
+  failures.push(`reliability controls: unable to inspect monitoring (${error.message})`);
 }
 
 for (const scriptPath of files.filter(

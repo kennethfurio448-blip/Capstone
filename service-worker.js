@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v22-reliability-controls";
+const CACHE_NAME = "medtrack-shell-v23-monitoring-and-sync";
 const APP_SHELL = [
     "/",
     "/index.html",
