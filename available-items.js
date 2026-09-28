@@ -683,7 +683,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             type: selectedItem.type,
             item: selectedItem.id
         });
-        window.location.href = `borrow-return.html?${parameters.toString()}`;
+        window.location.href = `status.html?${parameters.toString()}`;
     });
 
     borrowForm.addEventListener("submit", async function (event) {

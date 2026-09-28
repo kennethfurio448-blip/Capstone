@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v23-monitoring-and-sync";
+const CACHE_NAME = "medtrack-shell-v24-status-route";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -54,9 +54,9 @@ const APP_SHELL = [
     "/mobility.html",
     "/mobility.css",
     "/mobility.js",
-    "/borrow-return.html",
-    "/borrow-return.css",
-    "/borrow-return.js",
+    "/status.html",
+    "/status.css",
+    "/status.js",
     "/emergency-response.html",
     "/emergency-response.css",
     "/emergency-response.js",

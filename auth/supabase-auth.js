@@ -32,7 +32,7 @@
         "medical-supplies.html": ["admin", "staff"],
         "medical-equipment.html": ["admin", "staff"],
         "mobility.html": ["admin", "staff"],
-        "borrow-return.html": ["admin", "staff"],
+        "status.html": ["admin", "staff"],
         "emergency-response.html": ["admin", "staff"]
     });
 

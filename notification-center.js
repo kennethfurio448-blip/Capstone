@@ -225,7 +225,7 @@
                 message: `${itemName}, borrowed by ${borrower}, was due ${dueDate.toLocaleDateString()}.`,
                 timestamp: dueDate,
                 href: notificationLink(
-                    "borrow-return.html",
+                    "status.html",
                     "transactionSearch",
                     id || itemName
                 )
