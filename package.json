@@ -22,8 +22,8 @@
   "homepage": "https://github.com/kennethfurio448-blip/Capstone#readme",
   "description": "Secure medical inventory and emergency resource management system for PDRRMO.",
   "devDependencies": {
-    "@axe-core/playwright": "^4.10.2",
-    "@playwright/test": "^1.55.1",
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
     "supabase": "^2.117.0"
   }
 }
