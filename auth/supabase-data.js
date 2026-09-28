@@ -544,7 +544,7 @@
         if (!result.data || result.data.length !== 1) {
             throw new Error(
                 "The record was not deleted. It may no longer exist, " +
-                "or your account may not have Administrator permission."
+                "or your account may not have inventory management permission."
             );
         }
 

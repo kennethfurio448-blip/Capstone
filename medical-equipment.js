@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     const canManageInventory =
-        currentUser.role === "admin";
+        ["admin", "staff"].includes(currentUser.role);
 
     if (window.medtrackData) {
         await window.medtrackData.refresh();
@@ -682,7 +682,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (!canManageInventory) {
                 formMessage.textContent =
-                    "Administrator access is required.";
+                    "Inventory management access is required.";
                 return;
             }
 

@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     const canDeleteEmergency =
-        currentUser.role === "admin";
+        ["admin", "staff"].includes(currentUser.role);
 
     if (window.medtrackData) {
         await window.medtrackData.refresh();
