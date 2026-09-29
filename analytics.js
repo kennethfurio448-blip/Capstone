@@ -3,7 +3,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const trendSeries = [
         ["available", "Available / Normal", "#0b2d63"],
         ["attention", "Low Stock / Borrowed / Deployed", "#f2b514"],
-        ["unavailable", "For Repair / Unavailable", "#d9252a"]
+        ["unavailable", "For Repair / Unavailable", "#d9252a"],
+        ["expiration", "Expiring Soon / Expired", "#ef6c00"]
     ];
 
     function getStoredData(key) {
@@ -12,6 +13,17 @@ document.addEventListener("DOMContentLoaded", function () {
             return Array.isArray(data) ? data : [];
         } catch (error) {
             return [];
+        }
+    }
+
+    function getStoredObject(key) {
+        try {
+            const data = JSON.parse(localStorage.getItem(key));
+            return data && typeof data === "object" && !Array.isArray(data)
+                ? data
+                : {};
+        } catch (error) {
+            return {};
         }
     }
 
@@ -122,8 +134,29 @@ document.addEventListener("DOMContentLoaded", function () {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        const expirationCutoff = new Date(today);
+        const savedSettings = getStoredObject("medtrackSettings");
+        const configuredWarningDays = Number(
+            savedSettings.inventory &&
+            savedSettings.inventory.expirationWarningDays
+        );
+        const expirationWarningDays =
+            Number.isFinite(configuredWarningDays) &&
+            configuredWarningDays > 0
+                ? Math.floor(configuredWarningDays)
+                : 30;
+
+        expirationCutoff.setDate(
+            expirationCutoff.getDate() + expirationWarningDays
+        );
+
         function emptyValues() {
-            return { available: 0, attention: 0, unavailable: 0 };
+            return {
+                available: 0,
+                attention: 0,
+                unavailable: 0,
+                expiration: 0
+            };
         }
 
         function normalized(value) {
@@ -162,9 +195,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 : null;
 
             if (
-                quantity <= 0 ||
-                (expiration && !Number.isNaN(expiration.getTime()) && expiration < today)
+                expiration &&
+                !Number.isNaN(expiration.getTime()) &&
+                expiration <= expirationCutoff
             ) {
+                supplyValues.expiration += 1;
+            } else if (quantity <= 0) {
                 supplyValues.unavailable += 1;
             } else if (quantity <= threshold) {
                 supplyValues.attention += 1;
@@ -208,7 +244,8 @@ document.addEventListener("DOMContentLoaded", function () {
         status.textContent = total === 0
             ? "No registered inventory records are available."
             : `${total.toLocaleString()} registered inventory ` +
-                `${total === 1 ? "record" : "records"}, grouped by current status.`;
+                `${total === 1 ? "record" : "records"}, grouped by current status ` +
+                `and supply expiration.`;
     }
 
     async function updateInventoryDistribution() {
@@ -406,7 +443,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const groupWidth = plotWidth / buckets.length;
         const groupGap = Math.min(10, groupWidth * 0.05);
-        const barWidth = Math.min(46, (groupWidth * 0.72 - groupGap * 2) / 3);
+        const barWidth = Math.min(
+            46,
+            (
+                groupWidth * 0.78 -
+                groupGap * (trendSeries.length - 1)
+            ) / trendSeries.length
+        );
 
         buckets.forEach(function (bucket, bucketIndex) {
             const barsWidth = barWidth * trendSeries.length +
