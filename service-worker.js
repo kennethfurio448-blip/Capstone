@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v27-report-logo";
+const CACHE_NAME = "medtrack-shell-v28-government-letterhead";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -11,6 +11,7 @@ const APP_SHELL = [
     "/notification-center.js",
     "/assets/pdrrmo-logo.png",
     "/assets/pdrrmo-logo-transparent.png",
+    "/assets/quezon-province-seal.png",
     "/manifest.webmanifest",
     "/medtrack-icon.svg",
     "/page-favicon.js",
