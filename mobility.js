@@ -792,4 +792,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     renderVehicles();
+
+    const detailParameters = new URLSearchParams(window.location.search);
+    if (detailParameters.get("action") === "details") {
+        const detailItemId = detailParameters.get("item");
+        if (detailItemId) {
+            vehicleSearch.value = detailItemId;
+            renderVehicles();
+            openEditModal(detailItemId);
+        }
+    }
 });

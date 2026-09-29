@@ -16,7 +16,7 @@ const types = {
 
 const server = createServer(function (request, response) {
     clearTimeout(idleTimer);
-    idleTimer = setTimeout(shutdown, 5000);
+    idleTimer = setTimeout(shutdown, 30000);
     const url = new URL(request.url || "/", `http://${request.headers.host}`);
     const pathname = url.pathname === "/" ? "/index.html" : url.pathname;
     const relativePath = normalize(decodeURIComponent(pathname)).replace(/^[/\\]+/, "");

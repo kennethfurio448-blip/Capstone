@@ -374,6 +374,11 @@ body[hidden] {
     color: #c71f37;
 }
 
+.notification-item-added .notification-item-icon {
+    background: #e5f5ea;
+    color: #16833d;
+}
+
 .notification-item-content {
     display: block;
     min-width: 0;

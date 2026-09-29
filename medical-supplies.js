@@ -1336,4 +1336,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     renderSupplies();
+
+    const detailParameters = new URLSearchParams(window.location.search);
+    if (detailParameters.get("action") === "details") {
+        const detailItemId = normalizeId(detailParameters.get("item"));
+        if (detailItemId) {
+            supplySearch.value = detailItemId;
+            renderSupplies();
+            openEditModal(detailItemId);
+        }
+    }
 });

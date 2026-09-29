@@ -3,6 +3,7 @@
 
     const DROPDOWN_ID = "medtrackNotificationDropdown";
     const STATE_KEY = "medtrackNotificationState";
+    const ADDITION_CACHE_KEY = "medtrackInventoryItemAdditions";
     const BORROWABLE_ITEM_TYPES = new Set([
         "Medical Equipment",
         "Mobility Asset"
@@ -13,6 +14,7 @@
     let activeView = "active";
     let notificationUserId = null;
     let remoteSaveTimer = null;
+    let additionRefreshTimer = null;
 
     function storedArray(key) {
         try {
@@ -146,8 +148,102 @@
         return `${page}?${parameters.toString()}`;
     }
 
+    function inventoryItemLink(page, searchId, itemId) {
+        const parameters = new URLSearchParams({
+            search: searchId,
+            query: itemId,
+            action: "details",
+            item: itemId
+        });
+        return `${page}?${parameters.toString()}`;
+    }
+
+    function inventoryAdditionNotifications() {
+        const modules = {
+            medical_supplies: {
+                category: "Medical Supplies",
+                page: "medical-supplies.html",
+                searchId: "supplySearch",
+                icon: "fa-pills"
+            },
+            medical_equipment: {
+                category: "Medical Equipment",
+                page: "medical-equipment.html",
+                searchId: "equipmentSearch",
+                icon: "fa-suitcase-medical"
+            },
+            mobility_assets: {
+                category: "Mobility",
+                page: "mobility.html",
+                searchId: "vehicleSearch",
+                icon: "fa-truck-medical"
+            }
+        };
+
+        return storedArray(ADDITION_CACHE_KEY).flatMap(function (event) {
+            const module = modules[text(event.inventoryModule)];
+            const itemId = text(event.inventoryItemId);
+            const itemName = text(event.itemName, itemId || "Inventory item");
+            const actorName = text(event.actorName, "System");
+            const timestamp = localDate(event.occurredAt, false);
+
+            if (!module || !itemId || !timestamp) return [];
+
+            return [{
+                id: `item-created:${text(event.eventKey, event.id)}`,
+                type: "item-added",
+                icon: module.icon,
+                label: "New inventory item",
+                message: `${itemName} was added to ${module.category} by ${actorName}.`,
+                timestamp: timestamp,
+                href: inventoryItemLink(module.page, module.searchId, itemId)
+            }];
+        });
+    }
+
+    async function loadInventoryAdditions() {
+        if (!navigator.onLine || !window.medtrackSupabase) return;
+
+        const result = await window.medtrackSupabase
+            .from("inventory_activity_events")
+            .select(
+                "id, event_key, inventory_module, inventory_item_id, " +
+                "occurred_at, metadata"
+            )
+            .eq("event_type", "item_created")
+            .order("occurred_at", { ascending: false })
+            .limit(250);
+
+        if (result.error) {
+            console.error("Unable to load new-item notifications:", result.error);
+            return;
+        }
+
+        const events = (result.data || []).map(function (event) {
+            const metadata = event.metadata || {};
+            return {
+                id: event.id,
+                eventKey: event.event_key,
+                inventoryModule: event.inventory_module,
+                inventoryItemId: event.inventory_item_id,
+                itemName: metadata.itemName || "",
+                itemCategory: metadata.itemCategory || "",
+                actorName: metadata.actorName || "System",
+                occurredAt: event.occurred_at
+            };
+        });
+
+        localStorage.setItem(ADDITION_CACHE_KEY, JSON.stringify(events));
+        scheduleRefresh();
+    }
+
+    function scheduleAdditionRefresh() {
+        window.clearTimeout(additionRefreshTimer);
+        additionRefreshTimer = window.setTimeout(loadInventoryAdditions, 150);
+    }
+
     function buildNotifications() {
-        const notifications = [];
+        const notifications = inventoryAdditionNotifications();
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
@@ -234,6 +330,7 @@
 
         return notifications.sort(function (left, right) {
             const priority = {
+                "item-added": 5,
                 "out-of-stock": 4,
                 expired: 3,
                 overdue: 2,
@@ -348,6 +445,7 @@
             link.className = `notification-item notification-${notification.type}`;
             link.href = notification.href;
             link.dataset.notificationId = notification.id;
+            link.dataset.notificationVersion = notificationVersion(notification);
 
             const icon = document.createElement("span");
             icon.className = "notification-item-icon";
@@ -369,6 +467,11 @@
 
             content.append(label, message, timestamp);
             link.append(icon, content);
+            link.addEventListener("click", function () {
+                const currentState = notificationState();
+                currentState.readIds.push(link.dataset.notificationVersion);
+                saveNotificationState(currentState);
+            });
 
             const action = document.createElement("button");
             action.type = "button";
@@ -551,10 +654,15 @@
     window.addEventListener("storage", scheduleRefresh);
     window.addEventListener("online", loadRemoteNotificationState);
     window.addEventListener("medtrack:data-ready", scheduleRefresh);
-    window.addEventListener("medtrack:inventory-changed", scheduleRefresh);
+    window.addEventListener("medtrack:inventory-changed", function () {
+        scheduleRefresh();
+        scheduleAdditionRefresh();
+    });
+    window.addEventListener("medtrack:inventory-activity", scheduleAdditionRefresh);
     document.addEventListener("DOMContentLoaded", function () {
         refreshBadges();
         window.setTimeout(refreshBadges, 750);
         window.setTimeout(loadRemoteNotificationState, 900);
+        window.setTimeout(loadInventoryAdditions, 1000);
     });
 })();

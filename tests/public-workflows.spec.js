@@ -73,3 +73,41 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
     await page.getByRole("button", { name: "Active" }).click();
     await expect(page.getByText("Out of stock", { exact: true })).toBeVisible();
 });
+
+test("notification center shows new inventory items with creator and details link", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(function () {
+        localStorage.setItem("medtrackInventoryItemAdditions", JSON.stringify([{
+            id: 101,
+            eventKey: "item-created:medical_equipment:EQP-TEST-001",
+            inventoryModule: "medical_equipment",
+            inventoryItemId: "EQP-TEST-001",
+            itemName: "Portable Oxygen Concentrator",
+            itemCategory: "Respiratory Equipment",
+            actorName: "Test Administrator",
+            occurredAt: "2026-09-29T08:30:00+08:00"
+        }]));
+        localStorage.removeItem("medtrackNotificationState");
+    });
+    await page.setContent(
+        '<button type="button" class="notification-button" aria-label="Notifications">' +
+        '<i class="fa-solid fa-bell"></i><span></span></button>'
+    );
+    await page.addStyleTag({ url: "/app-shell.css" });
+    await page.addScriptTag({ url: "/notification-center.js" });
+
+    await page.locator(".notification-button").click();
+    await expect(page.getByText("New inventory item", { exact: true })).toBeVisible();
+    await expect(page.getByText(
+        "Portable Oxygen Concentrator was added to Medical Equipment by Test Administrator."
+    )).toBeVisible();
+
+    const notificationLink = page.locator(".notification-item-added");
+    await expect(notificationLink).toHaveAttribute(
+        "href",
+        /medical-equipment\.html\?.*action=details.*item=EQP-TEST-001/
+    );
+    await expect(page.locator("#notificationDropdownSummary")).toContainText(
+        "1 active, 1 unread"
+    );
+});

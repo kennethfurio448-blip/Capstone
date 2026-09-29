@@ -1365,7 +1365,8 @@
         const sensitiveKeys = [
             ...Object.keys(collections),
             "medtrackAccounts",
-            "medtrackAuditLogs"
+            "medtrackAuditLogs",
+            "medtrackInventoryItemAdditions"
         ];
 
         applyingCloudData = true;

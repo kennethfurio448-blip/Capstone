@@ -1030,4 +1030,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     renderEquipment();
+
+    const detailParameters = new URLSearchParams(window.location.search);
+    if (detailParameters.get("action") === "details") {
+        const detailItemId = normalizeId(detailParameters.get("item"));
+        if (detailItemId) {
+            equipmentSearch.value = detailItemId;
+            renderEquipment();
+            openEditModal(detailItemId);
+        }
+    }
 });

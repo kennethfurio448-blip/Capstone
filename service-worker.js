@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v29-expiration-chart";
+const CACHE_NAME = "medtrack-shell-v30-item-added-notifications";
 const APP_SHELL = [
     "/",
     "/index.html",
