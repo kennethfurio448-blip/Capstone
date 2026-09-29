@@ -12,7 +12,7 @@
     <title>Reports | MedTrack</title>
     <script src="page-favicon.js"></script>
 
-    <link rel="stylesheet" href="reports.css">
+    <link rel="stylesheet" href="reports.css?v=20260929-clean-print">
     <link rel="stylesheet" href="app-shell.css">
     <link rel="stylesheet" href="brand-theme.css">
 
@@ -312,6 +312,15 @@
 
         <section class="report-results" id="reportResults">
 
+            <div class="print-document-header" aria-hidden="true">
+                <h1>MEDTRACK INVENTORY AND RESOURCE REPORT</h1>
+
+                <div class="print-document-meta">
+                    <span id="printGeneratedDate">Not generated</span>
+                    <span id="printRecordCount">0 records</span>
+                </div>
+            </div>
+
             <div class="results-header">
 
                 <div>
@@ -370,7 +379,7 @@
 <script src="auth/supabase-data.js?v=20260915-sync-fix"></script>
 <script src="pwa.js"></script>
 <script src="card-navigation.js"></script>
-<script src="reports.js"></script>
+<script src="reports.js?v=20260929-clean-print"></script>
 
 </body>
 </html>

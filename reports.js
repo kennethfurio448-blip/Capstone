@@ -41,6 +41,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const generatedDate =
         document.getElementById("generatedDate");
 
+    const printGeneratedDate =
+        document.getElementById("printGeneratedDate");
+
+    const printRecordCount =
+        document.getElementById("printRecordCount");
+
     const reportMessage =
         document.getElementById("reportMessage");
 
@@ -585,8 +591,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         recordCount.textContent =
             information.rows.length;
 
-        generatedDate.textContent =
+        const generatedLabel =
             `Generated: ${new Date().toLocaleString()}`;
+
+        generatedDate.textContent = generatedLabel;
+        printGeneratedDate.textContent = generatedLabel;
+        printRecordCount.textContent =
+            `${information.rows.length} ${information.rows.length === 1 ? "record" : "records"}`;
 
         renderReportTable(
             information.headers,
