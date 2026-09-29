@@ -505,13 +505,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function generateSupplyId(supplies) {
         let highestNumber = 0;
+        const year = new Date().getFullYear();
 
         supplies.forEach(function (supply) {
             const supplyId =
                 normalizeId(supply.id);
 
             const match =
-                supplyId.match(/^MED-(\d+)$/i);
+                supplyId.match(
+                    /^MED-IMP-\d{4}-TB-(\d+)$/i
+                ) || supplyId.match(/^MED-(\d+)$/i);
 
             if (!match) {
                 return;
@@ -528,7 +531,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
 
         return (
-            "MED-" +
+            `MED-IMP-${year}-TB-` +
             String(highestNumber + 1).padStart(3, "0")
         );
     }
