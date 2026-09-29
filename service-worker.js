@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v26-clean-report-print";
+const CACHE_NAME = "medtrack-shell-v27-report-logo";
 const APP_SHELL = [
     "/",
     "/index.html",

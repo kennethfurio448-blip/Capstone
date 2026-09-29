@@ -822,6 +822,19 @@ a {
         margin-bottom: 18px;
     }
 
+    .print-document-brand {
+        padding-bottom: 8px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .print-document-brand img {
+        display: block;
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+    }
+
     .print-document-header h1 {
         margin: 0;
         padding: 15px 18px;
