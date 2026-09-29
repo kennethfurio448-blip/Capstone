@@ -283,18 +283,29 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function generateVehicleId(vehicles) {
         let highestNumber = 0;
+        const year = new Date().getFullYear();
 
         vehicles.forEach(function (vehicle) {
-            const number = Number(
-                String(vehicle.id).replace("MOB-", "")
-            );
+            const vehicleId = String(vehicle.id || "").trim();
+            const match = vehicleId.match(
+                /^MOB-IMP-\d{4}-[A-Z0-9]+-(\d+)$/i
+            ) || vehicleId.match(/^MOB-(\d+)$/i);
 
-            if (!Number.isNaN(number) && number > highestNumber) {
+            if (!match) {
+                return;
+            }
+
+            const number = Number(match[1]);
+
+            if (Number.isInteger(number) && number > highestNumber) {
                 highestNumber = number;
             }
         });
 
-        return `MOB-${String(highestNumber + 1).padStart(3, "0")}`;
+        return (
+            `MOB-IMP-${year}-DVI-` +
+            String(highestNumber + 1).padStart(3, "0")
+        );
     }
 
 

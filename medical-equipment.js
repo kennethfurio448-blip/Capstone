@@ -298,6 +298,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function generateEquipmentId(equipment) {
         let highestNumber = 0;
+        const year = new Date().getFullYear();
 
         equipment.forEach(function (item) {
             const equipmentId =
@@ -305,8 +306,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const match =
                 equipmentId.match(
-                    /^EQP-(\d+)$/i
-                );
+                    /^EQP-IMP-\d{4}-[A-Z0-9]+-(\d+)$/i
+                ) || equipmentId.match(/^EQP-(\d+)$/i);
 
             if (!match) {
                 return;
@@ -323,7 +324,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
 
         return (
-            "EQP-" +
+            `EQP-IMP-${year}-TB-` +
             String(highestNumber + 1)
                 .padStart(3, "0")
         );
