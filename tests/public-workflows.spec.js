@@ -40,6 +40,27 @@ test("all public pages load without missing local assets", async ({ page }) => {
     expect(failed).toEqual([]);
 });
 
+test("medical equipment uses flexible inspection and service fields", async ({ request }) => {
+    const response = await request.get("/medical-equipment.html");
+    const html = await response.text();
+
+    expect(response.ok()).toBeTruthy();
+    expect(html).toContain("Maintenance Type");
+    expect(html).toContain("Next Inspection / Service Date (Optional)");
+    for (const type of [
+        "Inspection",
+        "Calibration",
+        "Cleaning",
+        "Repair",
+        "Replacement",
+        "Not required"
+    ]) {
+        expect(html).toContain(`<option value="${type}">${type}</option>`);
+    }
+    expect(html).toMatch(/id="maintenanceDate"\s*>/);
+    expect(html).not.toContain("Next Maintenance Date");
+});
+
 test("notification center supports out-of-stock, dismiss, history, and restore", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(function () {

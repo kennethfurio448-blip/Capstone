@@ -109,6 +109,10 @@
                     quantity: Math.max(0, number(item.quantity)),
                     condition: text(item.condition, "Good"),
                     location: text(item.location, "Not specified"),
+                    maintenance_type: text(
+                        item.maintenanceType,
+                        "Inspection"
+                    ),
                     maintenance_date: nullable(item.maintenanceDate),
                     status: text(item.status, "Available"),
                     updated_at: new Date().toISOString()
@@ -123,6 +127,8 @@
                     quantity: item.quantity,
                     condition: item.condition,
                     location: item.location,
+                    maintenanceType:
+                        item.maintenance_type || "Inspection",
                     maintenanceDate: item.maintenance_date || "",
                     status: item.status,
                     serverUpdatedAt: item.updated_at || ""

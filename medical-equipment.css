@@ -821,6 +821,13 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
+.input-group small {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+}
+
 .form-message {
     min-height: 19px;
     margin-top: 14px;

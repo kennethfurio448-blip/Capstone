@@ -294,7 +294,8 @@
                             <th>Category</th>
                             <th>Quantity</th>
                             <th>Condition</th>
-                            <th>Next Maintenance</th>
+                            <th>Maintenance Type</th>
+                            <th>Next Inspection / Service</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -440,16 +441,37 @@
 
                 </div>
 
-                <div class="input-group full-width">
+                <div class="input-group">
+
+                    <label for="maintenanceType">
+                        Maintenance Type
+                    </label>
+
+                    <select id="maintenanceType" required>
+                        <option value="" disabled selected>
+                            Select maintenance type
+                        </option>
+                        <option value="Inspection">Inspection</option>
+                        <option value="Calibration">Calibration</option>
+                        <option value="Cleaning">Cleaning</option>
+                        <option value="Repair">Repair</option>
+                        <option value="Replacement">Replacement</option>
+                        <option value="Not required">Not required</option>
+                    </select>
+
+                    <small id="maintenanceRecommendation"></small>
+
+                </div>
+
+                <div class="input-group">
 
                     <label for="maintenanceDate">
-                        Next Maintenance Date
+                        Next Inspection / Service Date (Optional)
                     </label>
 
                     <input
                         type="date"
                         id="maintenanceDate"
-                        required
                     >
 
                 </div>

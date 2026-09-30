@@ -89,6 +89,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const equipmentStatus =
         document.getElementById("equipmentStatus");
 
+    const maintenanceType =
+        document.getElementById("maintenanceType");
+
+    const maintenanceRecommendation =
+        document.getElementById("maintenanceRecommendation");
+
     const maintenanceDate =
         document.getElementById("maintenanceDate");
 
@@ -105,6 +111,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("confirmDelete");
 
     let equipmentToDelete = null;
+    let maintenanceTypeManuallyChanged = false;
 
 
     const currentUser =
@@ -212,6 +219,35 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function normalizeText(value) {
         return String(value ?? "").trim();
+    }
+
+    function recommendedMaintenanceType(itemName) {
+        const name = normalizeText(itemName).toLowerCase();
+
+        if (/(bp apparatus|glucometer|pulse oximeter|thermometer)/.test(name)) {
+            return "Calibration";
+        }
+
+        if (/(bandage scissors|forceps|cpr mask|trauma shears)/.test(name)) {
+            return "Cleaning";
+        }
+
+        if (/(oxygen|hydraulic|pump motor|spreader|cutter|rescue|life detector|drone|throwline|underwater|sonar|tripod|lifting bag|regulator|cylinder|hose|cribbing|ram|remote controller)/.test(name)) {
+            return "Inspection";
+        }
+
+        return "Inspection";
+    }
+
+    function updateMaintenanceRecommendation(applyRecommendation) {
+        const recommendation = recommendedMaintenanceType(
+            equipmentName.value
+        );
+
+        maintenanceRecommendation.textContent =
+            `Recommended for this item: ${recommendation}.`;
+
+        if (applyRecommendation) maintenanceType.value = recommendation;
     }
 
 
@@ -405,6 +441,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             const itemCondition =
                 normalizeText(item.condition);
 
+            const itemMaintenanceType =
+                normalizeText(item.maintenanceType) ||
+                recommendedMaintenanceType(itemName);
+
             const itemStatus =
                 normalizeText(item.status);
 
@@ -454,6 +494,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <span class="condition-badge ${conditionClass}">
                         ${escapeHTML(itemCondition)}
                     </span>
+                </td>
+
+                <td>
+                    ${escapeHTML(itemMaintenanceType)}
                 </td>
 
                 <td>
@@ -570,6 +614,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         equipmentForm.reset();
+        maintenanceTypeManuallyChanged = false;
+        updateMaintenanceRecommendation(true);
 
         editingEquipmentId.value = "";
 
@@ -633,6 +679,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 selectedEquipment.status
             );
 
+        maintenanceType.value =
+            normalizeText(selectedEquipment.maintenanceType) ||
+            recommendedMaintenanceType(selectedEquipment.name);
+        maintenanceTypeManuallyChanged = true;
+        updateMaintenanceRecommendation(false);
+
         maintenanceDate.value =
             normalizeText(
                 selectedEquipment.maintenanceDate
@@ -683,6 +735,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             const statusValue =
                 equipmentStatus.value;
 
+            const maintenanceTypeValue =
+                maintenanceType.value;
+
             const maintenanceValue =
                 maintenanceDate.value;
 
@@ -691,7 +746,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 !categoryValue ||
                 !conditionValue ||
                 !statusValue ||
-                !maintenanceValue
+                !maintenanceTypeValue
             ) {
                 formMessage.textContent =
                     "Please complete all fields.";
@@ -743,6 +798,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     category: categoryValue,
                     quantity: quantityValue,
                     condition: conditionValue,
+                    maintenanceType:
+                        maintenanceTypeValue,
                     maintenanceDate:
                         maintenanceValue,
                     status: statusValue
@@ -757,6 +814,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     quantity: quantityValue,
                     condition: conditionValue,
                     location: "Not specified",
+                    maintenanceType:
+                        maintenanceTypeValue,
                     maintenanceDate:
                         maintenanceValue,
                     status: statusValue
@@ -905,6 +964,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         "change",
         renderEquipment
     );
+
+    equipmentName.addEventListener("input", function () {
+        updateMaintenanceRecommendation(
+            !maintenanceTypeManuallyChanged
+        );
+    });
+
+    maintenanceType.addEventListener("change", function () {
+        maintenanceTypeManuallyChanged = true;
+        if (maintenanceType.value === "Not required") {
+            maintenanceDate.value = "";
+        }
+    });
 
 
     openAddModalButton.addEventListener(
