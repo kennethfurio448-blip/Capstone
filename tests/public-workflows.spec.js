@@ -61,7 +61,7 @@ test("medical equipment uses flexible inspection and service fields", async ({ r
     expect(html).not.toContain("Next Maintenance Date");
 });
 
-test("new inventory IDs are allocated by the database", async ({ request }) => {
+test("inventory creation uses database-issued IDs and atomic saves", async ({ request }) => {
     const responses = await Promise.all([
         request.get("/medical-supplies.js"),
         request.get("/medical-equipment.js"),
@@ -79,18 +79,30 @@ test("new inventory IDs are allocated by the database", async ({ request }) => {
         'allocateInventoryId("medical_supplies")'
     );
     expect(sources[1]).toContain(
-        'allocateInventoryId("medical_equipment")'
+        ".saveMedicalEquipment({"
     );
     expect(sources[2]).toContain(
-        'allocateInventoryId("mobility_assets")'
+        ".saveMobilityAsset({"
     );
     expect(sources[3]).toContain(
         '"medtrack_allocate_inventory_id"'
+    );
+    expect(sources[3]).toContain(
+        '"medtrack_save_medical_equipment"'
+    );
+    expect(sources[3]).toContain(
+        '"medtrack_save_mobility_asset"'
     );
 
     expect(sources[0]).not.toContain("generateSupplyId");
     expect(sources[1]).not.toContain("generateEquipmentId");
     expect(sources[2]).not.toContain("generateVehicleId");
+    expect(sources[1]).not.toContain(
+        'allocateInventoryId("medical_equipment")'
+    );
+    expect(sources[2]).not.toContain(
+        'allocateInventoryId("mobility_assets")'
+    );
 });
 
 test("notification center supports out-of-stock, dismiss, history, and restore", async ({ page }) => {

@@ -841,6 +841,8 @@
             const missingDatabaseFeature =
                 [
                     "medtrack_save_medical_supply",
+                    "medtrack_save_medical_equipment",
+                    "medtrack_save_mobility_asset",
                     "medtrack_consume_medical_supply",
                     "medtrack_update_borrow_status"
                 ].includes(functionName) &&
@@ -1150,6 +1152,125 @@
         );
     }
 
+    async function saveMedicalEquipment(details) {
+        const operationKey = details.operationKey ||
+            createOperationId("EQUIPMENT-SAVE");
+        const pendingId = details.id ||
+            `PENDING-EQP-${operationKey.slice(-12).toUpperCase()}`;
+
+        return runInventoryOperation(
+            "medtrack_save_medical_equipment",
+            {
+                p_operation_key: operationKey,
+                p_equipment_id: details.id || null,
+                p_name: details.name,
+                p_category: details.category,
+                p_quantity: details.quantity,
+                p_condition: details.condition,
+                p_maintenance_type: details.maintenanceType,
+                p_maintenance_date: details.maintenanceDate || null,
+                p_status: details.status,
+                p_expected_updated_at: details.expectedUpdatedAt || null
+            },
+            ["medtrackMedicalEquipment"],
+            {
+                queueId: `rpc:${operationKey}`,
+                pendingId: pendingId,
+                optimistic: function () {
+                    const records = readLocalCollection(
+                        "medtrackMedicalEquipment"
+                    );
+                    const equipment = {
+                        id: pendingId,
+                        name: details.name,
+                        category: details.category,
+                        quantity: details.quantity,
+                        condition: details.condition,
+                        location: details.location || "Not specified",
+                        maintenanceType: details.maintenanceType,
+                        maintenanceDate: details.maintenanceDate || "",
+                        status: details.status,
+                        serverUpdatedAt: details.expectedUpdatedAt || "",
+                        pendingSync: true
+                    };
+                    const index = records.findIndex(function (record) {
+                        return text(record.id) === text(details.id);
+                    });
+                    if (index >= 0) records[index] = equipment;
+                    else records.push(equipment);
+                    writeLocalCollection(
+                        "medtrackMedicalEquipment",
+                        records,
+                        false
+                    );
+                    window.dispatchEvent(
+                        new CustomEvent("medtrack:data-ready")
+                    );
+                }
+            }
+        );
+    }
+
+    async function saveMobilityAsset(details) {
+        const operationKey = details.operationKey ||
+            createOperationId("MOBILITY-SAVE");
+        const pendingId = details.id ||
+            `PENDING-MOB-${operationKey.slice(-12).toUpperCase()}`;
+
+        return runInventoryOperation(
+            "medtrack_save_mobility_asset",
+            {
+                p_operation_key: operationKey,
+                p_asset_id: details.id || null,
+                p_name: details.name,
+                p_asset_type: details.type,
+                p_plate_number: details.plateNumber,
+                p_condition: details.condition,
+                p_driver: details.driver,
+                p_location: details.location,
+                p_maintenance_date: details.maintenanceDate || null,
+                p_status: details.status,
+                p_expected_updated_at: details.expectedUpdatedAt || null
+            },
+            ["medtrackMobilityAssets"],
+            {
+                queueId: `rpc:${operationKey}`,
+                pendingId: pendingId,
+                optimistic: function () {
+                    const records = readLocalCollection(
+                        "medtrackMobilityAssets"
+                    );
+                    const asset = {
+                        id: pendingId,
+                        name: details.name,
+                        type: details.type,
+                        plateNumber: details.plateNumber,
+                        condition: details.condition,
+                        driver: details.driver,
+                        location: details.location,
+                        maintenanceDate: details.maintenanceDate || "",
+                        status: details.status,
+                        serverUpdatedAt: details.expectedUpdatedAt || "",
+                        pendingSync: true
+                    };
+                    const index = records.findIndex(function (record) {
+                        return text(record.id) === text(details.id);
+                    });
+                    if (index >= 0) records[index] = asset;
+                    else records.push(asset);
+                    writeLocalCollection(
+                        "medtrackMobilityAssets",
+                        records,
+                        false
+                    );
+                    window.dispatchEvent(
+                        new CustomEvent("medtrack:data-ready")
+                    );
+                }
+            }
+        );
+    }
+
     async function allocateInventoryId(inventoryModule) {
         if (!navigator.onLine) {
             throw new Error(
@@ -1438,6 +1559,8 @@
         deleteInventoryItem: deleteInventoryItem,
         allocateInventoryId: allocateInventoryId,
         saveMedicalSupply: saveMedicalSupply,
+        saveMedicalEquipment: saveMedicalEquipment,
+        saveMobilityAsset: saveMobilityAsset,
         consumeMedicalSupply: consumeMedicalSupply,
         loadSupplyTransactions: loadSupplyTransactions,
         loadInventoryTrends: loadInventoryTrends,

@@ -182,6 +182,12 @@ const mfaMigrationPath = join(
   "migrations",
   "20260926090000_safe_admin_mfa_enforcement.sql",
 );
+const atomicInventorySaveMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20260930210000_atomic_equipment_mobility_saves.sql",
+);
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
 
@@ -233,6 +239,7 @@ for (const [label, path] of [
   ["client-error retention migration", retentionMigrationPath],
   ["accessibility and mobile tests", accessibilityTestPath],
   ["authenticated access tests", authenticatedTestPath],
+  ["atomic equipment and mobility saves", atomicInventorySaveMigrationPath],
   ["dependency update configuration", dependabotPath],
 ]) {
   if (!existsSync(path)) failures.push(`${label}: required file is missing`);

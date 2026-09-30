@@ -176,14 +176,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    function saveVehicles(vehicles) {
-        localStorage.setItem(
-            "medtrackMobilityAssets",
-            JSON.stringify(vehicles)
-        );
-    }
-
-
     function escapeHTML(value) {
         return String(value)
             .replaceAll("&", "&amp;")
@@ -599,16 +591,25 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         if (
-            !editId &&
-            (
-                !window.medtrackData ||
-                typeof window.medtrackData
-                    .allocateInventoryId !== "function"
-            )
+            !window.medtrackData ||
+            typeof window.medtrackData
+                .saveMobilityAsset !== "function"
         ) {
             formMessage.textContent =
-                "Database ID allocation is unavailable. Apply the latest " +
+                "Atomic mobility saving is unavailable. Apply the latest " +
                 "Supabase migration and refresh the page.";
+            return;
+        }
+
+        const existingVehicle = editId
+            ? vehicles.find(function (vehicle) {
+                return vehicle.id === editId;
+            })
+            : null;
+
+        if (editId && !existingVehicle) {
+            formMessage.textContent =
+                "The selected mobility asset could not be found.";
             return;
         }
 
@@ -616,20 +617,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         formMessage.textContent = "Saving mobility asset...";
 
         try {
-            if (editId) {
-                const vehicleIndex =
-                    vehicles.findIndex(function (vehicle) {
-                        return vehicle.id === editId;
-                    });
-
-                if (vehicleIndex === -1) {
-                    throw new Error(
-                        "The selected mobility asset could not be found."
-                    );
-                }
-
-                vehicles[vehicleIndex] = {
-                    ...vehicles[vehicleIndex],
+            const saveResult = await window.medtrackData
+                .saveMobilityAsset({
+                    id: editId,
                     name: nameValue,
                     type: typeValue,
                     plateNumber: plateValue,
@@ -637,29 +627,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                     driver: driverValue,
                     location: locationValue,
                     maintenanceDate: maintenanceValue,
-                    status: statusValue
-                };
-            } else {
-                const vehicleId = await window.medtrackData
-                    .allocateInventoryId("mobility_assets");
-                const newVehicle = {
-                    id: vehicleId,
-                    name: nameValue,
-                    type: typeValue,
-                    plateNumber: plateValue,
-                    condition: conditionValue,
-                    driver: driverValue,
-                    location: locationValue,
-                    maintenanceDate: maintenanceValue,
-                    status: statusValue
-                };
+                    status: statusValue,
+                    expectedUpdatedAt: existingVehicle
+                        ? existingVehicle.serverUpdatedAt
+                        : ""
+                });
 
-                vehicles.push(newVehicle);
-            }
-
-            saveVehicles(vehicles);
             closeVehicleModal();
             renderVehicles();
+            if (saveResult.queued) {
+                window.medtrackDialog.alert(
+                    "The mobility change is queued and will be saved atomically when the connection returns."
+                );
+            }
         } catch (error) {
             console.error("Unable to save mobility asset:", error);
             formMessage.textContent =

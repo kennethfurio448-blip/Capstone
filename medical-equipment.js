@@ -199,14 +199,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         ].includes(status) ? status : "For Repair";
     }
 
-    function saveEquipment(equipment) {
-        localStorage.setItem(
-            "medtrackMedicalEquipment",
-            JSON.stringify(equipment)
-        );
-    }
-
-
     function escapeHTML(value) {
         return String(value ?? "")
             .replaceAll("&", "&amp;")
@@ -690,16 +682,25 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
 
             if (
-                !editId &&
-                (
-                    !window.medtrackData ||
-                    typeof window.medtrackData
-                        .allocateInventoryId !== "function"
-                )
+                !window.medtrackData ||
+                typeof window.medtrackData
+                    .saveMedicalEquipment !== "function"
             ) {
                 formMessage.textContent =
-                    "Database ID allocation is unavailable. Apply the " +
+                    "Atomic equipment saving is unavailable. Apply the " +
                     "latest Supabase migration and refresh the page.";
+                return;
+            }
+
+            const existingEquipment = editId
+                ? equipment.find(function (item) {
+                    return normalizeId(item.id) === editId;
+                })
+                : null;
+
+            if (editId && !existingEquipment) {
+                formMessage.textContent =
+                    "The selected equipment could not be found.";
                 return;
             }
 
@@ -707,61 +708,31 @@ document.addEventListener("DOMContentLoaded", async function () {
             formMessage.textContent = "Saving equipment...";
 
             try {
-                if (editId) {
-                    const equipmentIndex =
-                        equipment.findIndex(
-                            function (item) {
-                                return (
-                                    normalizeId(item.id) ===
-                                    editId
-                                );
-                            }
-                        );
-
-                    if (equipmentIndex === -1) {
-                        throw new Error(
-                            "The selected equipment could not be found."
-                        );
-                    }
-
-                    equipment[equipmentIndex] = {
-                        ...equipment[equipmentIndex],
-                        id: normalizeId(
-                            equipment[equipmentIndex].id
-                        ),
+                const saveResult = await window.medtrackData
+                    .saveMedicalEquipment({
+                        id: editId,
                         name: nameValue,
                         category: categoryValue,
                         quantity: quantityValue,
                         condition: conditionValue,
-                        maintenanceType:
-                            maintenanceTypeValue,
-                        maintenanceDate:
-                            maintenanceValue,
-                        status: statusValue
-                    };
-                } else {
-                    const equipmentId = await window.medtrackData
-                        .allocateInventoryId("medical_equipment");
-                    const newEquipment = {
-                        id: equipmentId,
-                        name: nameValue,
-                        category: categoryValue,
-                        quantity: quantityValue,
-                        condition: conditionValue,
-                        location: "Not specified",
-                        maintenanceType:
-                            maintenanceTypeValue,
-                        maintenanceDate:
-                            maintenanceValue,
-                        status: statusValue
-                    };
+                        location: existingEquipment
+                            ? existingEquipment.location
+                            : "Not specified",
+                        maintenanceType: maintenanceTypeValue,
+                        maintenanceDate: maintenanceValue,
+                        status: statusValue,
+                        expectedUpdatedAt: existingEquipment
+                            ? existingEquipment.serverUpdatedAt
+                            : ""
+                    });
 
-                    equipment.push(newEquipment);
-                }
-
-                saveEquipment(equipment);
                 closeEquipmentModal();
                 renderEquipment();
+                if (saveResult.queued) {
+                    window.medtrackDialog.alert(
+                        "The equipment change is queued and will be saved atomically when the connection returns."
+                    );
+                }
             } catch (error) {
                 console.error("Unable to save equipment:", error);
                 formMessage.textContent =
