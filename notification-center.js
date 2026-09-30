@@ -6,6 +6,11 @@
     const ADDITION_CACHE_KEY = "medtrackInventoryItemAdditions";
     const REMOTE_ADDITION_PAGE_SIZE = 50;
     const VISIBLE_NOTIFICATION_PAGE_SIZE = 20;
+    const ALWAYS_VISIBLE_CATEGORIES = [
+        "Medical Supplies",
+        "Medical Equipment",
+        "Mobility"
+    ];
     const ALWAYS_VISIBLE_STATUSES = ["Available"];
     const BORROWABLE_ITEM_TYPES = new Set([
         "Medical Equipment",
@@ -568,9 +573,12 @@
     }
 
     function synchronizeFilterControls(panel, notifications) {
-        const categories = Array.from(new Set(notifications.map(function (item) {
-            return text(item.category, "Other");
-        }))).sort();
+        const categories = Array.from(new Set([
+            ...ALWAYS_VISIBLE_CATEGORIES,
+            ...notifications.map(function (item) {
+                return text(item.category, "Other");
+            })
+        ])).sort();
         const statuses = Array.from(new Set([
             ...ALWAYS_VISIBLE_STATUSES,
             ...notifications.map(function (item) {

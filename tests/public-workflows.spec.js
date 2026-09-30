@@ -199,6 +199,14 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
 
     await page.locator(".notification-button").click();
     await expect(page.locator(
+        '[data-notification-filter="category"] option'
+    )).toHaveText([
+        "All categories",
+        "Medical Equipment",
+        "Medical Supplies",
+        "Mobility"
+    ]);
+    await expect(page.locator(
         '[data-notification-filter="status"] option[value="Available"]'
     )).toHaveText("Available");
     await expect(page.locator(
