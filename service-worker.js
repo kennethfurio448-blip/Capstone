@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v38-verified-offline-access";
+const CACHE_NAME = "medtrack-shell-v39-available-notification-filter";
 const APP_SHELL = [
     "/",
     "/index.html",

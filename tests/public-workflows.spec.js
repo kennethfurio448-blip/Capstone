@@ -199,6 +199,9 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
 
     await page.locator(".notification-button").click();
     await expect(page.locator(
+        '[data-notification-filter="status"] option[value="Available"]'
+    )).toHaveText("Available");
+    await expect(page.locator(
         ".notification-item-content strong",
         { hasText: "Out of stock" }
     )).toBeVisible();
@@ -299,7 +302,7 @@ test("notification center shows every unique new inventory item with details", a
                 inventoryItemId: "MED-TEST-001",
                 itemName: "Emergency Gauze",
                 itemCategory: "First Aid",
-                itemStatus: "Out of Stock",
+                itemStatus: "Available",
                 actorName: "Test Administrator",
                 occurredAt: "2026-09-29T08:30:00+08:00"
             },
@@ -332,7 +335,7 @@ test("notification center shows every unique new inventory item with details", a
         "Portable Oxygen Concentrator was added by Test Administrator. " +
         "Category: Medical Equipment / Respiratory Equipment. Status: For Repair."
     )).toBeVisible();
-    await expect(page.getByText(/Emergency Gauze.*Status: Out of Stock/)).toBeVisible();
+    await expect(page.getByText(/Emergency Gauze.*Status: Available/)).toBeVisible();
     await expect(page.getByText(/Rescue Ambulance.*Status: Deployed/)).toBeVisible();
 
     const notificationLink = page.locator(
@@ -346,6 +349,11 @@ test("notification center shows every unique new inventory item with details", a
     await expect(page.locator("#notificationDropdownSummary")).toContainText(
         "3 active, 3 unread"
     );
+    await page.locator('[data-notification-filter="status"]').selectOption(
+        "Available"
+    );
+    await expect(page.locator(".notification-item-added")).toHaveCount(1);
+    await expect(page.getByText(/Emergency Gauze.*Status: Available/)).toBeVisible();
 });
 
 test("notification history supports filters and load more", async ({ page }) => {
