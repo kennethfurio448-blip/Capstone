@@ -69,6 +69,17 @@ test("mobility shows a dash when no driver was imported", async ({ request }) =>
     expect(source).toContain('vehicle.driver || "—"');
 });
 
+test("mobility uses destination labels while preserving stored location data", async ({ request }) => {
+    const response = await request.get("/mobility.html");
+    const html = await response.text();
+
+    expect(response.ok()).toBeTruthy();
+    expect(html).toContain("<th>Destination</th>");
+    expect(html).toContain("Enter destination");
+    expect(html).not.toContain("Current Location");
+    expect(html).not.toContain("Enter current location");
+});
+
 test("inventory creation uses database-issued IDs and atomic saves", async ({ request }) => {
     const responses = await Promise.all([
         request.get("/medical-supplies.js"),
