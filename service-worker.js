@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v45-category-order";
+const CACHE_NAME = "medtrack-shell-v46-remove-mark-read";
 const APP_SHELL = [
     "/",
     "/index.html",

@@ -597,7 +597,6 @@
             '<div class="notification-toolbar">',
             '  <button type="button" data-notification-view="active" class="is-active">Active</button>',
             '  <button type="button" data-notification-view="history">History</button>',
-            '  <button type="button" data-notification-action="read-all">Mark all read</button>',
             '  <button type="button" data-notification-action="unread-all">Mark all unread</button>',
             '  <button type="button" data-notification-action="restore-all">Restore all</button>',
             '</div>',
@@ -746,8 +745,6 @@
         panel.querySelectorAll("[data-notification-view]").forEach(function (button) {
             button.classList.toggle("is-active", button.dataset.notificationView === activeView);
         });
-        panel.querySelector('[data-notification-action="read-all"]').hidden =
-            activeView === "history" || unread === 0;
         panel.querySelector('[data-notification-action="unread-all"]').hidden =
             activeView === "history" || read === 0;
         panel.querySelector('[data-notification-action="restore-all"]').hidden =
@@ -907,13 +904,6 @@
         visibleNotificationCount = VISIBLE_NOTIFICATION_PAGE_SIZE;
     }
 
-    function markAllRead() {
-        const state = notificationState();
-        const active = activeNotifications(buildNotifications(), state);
-        state.readIds.push(...active.map(notificationVersion));
-        saveNotificationState(state);
-    }
-
     function markAllUnread() {
         const state = notificationState();
         const activeVersions = new Set(
@@ -937,8 +927,6 @@
         if (control.dataset.notificationView) {
             activeView = control.dataset.notificationView;
             visibleNotificationCount = VISIBLE_NOTIFICATION_PAGE_SIZE;
-        } else if (control.dataset.notificationAction === "read-all") {
-            markAllRead();
         } else if (control.dataset.notificationAction === "unread-all") {
             markAllUnread();
         } else if (control.dataset.notificationAction === "dismiss") {
