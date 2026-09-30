@@ -263,12 +263,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 ["Mobility Assets", Number(totals.mobilityAssets || 0), "#176fd1", "fa-wheelchair"]
             ];
             const total = segments.reduce((sum, item) => sum + item[1], 0);
+            const displayPercentages = balancedPercentages(
+                segments.map(function (segment) { return segment[1]; })
+            );
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.setAttribute("viewBox", "0 0 340 340");
             let startAngle = -90;
 
-            segments.forEach(function (segment) {
+            segments.forEach(function (segment, index) {
                 const percentage = total ? segment[1] / total * 100 : 0;
+                const displayPercentage = displayPercentages[index];
                 if (!percentage) return;
 
                 const endAngle = startAngle + percentage * 3.6;
@@ -279,7 +283,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     "stroke-width": 2
                 });
                 const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-                title.textContent = `${segment[0]}: ${segment[1]} (${percentage.toFixed(1)}%)`;
+                title.textContent = `${segment[0]}: ${segment[1]} (${displayPercentage.toFixed(1)}%)`;
                 path.appendChild(title);
 
                 if (percentage >= 8) {
@@ -294,7 +298,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         "font-weight": 800,
                         fill: "#ffffff"
                     });
-                    label.textContent = `${percentage.toFixed(1)}%`;
+                    label.textContent = `${displayPercentage.toFixed(1)}%`;
                 }
 
                 startAngle = endAngle;
@@ -314,13 +318,12 @@ document.addEventListener("DOMContentLoaded", function () {
             chart.replaceChildren(svg);
             chart.setAttribute(
                 "aria-label",
-                `Inventory distribution: ${segments.map(function (segment) {
-                    const percentage = total ? segment[1] / total * 100 : 0;
-                    return `${segment[0]} ${segment[1]} records, ${percentage.toFixed(1)} percent`;
+                `Inventory distribution: ${segments.map(function (segment, index) {
+                    return `${segment[0]} ${segment[1]} records, ` +
+                        `${displayPercentages[index].toFixed(1)} percent`;
                 }).join("; ")}`
             );
-            legend.replaceChildren(...segments.map(function (segment) {
-                const percentage = total ? segment[1] / total * 100 : 0;
+            legend.replaceChildren(...segments.map(function (segment, index) {
                 const row = document.createElement("div");
                 row.className = "distribution-legend-item";
                 const swatch = document.createElement("span");
@@ -338,7 +341,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const count = document.createElement("span");
                 count.textContent = segment[1].toLocaleString();
                 const percentageLabel = document.createElement("small");
-                percentageLabel.textContent = `${percentage.toFixed(1)}%`;
+                percentageLabel.textContent = `${displayPercentages[index].toFixed(1)}%`;
                 percentageLabel.style.color = segment[2];
                 percentageLabel.style.backgroundColor = `${segment[2]}14`;
                 value.append(count, percentageLabel);
@@ -352,6 +355,33 @@ document.addEventListener("DOMContentLoaded", function () {
             status.classList.add("error");
             status.textContent = "Inventory totals could not be loaded.";
         }
+    }
+
+    function balancedPercentages(values) {
+        const total = values.reduce(function (sum, value) {
+            return sum + Math.max(0, Number(value) || 0);
+        }, 0);
+
+        if (!total) return values.map(function () { return 0; });
+
+        const exactTenths = values.map(function (value) {
+            return Math.max(0, Number(value) || 0) / total * 1000;
+        });
+        const roundedTenths = exactTenths.map(Math.floor);
+        let remainingTenths = 1000 - roundedTenths.reduce(function (sum, value) {
+            return sum + value;
+        }, 0);
+        const priority = exactTenths.map(function (value, index) {
+            return { index: index, remainder: value - Math.floor(value) };
+        }).sort(function (left, right) {
+            return right.remainder - left.remainder || left.index - right.index;
+        });
+
+        for (let index = 0; index < remainingTenths; index++) {
+            roundedTenths[priority[index % priority.length].index]++;
+        }
+
+        return roundedTenths.map(function (value) { return value / 10; });
     }
 
     function polarPoint(centerX, centerY, radius, angle) {

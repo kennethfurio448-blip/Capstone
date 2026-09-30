@@ -111,3 +111,38 @@ test("notification center shows new inventory items with creator and details lin
         "1 active, 1 unread"
     );
 });
+
+test("inventory distribution percentages total exactly 100 percent", async ({ page }) => {
+    await page.goto("/");
+    await page.setContent(
+        '<div id="inventoryDistributionChart"></div>' +
+        '<div id="inventoryDistributionLegend"></div>' +
+        '<div id="inventoryDistributionStatus"></div>' +
+        '<div id="inventoryDistributionTotal"></div>'
+    );
+    await page.evaluate(function () {
+        window.medtrackData = {
+            loadInventoryDistribution: async function () {
+                return {
+                    medicalSupplies: 30,
+                    medicalEquipment: 30,
+                    mobilityAssets: 11
+                };
+            }
+        };
+    });
+    await page.addScriptTag({ url: "/analytics.js" });
+    await page.evaluate(function () {
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+    });
+
+    const labels = page.locator("#inventoryDistributionLegend small");
+    await expect(labels).toHaveCount(3);
+    const percentages = (await labels.allTextContents()).map(function (label) {
+        return Number(label.replace("%", ""));
+    });
+
+    expect(percentages.reduce(function (sum, value) {
+        return sum + value;
+    }, 0)).toBe(100);
+});
