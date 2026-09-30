@@ -124,6 +124,18 @@ test("reports show the emergency response summary", async ({ request }) => {
     );
 });
 
+test("emergency response hides the empty inventory option", async ({ request }) => {
+    const response = await request.get("/emergency-response.html");
+    const html = await response.text();
+
+    expect(response.ok()).toBeTruthy();
+    expect(html).not.toContain("No inventory item");
+    expect(html).toContain(
+        '<option value="" selected disabled hidden>'
+    );
+    expect(html).toContain("Select inventory type");
+});
+
 test("inventory creation uses database-issued IDs and atomic saves", async ({ request }) => {
     const responses = await Promise.all([
         request.get("/medical-supplies.js"),
