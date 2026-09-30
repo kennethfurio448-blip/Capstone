@@ -114,17 +114,26 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
     await page.addScriptTag({ url: "/notification-center.js" });
 
     await page.locator(".notification-button").click();
-    await expect(page.getByText("Out of stock", { exact: true })).toBeVisible();
+    await expect(page.locator(
+        ".notification-item-content strong",
+        { hasText: "Out of stock" }
+    )).toBeVisible();
     await expect(page.getByText(/Test Gauze has no Boxes remaining/)).toBeVisible();
 
     await page.getByRole("button", { name: "Dismiss notification" }).click();
     await expect(page.getByText("No current notifications.")).toBeVisible();
     await page.getByRole("button", { name: "History" }).click();
-    await expect(page.getByText("Out of stock", { exact: true })).toBeVisible();
+    await expect(page.locator(
+        ".notification-item-content strong",
+        { hasText: "Out of stock" }
+    )).toBeVisible();
 
     await page.getByRole("button", { name: "Restore notification" }).click();
     await page.getByRole("button", { name: "Active" }).click();
-    await expect(page.getByText("Out of stock", { exact: true })).toBeVisible();
+    await expect(page.locator(
+        ".notification-item-content strong",
+        { hasText: "Out of stock" }
+    )).toBeVisible();
 });
 
 test("equipment service notifications show due and overdue schedules", async ({ page }) => {
@@ -253,6 +262,57 @@ test("notification center shows every unique new inventory item with details", a
     await expect(page.locator("#notificationDropdownSummary")).toContainText(
         "3 active, 3 unread"
     );
+});
+
+test("notification history supports filters and load more", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(function () {
+        const dismissed = Array.from({ length: 25 }, function (_, index) {
+            const timestamp = new Date();
+            timestamp.setMinutes(timestamp.getMinutes() - index);
+            return {
+                id: `history-test-${index}`,
+                type: "item-added",
+                icon: "fa-pills",
+                label: "New inventory item",
+                message: `History item ${index}`,
+                category: index % 2 === 0
+                    ? "Medical Supplies"
+                    : "Medical Equipment",
+                status: index % 3 === 0 ? "Available" : "Low Stock",
+                timestamp: timestamp.toISOString(),
+                href: "medical-supplies.html",
+                dismissedAt: timestamp.toISOString()
+            };
+        });
+        localStorage.setItem("medtrackNotificationState", JSON.stringify({
+            readIds: [],
+            dismissed
+        }));
+    });
+    await page.setContent(
+        '<button type="button" class="notification-button" aria-label="Notifications">' +
+        '<i class="fa-solid fa-bell"></i><span></span></button>'
+    );
+    await page.addStyleTag({ url: "/app-shell.css" });
+    await page.addScriptTag({ url: "/notification-center.js" });
+
+    await page.locator(".notification-button").click();
+    await page.getByRole("button", { name: "History" }).click();
+    await expect(page.locator(".notification-row")).toHaveCount(20);
+    await page.getByRole("button", { name: "Load more" }).click();
+    await expect(page.locator(".notification-row")).toHaveCount(25);
+
+    await page.locator('[data-notification-filter="category"]').selectOption(
+        "Medical Equipment"
+    );
+    await expect(page.locator(".notification-row")).toHaveCount(12);
+    await page.locator('[data-notification-filter="status"]').selectOption(
+        "Available"
+    );
+    await expect(page.locator(".notification-row")).toHaveCount(4);
+    await expect(page.locator('[data-notification-filter="date"]')).toBeVisible();
+    await expect(page.locator('[data-notification-filter="unread"]')).toBeVisible();
 });
 
 test("inventory distribution percentages total exactly 100 percent", async ({ page }) => {

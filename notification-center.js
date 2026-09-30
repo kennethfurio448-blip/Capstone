@@ -4,6 +4,8 @@
     const DROPDOWN_ID = "medtrackNotificationDropdown";
     const STATE_KEY = "medtrackNotificationState";
     const ADDITION_CACHE_KEY = "medtrackInventoryItemAdditions";
+    const REMOTE_ADDITION_PAGE_SIZE = 50;
+    const VISIBLE_NOTIFICATION_PAGE_SIZE = 20;
     const BORROWABLE_ITEM_TYPES = new Set([
         "Medical Equipment",
         "Mobility Asset"
@@ -15,6 +17,15 @@
     let notificationUserId = null;
     let remoteSaveTimer = null;
     let additionRefreshTimer = null;
+    let additionHasMore = false;
+    let additionLoading = false;
+    let visibleNotificationCount = VISIBLE_NOTIFICATION_PAGE_SIZE;
+    const notificationFilters = {
+        category: "all",
+        status: "all",
+        unread: false,
+        date: "all"
+    };
 
     function storedArray(key) {
         try {
@@ -48,11 +59,26 @@
         }
     }
 
-    function saveNotificationState(state) {
+    function normalizedNotificationState(state) {
         const normalized = {
-            readIds: Array.from(new Set(state.readIds)).slice(-250),
-            dismissed: state.dismissed.slice(-100)
+            readIds: Array.from(new Set(state.readIds)).slice(-1000),
+            dismissed: state.dismissed.slice(-500)
         };
+        const encodedSize = function () {
+            return new TextEncoder().encode(JSON.stringify(normalized)).length;
+        };
+
+        while (normalized.dismissed.length > 0 && encodedSize() > 120000) {
+            normalized.dismissed.shift();
+        }
+        while (normalized.readIds.length > 0 && encodedSize() > 120000) {
+            normalized.readIds.shift();
+        }
+        return normalized;
+    }
+
+    function saveNotificationState(state) {
+        const normalized = normalizedNotificationState(state);
         localStorage.setItem(STATE_KEY, JSON.stringify(normalized));
         scheduleRemoteStateSave(normalized);
     }
@@ -67,8 +93,8 @@
             readIds: Array.from(new Set([
                 ...remoteState.readIds,
                 ...localState.readIds
-            ])).slice(-250),
-            dismissed: Array.from(dismissed.values()).slice(-100)
+            ])).slice(-1000),
+            dismissed: Array.from(dismissed.values()).slice(-500)
         };
     }
 
@@ -214,52 +240,82 @@
                 label: "New inventory item",
                 message: `${itemName} was added by ${actorName}. ` +
                     `Category: ${category}. Status: ${itemStatus}.`,
+                category: module.category,
+                status: itemStatus,
                 timestamp: timestamp,
                 href: inventoryItemLink(module.page, module.searchId, itemId)
             }];
         });
     }
 
-    async function loadInventoryAdditions() {
-        if (!navigator.onLine || !window.medtrackSupabase) return;
+    async function loadInventoryAdditions(reset = false) {
+        if (
+            !navigator.onLine ||
+            !window.medtrackSupabase ||
+            additionLoading
+        ) return;
 
-        const result = await window.medtrackSupabase
-            .from("inventory_activity_events")
-            .select(
-                "id, event_key, inventory_module, inventory_item_id, " +
-                "occurred_at, metadata"
-            )
-            .eq("event_type", "item_created")
-            .order("occurred_at", { ascending: false })
-            .limit(250);
+        additionLoading = true;
+        const cachedEvents = reset ? [] : storedArray(ADDITION_CACHE_KEY);
+        const offset = cachedEvents.length;
 
-        if (result.error) {
-            console.error("Unable to load new-item notifications:", result.error);
-            return;
+        try {
+            const result = await window.medtrackSupabase
+                .from("inventory_activity_events")
+                .select(
+                    "id, event_key, inventory_module, inventory_item_id, " +
+                    "occurred_at, metadata"
+                )
+                .eq("event_type", "item_created")
+                .order("occurred_at", { ascending: false })
+                .order("id", { ascending: false })
+                .range(offset, offset + REMOTE_ADDITION_PAGE_SIZE - 1);
+
+            if (result.error) {
+                console.error("Unable to load new-item notifications:", result.error);
+                return;
+            }
+
+            const page = (result.data || []).map(function (event) {
+                const metadata = event.metadata || {};
+                return {
+                    id: event.id,
+                    eventKey: event.event_key,
+                    inventoryModule: event.inventory_module,
+                    inventoryItemId: event.inventory_item_id,
+                    itemName: metadata.itemName || "",
+                    itemCategory: metadata.itemCategory || "",
+                    itemStatus: metadata.itemStatus || "",
+                    actorName: metadata.actorName || "System",
+                    occurredAt: event.occurred_at
+                };
+            });
+            const eventsByKey = new Map();
+
+            [...cachedEvents, ...page].forEach(function (event) {
+                const identity = text(
+                    event.eventKey,
+                    `${event.inventoryModule}:${event.inventoryItemId}:${event.occurredAt}`
+                );
+                if (identity) eventsByKey.set(identity, event);
+            });
+
+            additionHasMore = page.length === REMOTE_ADDITION_PAGE_SIZE;
+            localStorage.setItem(
+                ADDITION_CACHE_KEY,
+                JSON.stringify(Array.from(eventsByKey.values()))
+            );
+            scheduleRefresh();
+        } finally {
+            additionLoading = false;
         }
-
-        const events = (result.data || []).map(function (event) {
-            const metadata = event.metadata || {};
-            return {
-                id: event.id,
-                eventKey: event.event_key,
-                inventoryModule: event.inventory_module,
-                inventoryItemId: event.inventory_item_id,
-                itemName: metadata.itemName || "",
-                itemCategory: metadata.itemCategory || "",
-                itemStatus: metadata.itemStatus || "",
-                actorName: metadata.actorName || "System",
-                occurredAt: event.occurred_at
-            };
-        });
-
-        localStorage.setItem(ADDITION_CACHE_KEY, JSON.stringify(events));
-        scheduleRefresh();
     }
 
     function scheduleAdditionRefresh() {
         window.clearTimeout(additionRefreshTimer);
-        additionRefreshTimer = window.setTimeout(loadInventoryAdditions, 150);
+        additionRefreshTimer = window.setTimeout(function () {
+            loadInventoryAdditions(true);
+        }, 150);
     }
 
     function buildNotifications() {
@@ -288,6 +344,8 @@
                     icon: "fa-box-open",
                     label: "Out of stock",
                     message: `${name} has no ${unit} remaining and needs immediate replenishment.`,
+                    category: "Medical Supplies",
+                    status: "Out of stock",
                     timestamp: detectionTimestamp(supply),
                     href: href
                 });
@@ -298,6 +356,8 @@
                     icon: "fa-arrow-trend-down",
                     label: "Low stock",
                     message: `${name} has ${quantity} ${unit} remaining (minimum ${threshold}).`,
+                    category: "Medical Supplies",
+                    status: "Low stock",
                     timestamp: detectionTimestamp(supply),
                     href: href
                 });
@@ -311,6 +371,8 @@
                     icon: "fa-calendar-xmark",
                     label: "Expired supply",
                     message: `${name} expired on ${expiration.toLocaleDateString()}.`,
+                    category: "Medical Supplies",
+                    status: "Expired",
                     timestamp: expiration,
                     href: href
                 });
@@ -346,6 +408,8 @@
                     label: "Inspection/service overdue",
                     message: `${name} requires ${maintenanceType.toLowerCase()}; ` +
                         `it was scheduled for ${serviceDate.toLocaleDateString()}.`,
+                    category: "Medical Equipment",
+                    status: "Service overdue",
                     timestamp: serviceDate,
                     href: href
                 });
@@ -357,6 +421,8 @@
                     label: "Inspection/service due soon",
                     message: `${name} has ${maintenanceType.toLowerCase()} scheduled ` +
                         `for ${serviceDate.toLocaleDateString()}.`,
+                    category: "Medical Equipment",
+                    status: "Service due soon",
                     timestamp: serviceDate,
                     href: href
                 });
@@ -387,6 +453,8 @@
                 icon: "fa-clock",
                 label: "Overdue item",
                 message: `${itemName}, borrowed by ${borrower}, was due ${dueDate.toLocaleDateString()}.`,
+                category: text(record.itemType, "Inventory"),
+                status: "Overdue",
                 timestamp: dueDate,
                 href: notificationLink(
                     "status.html",
@@ -439,6 +507,12 @@
             '  <button type="button" data-notification-view="history">History</button>',
             '  <button type="button" data-notification-action="read-all">Mark all read</button>',
             '</div>',
+            '<div class="notification-filters" aria-label="Notification filters">',
+            '  <label>Category<select data-notification-filter="category"><option value="all">All categories</option></select></label>',
+            '  <label>Status<select data-notification-filter="status"><option value="all">All statuses</option></select></label>',
+            '  <label>Date<select data-notification-filter="date"><option value="all">Any date</option><option value="today">Today</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></label>',
+            '  <label class="notification-unread-filter"><input type="checkbox" data-notification-filter="unread"> Unread only</label>',
+            '</div>',
             '<div class="notification-list" id="notificationDropdownList"></div>'
         ].join("");
         document.body.appendChild(dropdown);
@@ -448,6 +522,7 @@
             closeDropdown
         );
         dropdown.addEventListener("click", handleDropdownAction);
+        dropdown.addEventListener("change", handleFilterChange);
         return dropdown;
     }
 
@@ -473,20 +548,88 @@
         }).reverse();
     }
 
+    function updateFilterOptions(select, values, allLabel) {
+        const selected = select.value || "all";
+        select.replaceChildren();
+        const allOption = document.createElement("option");
+        allOption.value = "all";
+        allOption.textContent = allLabel;
+        select.appendChild(allOption);
+        values.forEach(function (value) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+        select.value = values.includes(selected) ? selected : "all";
+    }
+
+    function synchronizeFilterControls(panel, notifications) {
+        const categories = Array.from(new Set(notifications.map(function (item) {
+            return text(item.category, "Other");
+        }))).sort();
+        const statuses = Array.from(new Set(notifications.map(function (item) {
+            return text(item.status, item.label);
+        }))).sort();
+        const categorySelect = panel.querySelector('[data-notification-filter="category"]');
+        const statusSelect = panel.querySelector('[data-notification-filter="status"]');
+
+        updateFilterOptions(categorySelect, categories, "All categories");
+        updateFilterOptions(statusSelect, statuses, "All statuses");
+        categorySelect.value = categories.includes(notificationFilters.category)
+            ? notificationFilters.category
+            : "all";
+        statusSelect.value = statuses.includes(notificationFilters.status)
+            ? notificationFilters.status
+            : "all";
+        panel.querySelector('[data-notification-filter="date"]').value =
+            notificationFilters.date;
+        panel.querySelector('[data-notification-filter="unread"]').checked =
+            notificationFilters.unread;
+    }
+
+    function filteredNotifications(notifications, state) {
+        const now = new Date();
+        const start = new Date(now);
+        if (notificationFilters.date === "today") {
+            start.setHours(0, 0, 0, 0);
+        } else if (notificationFilters.date !== "all") {
+            start.setDate(start.getDate() - Number(notificationFilters.date));
+        }
+
+        return notifications.filter(function (notification) {
+            if (
+                notificationFilters.category !== "all" &&
+                text(notification.category, "Other") !== notificationFilters.category
+            ) return false;
+            if (
+                notificationFilters.status !== "all" &&
+                text(notification.status, notification.label) !== notificationFilters.status
+            ) return false;
+            if (
+                notificationFilters.unread &&
+                state.readIds.includes(notificationVersion(notification))
+            ) return false;
+            return notificationFilters.date === "all" || notification.timestamp >= start;
+        });
+    }
+
     function renderDropdown() {
         const panel = ensureDropdown();
         const summary = panel.querySelector("#notificationDropdownSummary");
         const list = panel.querySelector("#notificationDropdownList");
         const state = notificationState();
         const active = activeNotifications(buildNotifications(), state);
-        const notifications = activeView === "history"
+        const sourceNotifications = activeView === "history"
             ? historyNotifications(state)
             : active;
+        synchronizeFilterControls(panel, sourceNotifications);
+        const notifications = filteredNotifications(sourceNotifications, state);
         const unread = active.filter(function (notification) {
             return !state.readIds.includes(notificationVersion(notification));
         }).length;
         summary.textContent = activeView === "history"
-            ? `${notifications.length} dismissed notification${notifications.length === 1 ? "" : "s"}`
+            ? `${notifications.length} of ${sourceNotifications.length} dismissed`
             : (active.length
                 ? `${active.length} active, ${unread} unread`
                 : "You're all caught up");
@@ -500,14 +643,24 @@
         if (notifications.length === 0) {
             const empty = document.createElement("div");
             empty.className = "notification-empty";
-            empty.innerHTML = activeView === "history"
-                ? '<i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><p>No notification history.</p>'
-                : '<i class="fa-solid fa-circle-check" aria-hidden="true"></i><p>No current notifications.</p>';
+            empty.innerHTML = sourceNotifications.length
+                ? '<i class="fa-solid fa-filter" aria-hidden="true"></i><p>No notifications match these filters.</p>'
+                : (activeView === "history"
+                    ? '<i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><p>No notification history.</p>'
+                    : '<i class="fa-solid fa-circle-check" aria-hidden="true"></i><p>No current notifications.</p>');
             list.appendChild(empty);
+            if (activeView === "active" && additionHasMore) {
+                const loadMore = document.createElement("button");
+                loadMore.type = "button";
+                loadMore.className = "notification-load-more";
+                loadMore.dataset.notificationAction = "load-more";
+                loadMore.textContent = "Load more";
+                list.appendChild(loadMore);
+            }
             return;
         }
 
-        notifications.forEach(function (notification) {
+        notifications.slice(0, visibleNotificationCount).forEach(function (notification) {
             const row = document.createElement("div");
             row.className = "notification-row";
 
@@ -558,6 +711,47 @@
             row.append(link, action);
             list.appendChild(row);
         });
+
+        if (
+            visibleNotificationCount < notifications.length ||
+            (activeView === "active" && additionHasMore)
+        ) {
+            const loadMore = document.createElement("button");
+            loadMore.type = "button";
+            loadMore.className = "notification-load-more";
+            loadMore.dataset.notificationAction = "load-more";
+            loadMore.textContent = additionLoading ? "Loading..." : "Load more";
+            loadMore.disabled = additionLoading;
+            list.appendChild(loadMore);
+        }
+    }
+
+    function handleFilterChange(event) {
+        const control = event.target instanceof Element
+            ? event.target.closest("[data-notification-filter]")
+            : null;
+        if (!control) return;
+        const filter = control.dataset.notificationFilter;
+        notificationFilters[filter] = filter === "unread"
+            ? control.checked
+            : control.value;
+        visibleNotificationCount = VISIBLE_NOTIFICATION_PAGE_SIZE;
+        renderDropdown();
+    }
+
+    async function loadMoreNotifications() {
+        visibleNotificationCount += VISIBLE_NOTIFICATION_PAGE_SIZE;
+        if (activeView === "active" && additionHasMore) {
+            const state = notificationState();
+            const available = filteredNotifications(
+                activeNotifications(buildNotifications(), state),
+                state
+            ).length;
+            if (visibleNotificationCount >= available) {
+                await loadInventoryAdditions(false);
+            }
+        }
+        renderDropdown();
     }
 
     function dismissNotification(notificationId) {
@@ -601,12 +795,16 @@
         event.stopPropagation();
         if (control.dataset.notificationView) {
             activeView = control.dataset.notificationView;
+            visibleNotificationCount = VISIBLE_NOTIFICATION_PAGE_SIZE;
         } else if (control.dataset.notificationAction === "read-all") {
             markAllRead();
         } else if (control.dataset.notificationAction === "dismiss") {
             dismissNotification(control.dataset.notificationId);
         } else if (control.dataset.notificationAction === "restore") {
             restoreNotification(control.dataset.notificationId);
+        } else if (control.dataset.notificationAction === "load-more") {
+            loadMoreNotifications();
+            return;
         }
         renderDropdown();
         refreshBadges();
@@ -648,6 +846,7 @@
 
         activeButton = button;
         activeView = "active";
+        visibleNotificationCount = VISIBLE_NOTIFICATION_PAGE_SIZE;
         renderDropdown();
         panel.hidden = false;
         button.setAttribute("aria-expanded", "true");
@@ -733,6 +932,8 @@
         refreshBadges();
         window.setTimeout(refreshBadges, 750);
         window.setTimeout(loadRemoteNotificationState, 900);
-        window.setTimeout(loadInventoryAdditions, 1000);
+        window.setTimeout(function () {
+            loadInventoryAdditions(true);
+        }, 1000);
     });
 })();

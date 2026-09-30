@@ -1,0 +1,45 @@
+name: Encrypted MedTrack backup
+
+on:
+  schedule:
+    - cron: "47 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup-and-rehearse-restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MEDTRACK_SUPABASE_URL: ${{ secrets.MEDTRACK_SUPABASE_URL }}
+      MEDTRACK_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MEDTRACK_SUPABASE_SERVICE_ROLE_KEY }}
+      MEDTRACK_BACKUP_PASSWORD: ${{ secrets.MEDTRACK_BACKUP_PASSWORD }}
+      MEDTRACK_BACKUP_FILE: backup-output/medtrack-encrypted-backup.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Confirm backup secrets are configured
+        shell: bash
+        run: |
+          test -n "$MEDTRACK_SUPABASE_URL"
+          test -n "$MEDTRACK_SUPABASE_SERVICE_ROLE_KEY"
+          test -n "$MEDTRACK_BACKUP_PASSWORD"
+      - run: npm ci
+      - name: Create encrypted backup
+        run: npm run backup:create
+      - name: Verify encrypted backup
+        run: npm run verify:backup
+      - name: Run non-destructive restore rehearsal
+        run: npm run test:backup-restore
+      - name: Retain encrypted backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: medtrack-encrypted-backup-${{ github.run_id }}
+          path: backup-output/medtrack-encrypted-backup.json
+          if-no-files-found: error
+          retention-days: 30

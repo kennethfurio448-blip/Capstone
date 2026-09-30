@@ -4,9 +4,12 @@
   "main": "admin-dashboard.js",
   "scripts": {
     "check": "node scripts/check-project.mjs",
-    "test": "npm run check && npm run test:e2e",
+    "test": "npm run check && npm run test:backup-format && npm run test:e2e",
     "test:e2e": "playwright test",
+    "test:backup-format": "node scripts/test-backup-format.mjs",
+    "backup:create": "node scripts/create-automated-backup.mjs",
     "verify:backup": "node scripts/verify-backup.mjs",
+    "test:backup-restore": "node scripts/test-backup-restore.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs"
   },
   "repository": {

@@ -146,6 +146,14 @@ const browserTestPath = join(root, "tests", "public-workflows.spec.js");
 const playwrightConfigPath = join(root, "playwright.config.js");
 const deploymentCheckPath = join(root, "scripts", "verify-deployment.mjs");
 const backupCheckPath = join(root, "scripts", "verify-backup.mjs");
+const backupCreatePath = join(root, "scripts", "create-automated-backup.mjs");
+const backupRestoreTestPath = join(root, "scripts", "test-backup-restore.mjs");
+const backupWorkflowPath = join(
+  root,
+  ".github",
+  "workflows",
+  "encrypted-backup.yml",
+);
 const reliabilityMigrationPath = join(
   root,
   "supabase",
@@ -196,6 +204,12 @@ try {
     '"Medical Equipment"',
     '"Mobility Asset"',
     "notification.timestamp.toISOString()",
+    'loadMore.dataset.notificationAction = "load-more"',
+    'data-notification-filter="category"',
+    'data-notification-filter="status"',
+    'data-notification-filter="unread"',
+    'data-notification-filter="date"',
+    ".range(offset, offset + REMOTE_ADDITION_PAGE_SIZE - 1)",
   ]) {
     if (!notificationCenter.includes(requiredNotificationControl)) {
       failures.push(`notification center: missing ${requiredNotificationControl}`);
@@ -212,6 +226,9 @@ for (const [label, path] of [
   ["Playwright configuration", playwrightConfigPath],
   ["deployment verification", deploymentCheckPath],
   ["encrypted backup verification", backupCheckPath],
+  ["encrypted backup creation", backupCreatePath],
+  ["backup restore rehearsal", backupRestoreTestPath],
+  ["scheduled encrypted backup workflow", backupWorkflowPath],
   ["notification and monitoring migration", reliabilityMigrationPath],
   ["client-error retention migration", retentionMigrationPath],
   ["accessibility and mobile tests", accessibilityTestPath],

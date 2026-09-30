@@ -696,6 +696,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     quantity: Number(item.quantity),
                     condition: item.condition,
                     location: item.location,
+                    maintenance_type:
+                        item.maintenanceType || "Inspection",
                     maintenance_date: item.maintenanceDate || "",
                     status: item.status
                 };

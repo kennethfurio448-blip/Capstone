@@ -22,6 +22,8 @@ The application requires its configured Supabase project for online authenticati
 - `npm run test:e2e` runs the Chromium browser tests.
 - `npm test` runs both static validation and browser tests.
 - `npm run verify:backup` decrypts and validates a backup without restoring it. Set `MEDTRACK_BACKUP_FILE` and `MEDTRACK_BACKUP_PASSWORD`; the password and record contents are never printed.
+- `npm run backup:create` exports synchronized production records and creates an AES-256-GCM encrypted backup. It requires `MEDTRACK_SUPABASE_URL`, `MEDTRACK_SUPABASE_SERVICE_ROLE_KEY`, and `MEDTRACK_BACKUP_PASSWORD`.
+- `npm run test:backup-restore` performs a non-destructive restore rehearsal against an encrypted file. It verifies decryption, unique record IDs, collection reconstruction, and JSON round-trip integrity without writing to any database.
 - `npm run verify:deployment` checks production entry points, security headers, Supabase authentication health, and required Edge Functions. Set `MEDTRACK_URL` and `MEDTRACK_SUPABASE_URL` to verify another environment.
 
 The browser suite includes public workflows, responsive phone layouts, WCAG accessibility checks, notification behavior, and optional Admin/Staff authentication smoke tests. Authenticated tests remain skipped until dedicated test credentials are configured as GitHub secrets; never use personal or production operator credentials.
@@ -39,6 +41,14 @@ Do not commit service-role keys, SMTP credentials, account passwords, OTP values
 ## Backups and recovery
 
 Administrators can create encrypted backups from System Settings. Use a unique backup password, store the file and password separately, and test restoration periodically in a non-production environment. Restoring a backup replaces synchronized application records and should only be performed by an authorized administrator.
+
+The `Encrypted MedTrack backup` GitHub Actions workflow runs daily at 18:47 UTC (02:47 Asia/Manila), verifies each encrypted backup, performs a non-destructive restore rehearsal, and retains only the encrypted artifact for 30 days. Configure these repository secrets before enabling the schedule:
+
+- `MEDTRACK_SUPABASE_URL`
+- `MEDTRACK_SUPABASE_SERVICE_ROLE_KEY`
+- `MEDTRACK_BACKUP_PASSWORD` (a unique value containing at least 12 characters)
+
+Rotate the service-role key and backup password according to PDRRMO policy. Never store either value in the repository or download logs. Automated backups contain synchronized operational tables; browser-only appearance preferences remain covered by the administrator's manual encrypted backup.
 
 Never perform a restore drill against `www.medtrackmanagement.com` or the production Supabase project. A dedicated test database and test Admin account are required before automating this destructive verification.
 
