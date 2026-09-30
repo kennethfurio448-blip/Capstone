@@ -95,6 +95,63 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
     await expect(page.getByText("Out of stock", { exact: true })).toBeVisible();
 });
 
+test("equipment service notifications show due and overdue schedules", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(function () {
+        const dateValue = function (offset) {
+            const date = new Date();
+            date.setHours(12, 0, 0, 0);
+            date.setDate(date.getDate() + offset);
+            return [
+                date.getFullYear(),
+                String(date.getMonth() + 1).padStart(2, "0"),
+                String(date.getDate()).padStart(2, "0")
+            ].join("-");
+        };
+
+        localStorage.setItem("medtrackMedicalEquipment", JSON.stringify([
+            {
+                id: "EQP-SERVICE-001",
+                name: "BP Apparatus",
+                maintenanceType: "Calibration",
+                maintenanceDate: dateValue(-1)
+            },
+            {
+                id: "EQP-SERVICE-002",
+                name: "Hydraulic Rescue Tool",
+                maintenanceType: "Inspection",
+                maintenanceDate: dateValue(10)
+            },
+            {
+                id: "EQP-SERVICE-003",
+                name: "Bandage Scissors",
+                maintenanceType: "Not required",
+                maintenanceDate: dateValue(5)
+            }
+        ]));
+        localStorage.removeItem("medtrackNotificationState");
+    });
+    await page.setContent(
+        '<button type="button" class="notification-button" aria-label="Notifications">' +
+        '<i class="fa-solid fa-bell"></i><span></span></button>'
+    );
+    await page.addStyleTag({ url: "/app-shell.css" });
+    await page.addScriptTag({ url: "/notification-center.js" });
+
+    await page.locator(".notification-button").click();
+    await expect(page.getByText("Inspection/service overdue", { exact: true })).toBeVisible();
+    await expect(page.getByText("Inspection/service due soon", { exact: true })).toBeVisible();
+    await expect(page.getByText(/BP Apparatus requires calibration/)).toBeVisible();
+    await expect(page.getByText(/Hydraulic Rescue Tool has inspection scheduled/)).toBeVisible();
+    await expect(page.getByText(/Bandage Scissors/)).toHaveCount(0);
+
+    const dueLink = page.locator(".notification-service-due");
+    await expect(dueLink).toHaveAttribute(
+        "href",
+        /medical-equipment\.html\?.*action=details.*item=EQP-SERVICE-002/
+    );
+});
+
 test("notification center shows every unique new inventory item with details", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(function () {

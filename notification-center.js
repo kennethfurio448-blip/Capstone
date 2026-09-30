@@ -266,6 +266,8 @@
         const notifications = inventoryAdditionNotifications();
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
+        const serviceWindowEnd = new Date(startOfToday);
+        serviceWindowEnd.setDate(serviceWindowEnd.getDate() + 30);
 
         storedArray("medtrackMedicalSupplies").forEach(function (supply) {
             const id = text(supply.id);
@@ -315,6 +317,52 @@
             }
         });
 
+        storedArray("medtrackMedicalEquipment").forEach(function (equipment) {
+            const id = text(equipment.id);
+            const name = text(equipment.name, id || "Medical equipment");
+            const maintenanceType = text(
+                equipment.maintenanceType,
+                "Inspection"
+            );
+            const serviceDate = localDate(equipment.maintenanceDate, true);
+
+            if (
+                !id ||
+                !serviceDate ||
+                maintenanceType === "Not required"
+            ) return;
+
+            const href = inventoryItemLink(
+                "medical-equipment.html",
+                "equipmentSearch",
+                id
+            );
+
+            if (serviceDate < startOfToday) {
+                notifications.push({
+                    id: `service-overdue:${id}:${equipment.maintenanceDate}`,
+                    type: "service-overdue",
+                    icon: "fa-screwdriver-wrench",
+                    label: "Inspection/service overdue",
+                    message: `${name} requires ${maintenanceType.toLowerCase()}; ` +
+                        `it was scheduled for ${serviceDate.toLocaleDateString()}.`,
+                    timestamp: serviceDate,
+                    href: href
+                });
+            } else if (serviceDate <= serviceWindowEnd) {
+                notifications.push({
+                    id: `service-due:${id}:${equipment.maintenanceDate}`,
+                    type: "service-due",
+                    icon: "fa-calendar-check",
+                    label: "Inspection/service due soon",
+                    message: `${name} has ${maintenanceType.toLowerCase()} scheduled ` +
+                        `for ${serviceDate.toLocaleDateString()}.`,
+                    timestamp: serviceDate,
+                    href: href
+                });
+            }
+        });
+
         storedArray("medtrackBorrowTransactions").forEach(function (record) {
             if (!BORROWABLE_ITEM_TYPES.has(text(record.itemType))) {
                 return;
@@ -351,8 +399,10 @@
         return notifications.sort(function (left, right) {
             const priority = {
                 "item-added": 5,
+                "service-overdue": 5,
                 "out-of-stock": 4,
                 expired: 3,
+                "service-due": 2,
                 overdue: 2,
                 "low-stock": 1
             };

@@ -251,26 +251,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    function formatDate(dateValue) {
-        if (!dateValue) {
-            return "Not scheduled";
-        }
-
-        const date = new Date(
-            dateValue + "T00:00:00"
-        );
-
-        if (Number.isNaN(date.getTime())) {
-            return dateValue;
-        }
-
-        return date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric"
-        });
-    }
-
     function isMaintenanceOverdue(dateValue) {
         if (!dateValue) {
             return false;
@@ -454,20 +434,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const conditionClass =
                 getConditionClass(itemCondition);
 
-            const overdue =
-                isMaintenanceOverdue(
-                    item.maintenanceDate
-                );
-
-            const maintenanceDisplay =
-                overdue
-                    ? `${formatDate(
-                        item.maintenanceDate
-                    )} (Overdue)`
-                    : formatDate(
-                        item.maintenanceDate
-                    );
-
             const row =
                 document.createElement("tr");
 
@@ -498,22 +464,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 <td>
                     ${escapeHTML(itemMaintenanceType)}
-                </td>
-
-                <td>
-                    ${
-                        overdue
-                            ? `
-                                <span class="status-badge status-maintenance">
-                                    ${escapeHTML(
-                                        maintenanceDisplay
-                                    )}
-                                </span>
-                            `
-                            : escapeHTML(
-                                maintenanceDisplay
-                            )
-                    }
                 </td>
 
                 <td>

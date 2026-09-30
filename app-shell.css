@@ -379,6 +379,16 @@ body[hidden] {
     color: #16833d;
 }
 
+.notification-service-overdue .notification-item-icon {
+    background: #fde8ec;
+    color: #c71f37;
+}
+
+.notification-service-due .notification-item-icon {
+    background: #fff4dd;
+    color: #b56f00;
+}
+
 .notification-item-content {
     display: block;
     min-width: 0;
