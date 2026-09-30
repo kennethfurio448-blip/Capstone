@@ -80,6 +80,27 @@ test("mobility uses destination labels while preserving stored location data", a
     expect(html).not.toContain("Enter current location");
 });
 
+test("reports omit user accounts and status history", async ({ request }) => {
+    const responses = await Promise.all([
+        request.get("/reports.html"),
+        request.get("/reports.js")
+    ]);
+    const [html, script] = await Promise.all(
+        responses.map(function (response) {
+            expect(response.ok()).toBeTruthy();
+            return response.text();
+        })
+    );
+
+    expect(html).not.toContain('<option value="users">');
+    expect(html).not.toContain('<option value="borrowing">');
+    expect(html).not.toContain("User Accounts");
+    expect(html).not.toContain("Status History");
+    expect(script).not.toContain("User Accounts Report");
+    expect(script).not.toContain("Status History Report");
+    expect(script).not.toContain('getStoredArray("medtrackAccounts")');
+});
+
 test("inventory creation uses database-issued IDs and atomic saves", async ({ request }) => {
     const responses = await Promise.all([
         request.get("/medical-supplies.js"),

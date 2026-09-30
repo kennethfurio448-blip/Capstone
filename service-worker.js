@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v50-mobility-destination";
+const CACHE_NAME = "medtrack-shell-v52-report-options-cleanup";
 const APP_SHELL = [
     "/",
     "/index.html",

@@ -73,7 +73,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     let currentReportHeaders = [];
     let currentReportRows = [];
     let currentReportName = "medtrack-report";
-    let assetStatusHistory = [];
 
 
     const currentUser =
@@ -85,14 +84,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (window.medtrackData) {
         await window.medtrackData.refresh();
-        if (typeof window.medtrackData.loadAssetStatusHistory === "function") {
-            try {
-                assetStatusHistory =
-                    await window.medtrackData.loadAssetStatusHistory();
-            } catch (error) {
-                console.error("Unable to load asset status history:", error);
-            }
-        }
     }
 
     currentUserName.textContent =
@@ -143,10 +134,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function getEmergencyRequests() {
         return getStoredArray("medtrackEmergencyRequests");
-    }
-
-    function getUsers() {
-        return getStoredArray("medtrackAccounts");
     }
 
 
@@ -246,22 +233,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         return "Available";
-    }
-
-    function getBorrowingStatus(transaction) {
-        const storedStatus = String(transaction.status || "");
-
-        if ([
-            "Borrowed",
-            "Returned",
-            "Missing",
-            "Damaged",
-            "For Repair"
-        ].includes(storedStatus)) {
-            return storedStatus;
-        }
-
-        return "Borrowed";
     }
 
     function getStatusClass(status) {
@@ -399,95 +370,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             };
         }
 
-        if (type === "borrowing") {
-            const transactions = getBorrowing();
-            const inventory = getEquipment().map(function (item) {
-                return { ...item, itemType: "Medical Equipment" };
-            }).concat(getMobility().map(function (item) {
-                return { ...item, itemType: "Mobility Asset" };
-            }));
-            const itemName = function (event) {
-                const item = inventory.find(function (record) {
-                    return record.itemType === event.itemType &&
-                        record.id === event.inventoryItemId;
-                });
-                return item ? item.name : event.inventoryItemId;
-            };
-            const recordedTransactions = new Set(
-                assetStatusHistory.map(function (event) {
-                    return event.transactionId;
-                }).filter(Boolean)
-            );
-            const records = assetStatusHistory.filter(function (event) {
-                return isWithinDateRange(String(event.changedAt || "").slice(0, 10));
-            }).map(function (event) {
-                return {
-                    id: `STATUS-${event.id}`,
-                    itemType: event.itemType,
-                    itemName: itemName(event),
-                    transactionId: event.transactionId,
-                    previousStatus: event.previousStatus || "\u2014",
-                    newStatus: event.newStatus,
-                    quantity: event.quantity,
-                    changedAt: event.changedAt,
-                    reportedBy: event.details.reportedBy ||
-                        event.details.borrower || "\u2014",
-                    remarks: event.remarks
-                };
-            }).concat(transactions.filter(function (transaction) {
-                return !recordedTransactions.has(transaction.id) &&
-                    isWithinDateRange(transaction.borrowDate);
-            }).map(function (transaction) {
-                return {
-                    id: transaction.id,
-                    itemType: transaction.itemType,
-                    itemName: transaction.itemName,
-                    transactionId: transaction.id,
-                    previousStatus: "\u2014",
-                    newStatus: getBorrowingStatus(transaction),
-                    quantity: transaction.quantity,
-                    changedAt: transaction.statusUpdatedAt ||
-                        transaction.borrowedAt || transaction.borrowDate,
-                    reportedBy: transaction.borrower,
-                    remarks: transaction.statusRemarks || transaction.remarks || ""
-                };
-            }));
-
-            return {
-                title: "Status History Report",
-                description:
-                    "Medical equipment and mobility status history.",
-                filename: "status-history-report",
-                headers: [
-                    "Status Record",
-                    "Item Type",
-                    "Item Name",
-                    "Transaction ID",
-                    "Previous Status",
-                    "New Status",
-                    "Quantity",
-                    "Changed At",
-                    "Reported / Received By",
-                    "Details or Remarks"
-                ],
-                rows: records.map(function (record) {
-                    return [
-                        record.id,
-                        record.itemType,
-                        record.itemName,
-                        record.transactionId,
-                        record.previousStatus,
-                        record.newStatus,
-                        record.quantity,
-                        formatDate(record.changedAt),
-                        record.reportedBy,
-                        record.remarks
-                    ];
-                }),
-                statusColumn: 5
-            };
-        }
-
         if (type === "emergency") {
             const records = getEmergencyRequests()
                 .filter(function (request) {
@@ -527,39 +409,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             };
         }
 
-        const records = getUsers()
-            .filter(function (user) {
-                return isWithinDateRange(user.createdAt);
-            });
-
-        return {
-            title: "User Accounts Report",
-            description:
-                "Registered Admin and Staff accounts.",
-            filename: "user-accounts-report",
-            headers: [
-                "User ID",
-                "Full Name",
-                "Username",
-                "Email",
-                "Role",
-                "Account Status",
-                "Date Created"
-            ],
-            rows: records.map(function (user, index) {
-                return [
-                    user.userId ||
-                        `USR-${String(index + 1).padStart(3, "0")}`,
-                    user.fullname,
-                    user.username,
-                    user.email,
-                    user.role,
-                    user.status || "active",
-                    formatDate(user.createdAt)
-                ];
-            }),
-            statusColumn: 5
-        };
+        return getReportInformation("supplies");
     }
 
 
@@ -763,17 +613,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         reportMessage.textContent = "";
     });
 
-    window.addEventListener("medtrack:data-ready", async function () {
+    window.addEventListener("medtrack:data-ready", function () {
         updateSummaryCards();
-        if (window.medtrackData &&
-            typeof window.medtrackData.loadAssetStatusHistory === "function") {
-            try {
-                assetStatusHistory =
-                    await window.medtrackData.loadAssetStatusHistory();
-            } catch (error) {
-                console.error("Unable to refresh asset status history:", error);
-            }
-        }
         generateReport();
     });
 
