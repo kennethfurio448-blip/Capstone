@@ -302,7 +302,7 @@ body[hidden] {
     cursor: pointer;
 }
 
-.notification-toolbar button:last-child {
+.notification-toolbar [data-notification-action="read-all"] {
     margin-left: auto;
 }
 

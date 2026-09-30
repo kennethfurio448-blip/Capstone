@@ -507,6 +507,7 @@
             '  <button type="button" data-notification-view="active" class="is-active">Active</button>',
             '  <button type="button" data-notification-view="history">History</button>',
             '  <button type="button" data-notification-action="read-all">Mark all read</button>',
+            '  <button type="button" data-notification-action="unread-all">Mark all unread</button>',
             '</div>',
             '<div class="notification-filters" aria-label="Notification filters">',
             '  <label>Category<select data-notification-filter="category"><option value="all">All categories</option></select></label>',
@@ -632,6 +633,7 @@
         const unread = active.filter(function (notification) {
             return !state.readIds.includes(notificationVersion(notification));
         }).length;
+        const read = active.length - unread;
         summary.textContent = activeView === "history"
             ? `${notifications.length} of ${sourceNotifications.length} dismissed`
             : (active.length
@@ -642,6 +644,8 @@
         });
         panel.querySelector('[data-notification-action="read-all"]').hidden =
             activeView === "history" || unread === 0;
+        panel.querySelector('[data-notification-action="unread-all"]').hidden =
+            activeView === "history" || read === 0;
         list.replaceChildren();
 
         if (notifications.length === 0) {
@@ -790,6 +794,19 @@
         saveNotificationState(state);
     }
 
+    function markAllUnread() {
+        const state = notificationState();
+        const activeVersions = new Set(
+            activeNotifications(buildNotifications(), state).map(
+                notificationVersion
+            )
+        );
+        state.readIds = state.readIds.filter(function (version) {
+            return !activeVersions.has(version);
+        });
+        saveNotificationState(state);
+    }
+
     function handleDropdownAction(event) {
         const control = event.target instanceof Element
             ? event.target.closest("[data-notification-action], [data-notification-view]")
@@ -802,6 +819,8 @@
             visibleNotificationCount = VISIBLE_NOTIFICATION_PAGE_SIZE;
         } else if (control.dataset.notificationAction === "read-all") {
             markAllRead();
+        } else if (control.dataset.notificationAction === "unread-all") {
+            markAllUnread();
         } else if (control.dataset.notificationAction === "dismiss") {
             dismissNotification(control.dataset.notificationId);
         } else if (control.dataset.notificationAction === "restore") {

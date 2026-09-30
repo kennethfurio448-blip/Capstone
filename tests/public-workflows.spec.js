@@ -207,6 +207,15 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
     )).toBeVisible();
     await expect(page.getByText(/Test Gauze has no Boxes remaining/)).toBeVisible();
 
+    await page.getByRole("button", { name: "Mark all read" }).click();
+    await expect(page.locator("#notificationDropdownSummary")).toContainText(
+        "1 active, 0 unread"
+    );
+    await page.getByRole("button", { name: "Mark all unread" }).click();
+    await expect(page.locator("#notificationDropdownSummary")).toContainText(
+        "1 active, 1 unread"
+    );
+
     await page.getByRole("button", { name: "Dismiss notification" }).click();
     await expect(page.getByText("No current notifications.")).toBeVisible();
     await page.getByRole("button", { name: "History" }).click();
