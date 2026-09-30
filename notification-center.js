@@ -297,28 +297,39 @@
         }
 
         if (category === "Medical Equipment") {
-            if (["borrowed", "in use"].includes(status)) return "Borrowed";
-            if (status === "returned") return "Returned";
-            if (status === "missing") return "Missing";
-            if (status === "damaged") return "Damaged";
-            if ([
-                "maintenance",
-                "under maintenance",
-                "for repair",
-                "under repair",
-                "repair",
-                "unavailable"
-            ].includes(status)) {
-                return "For Repair";
-            }
-            return "Available";
+            return canonicalEquipmentStatus(value);
         }
 
         return text(value, "Not recorded");
     }
 
-    function canonicalMobilityStatus(value) {
+    function canonicalEquipmentStatus(value, conditionValue) {
         const status = text(value).toLowerCase();
+        const condition = text(conditionValue).toLowerCase();
+        if (status === "missing" || condition === "missing") return "Missing";
+        if (status === "damaged" || condition === "damaged") return "Damaged";
+        if ([
+            "maintenance",
+            "under maintenance",
+            "for repair",
+            "under repair",
+            "repair",
+            "unavailable"
+        ].includes(status)) {
+            return "For Repair";
+        }
+        if (["borrowed", "in use", "assigned", "deployed"].includes(status)) {
+            return "Borrowed";
+        }
+        if (status === "returned") return "Returned";
+        return "Available";
+    }
+
+    function canonicalMobilityStatus(value, conditionValue) {
+        const status = text(value).toLowerCase();
+        const condition = text(conditionValue).toLowerCase();
+        if (status === "missing" || condition === "missing") return "Missing";
+        if (status === "damaged" || condition === "damaged") return "Damaged";
         if (["borrowed", "in use", "assigned", "deployed"].includes(status)) {
             return "Borrowed";
         }
@@ -336,6 +347,62 @@
             return "For Repair";
         }
         return "Available";
+    }
+
+    function inventoryStatusNotifications() {
+        const notifications = [];
+
+        storedArray("medtrackMedicalEquipment").forEach(function (equipment) {
+            const id = text(equipment.id);
+            if (!id) return;
+            const name = text(equipment.name, id);
+            const status = canonicalEquipmentStatus(
+                equipment.status,
+                equipment.condition
+            );
+            notifications.push({
+                id: `current-status:medical-equipment:${id}`,
+                type: "inventory-status",
+                icon: "fa-suitcase-medical",
+                label: "Medical equipment status",
+                message: `${name} is currently ${status}.`,
+                category: "Medical Equipment",
+                status: status,
+                timestamp: detectionTimestamp(equipment),
+                href: inventoryItemLink(
+                    "medical-equipment.html",
+                    "equipmentSearch",
+                    id
+                )
+            });
+        });
+
+        storedArray("medtrackMobilityAssets").forEach(function (asset) {
+            const id = text(asset.id);
+            if (!id) return;
+            const name = text(asset.name, id);
+            const status = canonicalMobilityStatus(
+                asset.status,
+                asset.condition
+            );
+            notifications.push({
+                id: `current-status:mobility:${id}`,
+                type: "inventory-status",
+                icon: "fa-truck-medical",
+                label: "Mobility status",
+                message: `${name} is currently ${status}.`,
+                category: "Mobility",
+                status: status,
+                timestamp: detectionTimestamp(asset),
+                href: inventoryItemLink(
+                    "mobility.html",
+                    "vehicleSearch",
+                    id
+                )
+            });
+        });
+
+        return notifications;
     }
 
     async function loadInventoryAdditions(reset = false) {
@@ -409,7 +476,10 @@
     }
 
     function buildNotifications() {
-        const notifications = inventoryAdditionNotifications();
+        const notifications = [
+            ...inventoryAdditionNotifications(),
+            ...inventoryStatusNotifications()
+        ];
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
         const serviceWindowEnd = new Date(startOfToday);
@@ -564,7 +634,8 @@
                 expired: 3,
                 "service-due": 2,
                 overdue: 2,
-                "low-stock": 1
+                "low-stock": 1,
+                "inventory-status": 0
             };
             const priorityDifference = priority[right.type] - priority[left.type];
             return priorityDifference || right.timestamp - left.timestamp;

@@ -428,6 +428,76 @@ test("notification center shows every unique new inventory item with details", a
     await expect(page.getByText(/Emergency Gauze.*Status: Available/)).toBeVisible();
 });
 
+test("equipment and mobility filters show actual current item statuses", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(function () {
+        localStorage.setItem("medtrackMedicalEquipment", JSON.stringify([{
+            id: "EQP-STATUS-001",
+            name: "Portable Ventilator",
+            category: "Respiratory Equipment",
+            status: "Borrowed",
+            condition: "Good",
+            serverUpdatedAt: "2026-10-01T08:00:00+08:00"
+        }]));
+        localStorage.setItem("medtrackMobilityAssets", JSON.stringify([{
+            id: "MOB-STATUS-001",
+            name: "Rescue Ambulance 2",
+            type: "Ambulance",
+            status: "Deployed",
+            condition: "Good",
+            serverUpdatedAt: "2026-10-01T08:05:00+08:00"
+        }, {
+            id: "MOB-STATUS-002",
+            name: "Rescue Truck",
+            type: "Rescue Vehicle",
+            status: "Available",
+            condition: "Damaged",
+            serverUpdatedAt: "2026-10-01T08:06:00+08:00"
+        }]));
+        localStorage.removeItem("medtrackInventoryItemAdditions");
+        localStorage.removeItem("medtrackNotificationState");
+    });
+    await page.setContent(
+        '<button type="button" class="notification-button" aria-label="Notifications">' +
+        '<i class="fa-solid fa-bell"></i><span></span></button>'
+    );
+    await page.addStyleTag({ url: "/app-shell.css" });
+    await page.addScriptTag({ url: "/notification-center.js" });
+
+    await page.locator(".notification-button").click();
+    await page.locator('[data-notification-filter="category"]').selectOption(
+        "Medical Equipment"
+    );
+    await page.locator('[data-notification-filter="status"]').selectOption(
+        "Borrowed"
+    );
+    await expect(page.getByText(
+        "Portable Ventilator is currently Borrowed."
+    )).toBeVisible();
+    await expect(page.locator(".notification-inventory-status")).toHaveCount(1);
+
+    await page.locator('[data-notification-filter="category"]').selectOption(
+        "Mobility"
+    );
+    await page.locator('[data-notification-filter="status"]').selectOption(
+        "Borrowed"
+    );
+    await expect(page.getByText(
+        "Rescue Ambulance 2 is currently Borrowed."
+    )).toBeVisible();
+
+    await page.locator('[data-notification-filter="status"]').selectOption(
+        "Damaged"
+    );
+    await expect(page.getByText(
+        "Rescue Truck is currently Damaged."
+    )).toBeVisible();
+    await expect(page.locator(".notification-inventory-status")).toHaveAttribute(
+        "href",
+        /mobility\.html\?.*action=details.*item=MOB-STATUS-002/
+    );
+});
+
 test("notification history supports filters and load more", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(function () {
