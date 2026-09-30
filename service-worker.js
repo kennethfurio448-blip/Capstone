@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v42-all-notification-categories";
+const CACHE_NAME = "medtrack-shell-v43-mobility-status-filter";
 const APP_SHELL = [
     "/",
     "/index.html",

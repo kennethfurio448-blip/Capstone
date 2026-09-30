@@ -12,6 +12,16 @@
         "Mobility"
     ];
     const ALWAYS_VISIBLE_STATUSES = ["Available"];
+    const STATUS_OPTIONS_BY_CATEGORY = Object.freeze({
+        Mobility: [
+            "Available",
+            "Borrowed",
+            "Returned",
+            "Missing",
+            "Damaged",
+            "For Repair"
+        ]
+    });
     const BORROWABLE_ITEM_TYPES = new Set([
         "Medical Equipment",
         "Mobility Asset"
@@ -218,7 +228,9 @@
             const itemId = text(event.inventoryItemId);
             const itemName = text(event.itemName, itemId || "Inventory item");
             const itemCategory = text(event.itemCategory);
-            const itemStatus = text(event.itemStatus, "Not recorded");
+            const itemStatus = module.category === "Mobility"
+                ? canonicalMobilityStatus(event.itemStatus)
+                : text(event.itemStatus, "Not recorded");
             const actorName = text(event.actorName, "System");
             const timestamp = localDate(event.occurredAt, false);
             const eventIdentity = text(
@@ -252,6 +264,27 @@
                 href: inventoryItemLink(module.page, module.searchId, itemId)
             }];
         });
+    }
+
+    function canonicalMobilityStatus(value) {
+        const status = text(value).toLowerCase();
+        if (["borrowed", "in use", "assigned", "deployed"].includes(status)) {
+            return "Borrowed";
+        }
+        if (status === "returned") return "Returned";
+        if (status === "missing") return "Missing";
+        if (status === "damaged") return "Damaged";
+        if ([
+            "maintenance",
+            "under maintenance",
+            "for repair",
+            "under repair",
+            "repair",
+            "unavailable"
+        ].includes(status)) {
+            return "For Repair";
+        }
+        return "Available";
     }
 
     async function loadInventoryAdditions(reset = false) {
@@ -459,7 +492,9 @@
                 icon: "fa-clock",
                 label: "Overdue item",
                 message: `${itemName}, borrowed by ${borrower}, was due ${dueDate.toLocaleDateString()}.`,
-                category: text(record.itemType, "Inventory"),
+                category: text(record.itemType) === "Mobility Asset"
+                    ? "Mobility"
+                    : text(record.itemType, "Inventory"),
                 status: "Overdue",
                 timestamp: dueDate,
                 href: notificationLink(
@@ -579,23 +614,29 @@
                 return text(item.category, "Other");
             })
         ])).sort();
-        const statuses = Array.from(new Set([
-            ...ALWAYS_VISIBLE_STATUSES,
-            ...notifications.map(function (item) {
-                return text(item.status, item.label);
-            })
-        ])).sort();
+        const categoryStatuses =
+            STATUS_OPTIONS_BY_CATEGORY[notificationFilters.category];
+        const statuses = categoryStatuses
+            ? [...categoryStatuses]
+            : Array.from(new Set([
+                ...ALWAYS_VISIBLE_STATUSES,
+                ...notifications.map(function (item) {
+                    return text(item.status, item.label);
+                })
+            ])).sort();
         const categorySelect = panel.querySelector('[data-notification-filter="category"]');
         const statusSelect = panel.querySelector('[data-notification-filter="status"]');
 
         updateFilterOptions(categorySelect, categories, "All categories");
         updateFilterOptions(statusSelect, statuses, "All statuses");
-        categorySelect.value = categories.includes(notificationFilters.category)
-            ? notificationFilters.category
-            : "all";
-        statusSelect.value = statuses.includes(notificationFilters.status)
-            ? notificationFilters.status
-            : "all";
+        if (!categories.includes(notificationFilters.category)) {
+            notificationFilters.category = "all";
+        }
+        if (!statuses.includes(notificationFilters.status)) {
+            notificationFilters.status = "all";
+        }
+        categorySelect.value = notificationFilters.category;
+        statusSelect.value = notificationFilters.status;
         panel.querySelector('[data-notification-filter="date"]').value =
             notificationFilters.date;
         panel.querySelector('[data-notification-filter="unread"]').checked =

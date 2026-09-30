@@ -355,7 +355,7 @@ test("notification center shows every unique new inventory item with details", a
         "Category: Medical Equipment / Respiratory Equipment. Status: For Repair."
     )).toBeVisible();
     await expect(page.getByText(/Emergency Gauze.*Status: Available/)).toBeVisible();
-    await expect(page.getByText(/Rescue Ambulance.*Status: Deployed/)).toBeVisible();
+    await expect(page.getByText(/Rescue Ambulance.*Status: Borrowed/)).toBeVisible();
 
     const notificationLink = page.locator(
         ".notification-item-added",
@@ -373,6 +373,26 @@ test("notification center shows every unique new inventory item with details", a
     );
     await expect(page.locator(".notification-item-added")).toHaveCount(1);
     await expect(page.getByText(/Emergency Gauze.*Status: Available/)).toBeVisible();
+
+    await page.locator('[data-notification-filter="category"]').selectOption(
+        "Mobility"
+    );
+    await expect(page.locator(
+        '[data-notification-filter="status"] option'
+    )).toHaveText([
+        "All statuses",
+        "Available",
+        "Borrowed",
+        "Returned",
+        "Missing",
+        "Damaged",
+        "For Repair"
+    ]);
+    await page.locator('[data-notification-filter="status"]').selectOption(
+        "Borrowed"
+    );
+    await expect(page.locator(".notification-item-added")).toHaveCount(1);
+    await expect(page.getByText(/Rescue Ambulance.*Status: Borrowed/)).toBeVisible();
 });
 
 test("notification history supports filters and load more", async ({ page }) => {
