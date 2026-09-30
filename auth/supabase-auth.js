@@ -12,6 +12,11 @@
     const OFFLINE_PROFILE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
     const AUTH_REQUEST_TIMEOUT_MS = 10 * 1000;
     const OFFLINE_STORE_TIMEOUT_MS = 3 * 1000;
+    const ONLINE_ONLY_ADMIN_PAGES = new Set([
+        "manage-users.html",
+        "audit-logs.html",
+        "settings.html"
+    ]);
     const SENSITIVE_CACHE_KEYS = Object.freeze([
         "medtrackMedicalSupplies",
         "medtrackMedicalEquipment",
@@ -42,6 +47,7 @@
     let sessionTimeoutTimer = null;
     let lastActivityWrite = 0;
     let pendingLoginReason = "";
+    let offlineSessionExpiresAt = 0;
 
     function projectUrl(path) {
         return new URL(path, projectRootUrl).href;
@@ -135,7 +141,7 @@
         if (result.error || !user) return null;
 
         return withTimeout(
-            offlineStore.loadProfile(
+            offlineStore.loadAuthorizedProfile(
                 user.id,
                 OFFLINE_PROFILE_MAX_AGE_MS
             ),
@@ -333,6 +339,28 @@
         return [...requestedRoles];
     }
 
+    function currentPageName() {
+        return decodeURIComponent(
+            window.location.pathname.split("/").pop() || ""
+        ).toLowerCase();
+    }
+
+    function isOfflineSession(profile) {
+        return !navigator.onLine || Boolean(profile && profile.offlineAccess);
+    }
+
+    async function authorizeOfflineContinuation(profile) {
+        if (!offlineStore || !profile || profile.offlineAccess) return;
+        await withTimeout(
+            offlineStore.authorizeOfflineProfile(
+                profile,
+                profile.role === "admin" ? "aal2" : "authenticated"
+            ),
+            OFFLINE_STORE_TIMEOUT_MS,
+            "Offline authorization storage timed out."
+        );
+    }
+
     function recordSessionActivity() {
         const now = Date.now();
         if (now - lastActivityWrite < ACTIVITY_WRITE_INTERVAL_MS) return;
@@ -341,6 +369,18 @@
     }
 
     async function enforceSessionTimeout() {
+        if (!navigator.onLine) {
+            if (
+                offlineSessionExpiresAt > 0 &&
+                Date.now() >= offlineSessionExpiresAt
+            ) {
+                window.location.replace(
+                    loginRedirectUrl("offline-session-expired")
+                );
+            }
+            return;
+        }
+
         const lastActivity = Number(
             sessionStorage.getItem(SESSION_ACTIVITY_KEY) || Date.now()
         );
@@ -838,8 +878,8 @@
     async function ensureAdminMfa(profile) {
         if (!profile || profile.role !== "admin") return true;
 
-        if (!navigator.onLine) {
-            throw new Error("Administrator MFA verification requires an internet connection.");
+        if (isOfflineSession(profile)) {
+            return profile.offlineAccess === true;
         }
 
         const assurance = await client.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -895,8 +935,22 @@
                 return null;
             }
 
+            if (
+                isOfflineSession(profile) &&
+                ONLINE_ONLY_ADMIN_PAGES.has(currentPageName())
+            ) {
+                window.location.replace(dashboardUrl(profile.role));
+                return null;
+            }
+
             const mfaComplete = await ensureAdminMfa(profile);
             if (!mfaComplete) return null;
+
+            await authorizeOfflineContinuation(profile);
+
+            offlineSessionExpiresAt = profile.offlineAccessExpiresAt
+                ? new Date(profile.offlineAccessExpiresAt).getTime()
+                : 0;
 
             preparePageShell(profile);
             document.body.hidden = false;
@@ -981,13 +1035,15 @@
 
             if (profile) {
                 await signOut();
-            } else {
+            } else if (navigator.onLine) {
                 await clearSensitiveBrowserData();
             }
         } catch (error) {
             console.error("Existing session validation failed:", error);
-            await client.auth.signOut({ scope: "local" });
-            await clearSensitiveBrowserData();
+            if (navigator.onLine) {
+                await client.auth.signOut({ scope: "local" });
+                await clearSensitiveBrowserData();
+            }
         }
 
         return false;

@@ -103,6 +103,14 @@ if (new URLSearchParams(window.location.search).get("reason") === "session-expir
     window.history.replaceState({}, "", window.location.pathname);
 }
 
+if (new URLSearchParams(window.location.search).get("reason") === "offline-session-expired") {
+    showMessage(
+        "Your 24-hour offline access expired. Reconnect to verify your account; queued changes are preserved.",
+        "error"
+    );
+    window.history.replaceState({}, "", window.location.pathname);
+}
+
 togglePasswordButton.addEventListener("click", function () {
     const icon = togglePasswordButton.querySelector("i");
     if (passwordInput.type === "password") {
@@ -131,6 +139,12 @@ loginForm.addEventListener("submit", async function (event) {
     submitButton.disabled = true;
     showMessage("Signing in...", "success");
     try {
+        if (!navigator.onLine) {
+            throw new Error(
+                "Internet is required for a new sign-in. If this device was " +
+                "verified within the last 24 hours, reopen your dashboard to continue offline."
+            );
+        }
         const services = await getAuthenticationServices();
         const profile = await services.auth.signIn(
             identifier,

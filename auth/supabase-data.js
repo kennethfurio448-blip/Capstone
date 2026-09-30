@@ -1113,11 +1113,16 @@
     }
 
     async function saveMedicalSupply(details) {
+        const operationKey = details.operationKey ||
+            createOperationId("SUPPLY-SAVE");
+        const pendingId = details.id ||
+            `PENDING-MED-${operationKey.slice(-12).toUpperCase()}`;
+
         return runInventoryOperation(
             "medtrack_save_medical_supply",
             {
-                p_operation_key: details.operationKey,
-                p_supply_id: details.id,
+                p_operation_key: operationKey,
+                p_supply_id: details.id || null,
                 p_name: details.name,
                 p_category: details.category,
                 p_quantity: details.quantity,
@@ -1127,11 +1132,12 @@
             },
             ["medtrackMedicalSupplies"],
             {
-                queueId: `rpc:${details.operationKey}`,
+                queueId: `rpc:${operationKey}`,
+                pendingId: pendingId,
                 optimistic: function () {
                     const records = readLocalCollection("medtrackMedicalSupplies");
                     const supply = {
-                        id: details.id,
+                        id: pendingId,
                         name: details.name,
                         category: details.category,
                         quantity: details.quantity,

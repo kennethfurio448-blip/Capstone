@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v37-atomic-inventory-saves";
+const CACHE_NAME = "medtrack-shell-v38-verified-offline-access";
 const APP_SHELL = [
     "/",
     "/index.html",

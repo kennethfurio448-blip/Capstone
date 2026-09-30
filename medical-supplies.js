@@ -898,26 +898,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            if (
-                !editId &&
-                typeof window.medtrackData
-                    .allocateInventoryId !== "function"
-            ) {
-                formMessage.textContent =
-                    "Database ID allocation is unavailable. Apply the " +
-                    "latest Supabase migration and refresh the page.";
-                return;
-            }
-
             saveSupplyButton.disabled = true;
             formMessage.textContent = "Saving supply...";
 
             try {
-                if (!editId) {
-                    supplyId = await window.medtrackData
-                        .allocateInventoryId("medical_supplies");
-                }
-
                 const saveResult = await window.medtrackData.saveMedicalSupply({
                     operationKey:
                         generateOperationKey("SUPPLY-ADD"),

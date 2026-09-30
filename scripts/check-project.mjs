@@ -188,6 +188,12 @@ const atomicInventorySaveMigrationPath = join(
   "migrations",
   "20260930210000_atomic_equipment_mobility_saves.sql",
 );
+const atomicSupplyOfflineMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20260930223000_atomic_supply_offline_saves.sql",
+);
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
 
@@ -481,6 +487,7 @@ try {
 try {
   const offlineStore = readFileSync(offlineStorePath, "utf8");
   const dataSync = readFileSync(dataSyncPath, "utf8");
+  const authGuard = readFileSync(authGuardPath, "utf8");
   const serviceWorker = readFileSync(serviceWorkerPath, "utf8");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   const offlineMigration = readFileSync(offlineMigrationPath, "utf8");
@@ -499,6 +506,28 @@ try {
   ]) {
     if (!dataSync.includes(requiredControl)) {
       failures.push(`offline-sync: missing required control ${requiredControl}`);
+    }
+  }
+
+  for (const requiredOfflineAuthControl of [
+    "authorizeOfflineProfile",
+    "loadAuthorizedProfile",
+    "offlineAuthorizedAt",
+    "offlineAssurance",
+  ]) {
+    if (!offlineStore.includes(requiredOfflineAuthControl)) {
+      failures.push(`offline-auth: missing ${requiredOfflineAuthControl}`);
+    }
+  }
+
+  for (const requiredOfflineGuardControl of [
+    "OFFLINE_PROFILE_MAX_AGE_MS",
+    "ONLINE_ONLY_ADMIN_PAGES",
+    "authorizeOfflineContinuation",
+    "isOfflineSession",
+  ]) {
+    if (!authGuard.includes(requiredOfflineGuardControl)) {
+      failures.push(`offline-auth: missing guard ${requiredOfflineGuardControl}`);
     }
   }
 
@@ -550,6 +579,25 @@ try {
   }
 } catch (error) {
   failures.push(`offline support: unable to inspect PWA controls (${error.message})`);
+}
+
+try {
+  const atomicSupplyOfflineMigration = readFileSync(
+    atomicSupplyOfflineMigrationPath,
+    "utf8",
+  );
+  for (const requiredSupplyControl of [
+    "medtrack_save_medical_supply",
+    "medtrack_allocate_inventory_id",
+    "medtrack_inventory_operations",
+    "on conflict (operation_key) do nothing",
+  ]) {
+    if (!atomicSupplyOfflineMigration.includes(requiredSupplyControl)) {
+      failures.push(`offline supply save: missing ${requiredSupplyControl}`);
+    }
+  }
+} catch (error) {
+  failures.push(`offline supply save: unable to inspect migration (${error.message})`);
 }
 
 try {

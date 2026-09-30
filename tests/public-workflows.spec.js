@@ -75,7 +75,7 @@ test("inventory creation uses database-issued IDs and atomic saves", async ({ re
         })
     );
 
-    expect(sources[0]).toContain(
+    expect(sources[0]).not.toContain(
         'allocateInventoryId("medical_supplies")'
     );
     expect(sources[1]).toContain(
@@ -86,6 +86,9 @@ test("inventory creation uses database-issued IDs and atomic saves", async ({ re
     );
     expect(sources[3]).toContain(
         '"medtrack_allocate_inventory_id"'
+    );
+    expect(sources[3]).toContain(
+        '"medtrack_save_medical_supply"'
     );
     expect(sources[3]).toContain(
         '"medtrack_save_medical_equipment"'
@@ -103,6 +106,75 @@ test("inventory creation uses database-issued IDs and atomic saves", async ({ re
     expect(sources[2]).not.toContain(
         'allocateInventoryId("mobility_assets")'
     );
+});
+
+test("offline continuation requires a recent approved staff or admin session", async ({ page }) => {
+    await page.goto("/");
+    await page.addScriptTag({ url: "/auth/offline-store.js" });
+
+    const result = await page.evaluate(async function () {
+        const store = window.medtrackOfflineStore;
+        await store.clearAll();
+
+        const staff = {
+            id: "offline-staff-test",
+            email: "staff@example.test",
+            fullname: "Offline Staff",
+            username: "offline.staff",
+            role: "staff",
+            status: "active"
+        };
+        const admin = {
+            id: "offline-admin-test",
+            email: "admin@example.test",
+            fullname: "Offline Admin",
+            username: "offline.admin",
+            role: "admin",
+            status: "active"
+        };
+
+        await store.saveProfile(staff);
+        const staffBeforeApproval = await store.loadAuthorizedProfile(
+            staff.id,
+            24 * 60 * 60 * 1000
+        );
+        await store.authorizeOfflineProfile(staff, "authenticated");
+        const approvedStaff = await store.loadAuthorizedProfile(
+            staff.id,
+            24 * 60 * 60 * 1000
+        );
+
+        await store.saveProfile(admin);
+        await store.authorizeOfflineProfile(admin, "authenticated");
+        const adminWithoutMfa = await store.loadAuthorizedProfile(
+            admin.id,
+            24 * 60 * 60 * 1000
+        );
+        await store.authorizeOfflineProfile(admin, "aal2");
+        const approvedAdmin = await store.loadAuthorizedProfile(
+            admin.id,
+            24 * 60 * 60 * 1000
+        );
+
+        await store.clearAll();
+        return {
+            staffBeforeApproval: staffBeforeApproval,
+            staffRole: approvedStaff && approvedStaff.role,
+            staffOffline: approvedStaff && approvedStaff.offlineAccess,
+            staffExpiresAt: approvedStaff && approvedStaff.offlineAccessExpiresAt,
+            adminWithoutMfa: adminWithoutMfa,
+            adminRole: approvedAdmin && approvedAdmin.role,
+            adminOffline: approvedAdmin && approvedAdmin.offlineAccess
+        };
+    });
+
+    expect(result.staffBeforeApproval).toBeNull();
+    expect(result.staffRole).toBe("staff");
+    expect(result.staffOffline).toBe(true);
+    expect(new Date(result.staffExpiresAt).getTime()).toBeGreaterThan(Date.now());
+    expect(result.adminWithoutMfa).toBeNull();
+    expect(result.adminRole).toBe("admin");
+    expect(result.adminOffline).toBe(true);
 });
 
 test("notification center supports out-of-stock, dismiss, history, and restore", async ({ page }) => {

@@ -113,11 +113,16 @@
     async function saveProfile(profile) {
         if (!profile || !profile.id) return;
         await useStore("profiles", "readwrite", function (store) {
-            store.put({
-                userId: profile.id,
-                profile: JSON.parse(JSON.stringify(profile)),
-                savedAt: new Date().toISOString()
-            });
+            const request = store.get(profile.id);
+            request.onsuccess = function () {
+                const existing = request.result || {};
+                store.put({
+                    ...existing,
+                    userId: profile.id,
+                    profile: JSON.parse(JSON.stringify(profile)),
+                    savedAt: new Date().toISOString()
+                });
+            };
         });
     }
 
@@ -133,6 +138,65 @@
         const age = Date.now() - new Date(record.savedAt).getTime();
         if (!Number.isFinite(age) || age > maximumAgeMs) return null;
         return record.profile || null;
+    }
+
+    async function authorizeOfflineProfile(profile, assurance) {
+        if (!profile || !profile.id || !profile.role) return;
+        await useStore("profiles", "readwrite", function (store) {
+            const request = store.get(profile.id);
+            request.onsuccess = function () {
+                const existing = request.result || {};
+                store.put({
+                    ...existing,
+                    userId: profile.id,
+                    profile: JSON.parse(JSON.stringify(profile)),
+                    savedAt: existing.savedAt || new Date().toISOString(),
+                    offlineAuthorizedAt: new Date().toISOString(),
+                    offlineAuthorizedRole: profile.role,
+                    offlineAssurance: assurance || "authenticated"
+                });
+            };
+        });
+    }
+
+    async function loadAuthorizedProfile(userId, maximumAgeMs) {
+        if (!userId) return null;
+        const database = await openDatabase();
+        const transaction = database.transaction("profiles", "readonly");
+        const record = await requestResult(
+            transaction.objectStore("profiles").get(userId)
+        );
+        if (!record || !record.profile || !record.offlineAuthorizedAt) {
+            return null;
+        }
+
+        const authorizedAge =
+            Date.now() - new Date(record.offlineAuthorizedAt).getTime();
+        const profileAge = Date.now() - new Date(record.savedAt).getTime();
+        if (
+            !Number.isFinite(authorizedAge) ||
+            !Number.isFinite(profileAge) ||
+            authorizedAge > maximumAgeMs ||
+            profileAge > maximumAgeMs ||
+            record.offlineAuthorizedRole !== record.profile.role
+        ) {
+            return null;
+        }
+
+        if (
+            record.profile.role === "admin" &&
+            record.offlineAssurance !== "aal2"
+        ) {
+            return null;
+        }
+
+        return {
+            ...record.profile,
+            offlineAccess: true,
+            offlineAccessExpiresAt: new Date(
+                new Date(record.offlineAuthorizedAt).getTime() + maximumAgeMs
+            ).toISOString()
+        };
     }
 
     async function enqueue(operation) {
@@ -217,6 +281,8 @@
         loadSnapshot: loadSnapshot,
         saveProfile: saveProfile,
         loadProfile: loadProfile,
+        authorizeOfflineProfile: authorizeOfflineProfile,
+        loadAuthorizedProfile: loadAuthorizedProfile,
         enqueue: enqueue,
         listOperations: listOperations,
         removeOperation: removeOperation,
