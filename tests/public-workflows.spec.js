@@ -202,8 +202,8 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
         '[data-notification-filter="category"] option'
     )).toHaveText([
         "All categories",
-        "Medical Equipment",
         "Medical Supplies",
+        "Medical Equipment",
         "Mobility"
     ]);
     await expect(page.locator(

@@ -659,12 +659,15 @@
     }
 
     function synchronizeFilterControls(panel, notifications) {
-        const categories = Array.from(new Set([
-            ...ALWAYS_VISIBLE_CATEGORIES,
-            ...notifications.map(function (item) {
+        const detectedCategories = Array.from(new Set(
+            notifications.map(function (item) {
                 return text(item.category, "Other");
             })
-        ])).sort();
+        )).sort();
+        const categories = Array.from(new Set([
+            ...ALWAYS_VISIBLE_CATEGORIES,
+            ...detectedCategories
+        ]));
         const categoryStatuses =
             STATUS_OPTIONS_BY_CATEGORY[notificationFilters.category];
         const statuses = categoryStatuses
