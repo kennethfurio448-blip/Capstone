@@ -393,6 +393,46 @@ test("notification center shows every unique new inventory item with details", a
     );
     await expect(page.locator(".notification-item-added")).toHaveCount(1);
     await expect(page.getByText(/Rescue Ambulance.*Status: Borrowed/)).toBeVisible();
+
+    await page.locator('[data-notification-filter="category"]').selectOption(
+        "Medical Equipment"
+    );
+    await expect(page.locator(
+        '[data-notification-filter="status"] option'
+    )).toHaveText([
+        "All statuses",
+        "Available",
+        "Borrowed",
+        "Returned",
+        "Missing",
+        "Damaged",
+        "For Repair"
+    ]);
+    await page.locator('[data-notification-filter="status"]').selectOption(
+        "For Repair"
+    );
+    await expect(page.locator(".notification-item-added")).toHaveCount(1);
+    await expect(page.getByText(
+        /Portable Oxygen Concentrator.*Status: For Repair/
+    )).toBeVisible();
+
+    await page.locator('[data-notification-filter="category"]').selectOption(
+        "Medical Supplies"
+    );
+    await expect(page.locator(
+        '[data-notification-filter="status"] option'
+    )).toHaveText([
+        "All statuses",
+        "Available",
+        "Low stock",
+        "Out of stock",
+        "Expired"
+    ]);
+    await page.locator('[data-notification-filter="status"]').selectOption(
+        "Available"
+    );
+    await expect(page.locator(".notification-item-added")).toHaveCount(1);
+    await expect(page.getByText(/Emergency Gauze.*Status: Available/)).toBeVisible();
 });
 
 test("notification history supports filters and load more", async ({ page }) => {

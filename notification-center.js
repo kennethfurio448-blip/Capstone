@@ -13,6 +13,20 @@
     ];
     const ALWAYS_VISIBLE_STATUSES = ["Available"];
     const STATUS_OPTIONS_BY_CATEGORY = Object.freeze({
+        "Medical Supplies": [
+            "Available",
+            "Low stock",
+            "Out of stock",
+            "Expired"
+        ],
+        "Medical Equipment": [
+            "Available",
+            "Borrowed",
+            "Returned",
+            "Missing",
+            "Damaged",
+            "For Repair"
+        ],
         Mobility: [
             "Available",
             "Borrowed",
@@ -228,9 +242,10 @@
             const itemId = text(event.inventoryItemId);
             const itemName = text(event.itemName, itemId || "Inventory item");
             const itemCategory = text(event.itemCategory);
-            const itemStatus = module.category === "Mobility"
-                ? canonicalMobilityStatus(event.itemStatus)
-                : text(event.itemStatus, "Not recorded");
+            const itemStatus = canonicalNotificationStatus(
+                module.category,
+                event.itemStatus
+            );
             const actorName = text(event.actorName, "System");
             const timestamp = localDate(event.occurredAt, false);
             const eventIdentity = text(
@@ -264,6 +279,42 @@
                 href: inventoryItemLink(module.page, module.searchId, itemId)
             }];
         });
+    }
+
+    function canonicalNotificationStatus(category, value) {
+        if (category === "Mobility") {
+            return canonicalMobilityStatus(value);
+        }
+
+        const status = text(value).toLowerCase();
+        if (category === "Medical Supplies") {
+            if (status === "expired") return "Expired";
+            if (["out of stock", "unavailable"].includes(status)) {
+                return "Out of stock";
+            }
+            if (status === "low stock") return "Low stock";
+            return "Available";
+        }
+
+        if (category === "Medical Equipment") {
+            if (["borrowed", "in use"].includes(status)) return "Borrowed";
+            if (status === "returned") return "Returned";
+            if (status === "missing") return "Missing";
+            if (status === "damaged") return "Damaged";
+            if ([
+                "maintenance",
+                "under maintenance",
+                "for repair",
+                "under repair",
+                "repair",
+                "unavailable"
+            ].includes(status)) {
+                return "For Repair";
+            }
+            return "Available";
+        }
+
+        return text(value, "Not recorded");
     }
 
     function canonicalMobilityStatus(value) {
