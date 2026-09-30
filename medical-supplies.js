@@ -503,40 +503,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    function generateSupplyId(supplies) {
-        let highestNumber = 0;
-        const year = new Date().getFullYear();
-
-        supplies.forEach(function (supply) {
-            const supplyId =
-                normalizeId(supply.id);
-
-            const match =
-                supplyId.match(
-                    /^MED-IMP-\d{4}-TB-(\d+)$/i
-                ) || supplyId.match(/^MED-(\d+)$/i);
-
-            if (!match) {
-                return;
-            }
-
-            const number = Number(match[1]);
-
-            if (
-                Number.isInteger(number) &&
-                number > highestNumber
-            ) {
-                highestNumber = number;
-            }
-        });
-
-        return (
-            `MED-IMP-${year}-TB-` +
-            String(highestNumber + 1).padStart(3, "0")
-        );
-    }
-
-
     function updateStatistics(supplies) {
         let availableCount = 0;
         let lowStockCount = 0;
@@ -919,8 +885,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Use Record Consumed Supplies to reduce stock.";
                     return;
                 }
-            } else {
-                supplyId = generateSupplyId(supplies);
             }
 
             if (
@@ -934,10 +898,26 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
+            if (
+                !editId &&
+                typeof window.medtrackData
+                    .allocateInventoryId !== "function"
+            ) {
+                formMessage.textContent =
+                    "Database ID allocation is unavailable. Apply the " +
+                    "latest Supabase migration and refresh the page.";
+                return;
+            }
+
             saveSupplyButton.disabled = true;
             formMessage.textContent = "Saving supply...";
 
             try {
+                if (!editId) {
+                    supplyId = await window.medtrackData
+                        .allocateInventoryId("medical_supplies");
+                }
+
                 const saveResult = await window.medtrackData.saveMedicalSupply({
                     operationKey:
                         generateOperationKey("SUPPLY-ADD"),

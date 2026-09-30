@@ -61,6 +61,38 @@ test("medical equipment uses flexible inspection and service fields", async ({ r
     expect(html).not.toContain("Next Maintenance Date");
 });
 
+test("new inventory IDs are allocated by the database", async ({ request }) => {
+    const responses = await Promise.all([
+        request.get("/medical-supplies.js"),
+        request.get("/medical-equipment.js"),
+        request.get("/mobility.js"),
+        request.get("/auth/supabase-data.js")
+    ]);
+    const sources = await Promise.all(
+        responses.map(function (response) {
+            expect(response.ok()).toBeTruthy();
+            return response.text();
+        })
+    );
+
+    expect(sources[0]).toContain(
+        'allocateInventoryId("medical_supplies")'
+    );
+    expect(sources[1]).toContain(
+        'allocateInventoryId("medical_equipment")'
+    );
+    expect(sources[2]).toContain(
+        'allocateInventoryId("mobility_assets")'
+    );
+    expect(sources[3]).toContain(
+        '"medtrack_allocate_inventory_id"'
+    );
+
+    expect(sources[0]).not.toContain("generateSupplyId");
+    expect(sources[1]).not.toContain("generateEquipmentId");
+    expect(sources[2]).not.toContain("generateVehicleId");
+});
+
 test("notification center supports out-of-stock, dismiss, history, and restore", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(function () {

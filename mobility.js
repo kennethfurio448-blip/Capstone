@@ -71,6 +71,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const vehicleForm =
         document.getElementById("vehicleForm");
 
+    const saveVehicleButton =
+        vehicleForm.querySelector('button[type="submit"]');
+
     const editingVehicleId =
         document.getElementById("editingVehicleId");
 
@@ -278,34 +281,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         return "condition-damaged";
-    }
-
-
-    function generateVehicleId(vehicles) {
-        let highestNumber = 0;
-        const year = new Date().getFullYear();
-
-        vehicles.forEach(function (vehicle) {
-            const vehicleId = String(vehicle.id || "").trim();
-            const match = vehicleId.match(
-                /^MOB-IMP-\d{4}-[A-Z0-9]+-(\d+)$/i
-            ) || vehicleId.match(/^MOB-(\d+)$/i);
-
-            if (!match) {
-                return;
-            }
-
-            const number = Number(match[1]);
-
-            if (Number.isInteger(number) && number > highestNumber) {
-                highestNumber = number;
-            }
-        });
-
-        return (
-            `MOB-IMP-${year}-DVI-` +
-            String(highestNumber + 1).padStart(3, "0")
-        );
     }
 
 
@@ -556,7 +531,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    vehicleForm.addEventListener("submit", function (event) {
+    vehicleForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
         if (!canManageInventory) {
@@ -623,13 +598,36 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        if (editId) {
-            const vehicleIndex =
-                vehicles.findIndex(function (vehicle) {
-                    return vehicle.id === editId;
-                });
+        if (
+            !editId &&
+            (
+                !window.medtrackData ||
+                typeof window.medtrackData
+                    .allocateInventoryId !== "function"
+            )
+        ) {
+            formMessage.textContent =
+                "Database ID allocation is unavailable. Apply the latest " +
+                "Supabase migration and refresh the page.";
+            return;
+        }
 
-            if (vehicleIndex !== -1) {
+        saveVehicleButton.disabled = true;
+        formMessage.textContent = "Saving mobility asset...";
+
+        try {
+            if (editId) {
+                const vehicleIndex =
+                    vehicles.findIndex(function (vehicle) {
+                        return vehicle.id === editId;
+                    });
+
+                if (vehicleIndex === -1) {
+                    throw new Error(
+                        "The selected mobility asset could not be found."
+                    );
+                }
+
                 vehicles[vehicleIndex] = {
                     ...vehicles[vehicleIndex],
                     name: nameValue,
@@ -641,26 +639,34 @@ document.addEventListener("DOMContentLoaded", async function () {
                     maintenanceDate: maintenanceValue,
                     status: statusValue
                 };
+            } else {
+                const vehicleId = await window.medtrackData
+                    .allocateInventoryId("mobility_assets");
+                const newVehicle = {
+                    id: vehicleId,
+                    name: nameValue,
+                    type: typeValue,
+                    plateNumber: plateValue,
+                    condition: conditionValue,
+                    driver: driverValue,
+                    location: locationValue,
+                    maintenanceDate: maintenanceValue,
+                    status: statusValue
+                };
+
+                vehicles.push(newVehicle);
             }
-        } else {
-            const newVehicle = {
-                id: generateVehicleId(vehicles),
-                name: nameValue,
-                type: typeValue,
-                plateNumber: plateValue,
-                condition: conditionValue,
-                driver: driverValue,
-                location: locationValue,
-                maintenanceDate: maintenanceValue,
-                status: statusValue
-            };
 
-            vehicles.push(newVehicle);
+            saveVehicles(vehicles);
+            closeVehicleModal();
+            renderVehicles();
+        } catch (error) {
+            console.error("Unable to save mobility asset:", error);
+            formMessage.textContent =
+                error.message || "Unable to save the mobility asset.";
+        } finally {
+            saveVehicleButton.disabled = false;
         }
-
-        saveVehicles(vehicles);
-        closeVehicleModal();
-        renderVehicles();
     });
 
 

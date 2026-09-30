@@ -71,6 +71,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const equipmentForm =
         document.getElementById("equipmentForm");
 
+    const saveEquipmentButton =
+        equipmentForm.querySelector('button[type="submit"]');
+
     const editingEquipmentId =
         document.getElementById("editingEquipmentId");
 
@@ -306,41 +309,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         return "condition-damaged";
-    }
-
-
-    function generateEquipmentId(equipment) {
-        let highestNumber = 0;
-        const year = new Date().getFullYear();
-
-        equipment.forEach(function (item) {
-            const equipmentId =
-                normalizeId(item.id);
-
-            const match =
-                equipmentId.match(
-                    /^EQP-IMP-\d{4}-[A-Z0-9]+-(\d+)$/i
-                ) || equipmentId.match(/^EQP-(\d+)$/i);
-
-            if (!match) {
-                return;
-            }
-
-            const number = Number(match[1]);
-
-            if (
-                Number.isInteger(number) &&
-                number > highestNumber
-            ) {
-                highestNumber = number;
-            }
-        });
-
-        return (
-            `EQP-IMP-${year}-TB-` +
-            String(highestNumber + 1)
-                .padStart(3, "0")
-        );
     }
 
 
@@ -661,7 +629,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     equipmentForm.addEventListener(
         "submit",
-        function (event) {
+        async function (event) {
             event.preventDefault();
 
             if (!canManageInventory) {
@@ -721,62 +689,86 @@ document.addEventListener("DOMContentLoaded", async function () {
                     editingEquipmentId.value
                 );
 
-            if (editId) {
-                const equipmentIndex =
-                    equipment.findIndex(
-                        function (item) {
-                            return (
-                                normalizeId(item.id) ===
-                                editId
-                            );
-                        }
-                    );
-
-                if (equipmentIndex === -1) {
-                    formMessage.textContent =
-                        "The selected equipment could not be found.";
-
-                    return;
-                }
-
-                equipment[equipmentIndex] = {
-                    ...equipment[equipmentIndex],
-                    id: normalizeId(
-                        equipment[equipmentIndex].id
-                    ),
-                    name: nameValue,
-                    category: categoryValue,
-                    quantity: quantityValue,
-                    condition: conditionValue,
-                    maintenanceType:
-                        maintenanceTypeValue,
-                    maintenanceDate:
-                        maintenanceValue,
-                    status: statusValue
-                };
-            } else {
-                const newEquipment = {
-                    id: generateEquipmentId(
-                        equipment
-                    ),
-                    name: nameValue,
-                    category: categoryValue,
-                    quantity: quantityValue,
-                    condition: conditionValue,
-                    location: "Not specified",
-                    maintenanceType:
-                        maintenanceTypeValue,
-                    maintenanceDate:
-                        maintenanceValue,
-                    status: statusValue
-                };
-
-                equipment.push(newEquipment);
+            if (
+                !editId &&
+                (
+                    !window.medtrackData ||
+                    typeof window.medtrackData
+                        .allocateInventoryId !== "function"
+                )
+            ) {
+                formMessage.textContent =
+                    "Database ID allocation is unavailable. Apply the " +
+                    "latest Supabase migration and refresh the page.";
+                return;
             }
 
-            saveEquipment(equipment);
-            closeEquipmentModal();
-            renderEquipment();
+            saveEquipmentButton.disabled = true;
+            formMessage.textContent = "Saving equipment...";
+
+            try {
+                if (editId) {
+                    const equipmentIndex =
+                        equipment.findIndex(
+                            function (item) {
+                                return (
+                                    normalizeId(item.id) ===
+                                    editId
+                                );
+                            }
+                        );
+
+                    if (equipmentIndex === -1) {
+                        throw new Error(
+                            "The selected equipment could not be found."
+                        );
+                    }
+
+                    equipment[equipmentIndex] = {
+                        ...equipment[equipmentIndex],
+                        id: normalizeId(
+                            equipment[equipmentIndex].id
+                        ),
+                        name: nameValue,
+                        category: categoryValue,
+                        quantity: quantityValue,
+                        condition: conditionValue,
+                        maintenanceType:
+                            maintenanceTypeValue,
+                        maintenanceDate:
+                            maintenanceValue,
+                        status: statusValue
+                    };
+                } else {
+                    const equipmentId = await window.medtrackData
+                        .allocateInventoryId("medical_equipment");
+                    const newEquipment = {
+                        id: equipmentId,
+                        name: nameValue,
+                        category: categoryValue,
+                        quantity: quantityValue,
+                        condition: conditionValue,
+                        location: "Not specified",
+                        maintenanceType:
+                            maintenanceTypeValue,
+                        maintenanceDate:
+                            maintenanceValue,
+                        status: statusValue
+                    };
+
+                    equipment.push(newEquipment);
+                }
+
+                saveEquipment(equipment);
+                closeEquipmentModal();
+                renderEquipment();
+            } catch (error) {
+                console.error("Unable to save equipment:", error);
+                formMessage.textContent =
+                    error.message || "Unable to save the equipment.";
+            } finally {
+                saveEquipmentButton.disabled = false;
+            }
         }
     );
 

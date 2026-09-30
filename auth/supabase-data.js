@@ -1150,6 +1150,40 @@
         );
     }
 
+    async function allocateInventoryId(inventoryModule) {
+        if (!navigator.onLine) {
+            throw new Error(
+                "Connect to the internet before adding a new inventory item. " +
+                "The database must issue its unique ID."
+            );
+        }
+
+        const allowedModules = new Set([
+            "medical_supplies",
+            "medical_equipment",
+            "mobility_assets"
+        ]);
+        const normalizedModule = text(inventoryModule).toLowerCase();
+
+        if (!allowedModules.has(normalizedModule)) {
+            throw new Error("Invalid inventory module for ID allocation.");
+        }
+
+        const result = await client.rpc(
+            "medtrack_allocate_inventory_id",
+            { p_inventory_module: normalizedModule }
+        );
+
+        if (result.error) throw new Error(result.error.message);
+
+        const allocatedId = text(result.data);
+        if (!allocatedId) {
+            throw new Error("The database did not return an inventory ID.");
+        }
+
+        return allocatedId;
+    }
+
     async function consumeMedicalSupply(details) {
         return runInventoryOperation(
             "medtrack_consume_medical_supply",
@@ -1402,6 +1436,7 @@
         updateBorrowStatus: updateBorrowStatus,
         useInventoryItem: useInventoryItem,
         deleteInventoryItem: deleteInventoryItem,
+        allocateInventoryId: allocateInventoryId,
         saveMedicalSupply: saveMedicalSupply,
         consumeMedicalSupply: consumeMedicalSupply,
         loadSupplyTransactions: loadSupplyTransactions,
