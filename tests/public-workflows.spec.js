@@ -74,19 +74,46 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
     await expect(page.getByText("Out of stock", { exact: true })).toBeVisible();
 });
 
-test("notification center shows new inventory items with creator and details link", async ({ page }) => {
+test("notification center shows every unique new inventory item with details", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(function () {
-        localStorage.setItem("medtrackInventoryItemAdditions", JSON.stringify([{
-            id: 101,
+        const equipmentEvent = {
+            id: 102,
             eventKey: "item-created:medical_equipment:EQP-TEST-001",
             inventoryModule: "medical_equipment",
             inventoryItemId: "EQP-TEST-001",
             itemName: "Portable Oxygen Concentrator",
             itemCategory: "Respiratory Equipment",
+            itemStatus: "For Repair",
             actorName: "Test Administrator",
-            occurredAt: "2026-09-29T08:30:00+08:00"
-        }]));
+            occurredAt: "2026-09-29T08:31:00+08:00"
+        };
+        localStorage.setItem("medtrackInventoryItemAdditions", JSON.stringify([
+            {
+                id: 101,
+                eventKey: "item-created:medical_supplies:MED-TEST-001",
+                inventoryModule: "medical_supplies",
+                inventoryItemId: "MED-TEST-001",
+                itemName: "Emergency Gauze",
+                itemCategory: "First Aid",
+                itemStatus: "Out of Stock",
+                actorName: "Test Administrator",
+                occurredAt: "2026-09-29T08:30:00+08:00"
+            },
+            equipmentEvent,
+            { ...equipmentEvent, id: 999 },
+            {
+                id: 103,
+                eventKey: "item-created:mobility_assets:MOB-TEST-001",
+                inventoryModule: "mobility_assets",
+                inventoryItemId: "MOB-TEST-001",
+                itemName: "Rescue Ambulance",
+                itemCategory: "Ambulance",
+                itemStatus: "Deployed",
+                actorName: "Test Administrator",
+                occurredAt: "2026-09-29T08:32:00+08:00"
+            }
+        ]));
         localStorage.removeItem("medtrackNotificationState");
     });
     await page.setContent(
@@ -97,18 +124,24 @@ test("notification center shows new inventory items with creator and details lin
     await page.addScriptTag({ url: "/notification-center.js" });
 
     await page.locator(".notification-button").click();
-    await expect(page.getByText("New inventory item", { exact: true })).toBeVisible();
+    await expect(page.locator(".notification-item-added")).toHaveCount(3);
     await expect(page.getByText(
-        "Portable Oxygen Concentrator was added to Medical Equipment by Test Administrator."
+        "Portable Oxygen Concentrator was added by Test Administrator. " +
+        "Category: Medical Equipment / Respiratory Equipment. Status: For Repair."
     )).toBeVisible();
+    await expect(page.getByText(/Emergency Gauze.*Status: Out of Stock/)).toBeVisible();
+    await expect(page.getByText(/Rescue Ambulance.*Status: Deployed/)).toBeVisible();
 
-    const notificationLink = page.locator(".notification-item-added");
+    const notificationLink = page.locator(
+        ".notification-item-added",
+        { hasText: "Portable Oxygen Concentrator" }
+    );
     await expect(notificationLink).toHaveAttribute(
         "href",
         /medical-equipment\.html\?.*action=details.*item=EQP-TEST-001/
     );
     await expect(page.locator("#notificationDropdownSummary")).toContainText(
-        "1 active, 1 unread"
+        "3 active, 3 unread"
     );
 });
 

@@ -159,6 +159,7 @@
     }
 
     function inventoryAdditionNotifications() {
+        const seenAdditions = new Set();
         const modules = {
             medical_supplies: {
                 category: "Medical Supplies",
@@ -184,17 +185,35 @@
             const module = modules[text(event.inventoryModule)];
             const itemId = text(event.inventoryItemId);
             const itemName = text(event.itemName, itemId || "Inventory item");
+            const itemCategory = text(event.itemCategory);
+            const itemStatus = text(event.itemStatus, "Not recorded");
             const actorName = text(event.actorName, "System");
             const timestamp = localDate(event.occurredAt, false);
+            const eventIdentity = text(
+                event.eventKey,
+                `${event.inventoryModule}:${itemId}:${event.occurredAt}`
+            );
 
-            if (!module || !itemId || !timestamp) return [];
+            if (
+                !module ||
+                !itemId ||
+                !timestamp ||
+                seenAdditions.has(eventIdentity)
+            ) return [];
+
+            seenAdditions.add(eventIdentity);
+
+            const category = itemCategory
+                ? `${module.category} / ${itemCategory}`
+                : module.category;
 
             return [{
-                id: `item-created:${text(event.eventKey, event.id)}`,
+                id: `item-created:${eventIdentity}`,
                 type: "item-added",
                 icon: module.icon,
                 label: "New inventory item",
-                message: `${itemName} was added to ${module.category} by ${actorName}.`,
+                message: `${itemName} was added by ${actorName}. ` +
+                    `Category: ${category}. Status: ${itemStatus}.`,
                 timestamp: timestamp,
                 href: inventoryItemLink(module.page, module.searchId, itemId)
             }];
@@ -228,6 +247,7 @@
                 inventoryItemId: event.inventory_item_id,
                 itemName: metadata.itemName || "",
                 itemCategory: metadata.itemCategory || "",
+                itemStatus: metadata.itemStatus || "",
                 actorName: metadata.actorName || "System",
                 occurredAt: event.occurred_at
             };
