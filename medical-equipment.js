@@ -89,9 +89,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const equipmentStatus =
         document.getElementById("equipmentStatus");
 
-    const equipmentLocation =
-        document.getElementById("equipmentLocation");
-
     const maintenanceDate =
         document.getElementById("maintenanceDate");
 
@@ -359,9 +356,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const itemCategory =
                     normalizeText(item.category);
 
-                const itemLocation =
-                    normalizeText(item.location);
-
                 const itemStatus =
                     normalizeText(item.status);
 
@@ -369,7 +363,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     ${itemId}
                     ${itemName}
                     ${itemCategory}
-                    ${itemLocation}
                 `.toLowerCase();
 
                 const matchesSearch =
@@ -411,9 +404,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const itemCondition =
                 normalizeText(item.condition);
-
-            const itemLocation =
-                normalizeText(item.location);
 
             const itemStatus =
                 normalizeText(item.status);
@@ -464,10 +454,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <span class="condition-badge ${conditionClass}">
                         ${escapeHTML(itemCondition)}
                     </span>
-                </td>
-
-                <td>
-                    ${escapeHTML(itemLocation)}
                 </td>
 
                 <td>
@@ -647,11 +633,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 selectedEquipment.status
             );
 
-        equipmentLocation.value =
-            normalizeText(
-                selectedEquipment.location
-            );
-
         maintenanceDate.value =
             normalizeText(
                 selectedEquipment.maintenanceDate
@@ -702,9 +683,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const statusValue =
                 equipmentStatus.value;
 
-            const locationValue =
-                equipmentLocation.value.trim();
-
             const maintenanceValue =
                 maintenanceDate.value;
 
@@ -713,7 +691,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 !categoryValue ||
                 !conditionValue ||
                 !statusValue ||
-                !locationValue ||
                 !maintenanceValue
             ) {
                 formMessage.textContent =
@@ -766,7 +743,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     category: categoryValue,
                     quantity: quantityValue,
                     condition: conditionValue,
-                    location: locationValue,
                     maintenanceDate:
                         maintenanceValue,
                     status: statusValue
@@ -780,7 +756,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     category: categoryValue,
                     quantity: quantityValue,
                     condition: conditionValue,
-                    location: locationValue,
+                    location: "Not specified",
                     maintenanceDate:
                         maintenanceValue,
                     status: statusValue
