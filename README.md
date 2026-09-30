@@ -45,7 +45,7 @@ Administrators can create encrypted backups from System Settings. Use a unique b
 The `Encrypted MedTrack backup` GitHub Actions workflow runs daily at 18:47 UTC (02:47 Asia/Manila), verifies each encrypted backup, performs a non-destructive restore rehearsal, and retains only the encrypted artifact for 30 days. Configure these repository secrets before enabling the schedule:
 
 - `MEDTRACK_SUPABASE_URL`
-- `MEDTRACK_SUPABASE_SERVICE_ROLE_KEY`
+- `MEDTRACK_SUPABASE_SERVICE_ROLE_KEY` (prefer a dedicated `sb_secret_...` key; the secret name remains unchanged for workflow compatibility)
 - `MEDTRACK_BACKUP_PASSWORD` (a unique value containing at least 12 characters)
 
 Rotate the service-role key and backup password according to PDRRMO policy. Never store either value in the repository or download logs. Automated backups contain synchronized operational tables; browser-only appearance preferences remain covered by the administrator's manual encrypted backup.

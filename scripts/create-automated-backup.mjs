@@ -30,13 +30,14 @@ async function fetchTable(table) {
         endpoint.searchParams.set("order", "id.asc");
         endpoint.searchParams.set("offset", String(offset));
         endpoint.searchParams.set("limit", String(pageSize));
-        const response = await fetch(endpoint, {
-            headers: {
-                apikey: serviceRoleKey,
-                Authorization: `Bearer ${serviceRoleKey}`,
-                Accept: "application/json"
-            }
-        });
+        const headers = {
+            apikey: serviceRoleKey,
+            Accept: "application/json"
+        };
+        if (!serviceRoleKey.startsWith("sb_secret_")) {
+            headers.Authorization = `Bearer ${serviceRoleKey}`;
+        }
+        const response = await fetch(endpoint, { headers });
         if (!response.ok) {
             throw new Error(`${table} backup failed with HTTP ${response.status}.`);
         }
