@@ -302,7 +302,8 @@ body[hidden] {
     cursor: pointer;
 }
 
-.notification-toolbar [data-notification-action="read-all"] {
+.notification-toolbar [data-notification-action="read-all"],
+.notification-toolbar [data-notification-action="restore-all"] {
     margin-left: auto;
 }
 

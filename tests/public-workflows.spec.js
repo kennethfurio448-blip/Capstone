@@ -224,12 +224,14 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
         { hasText: "Out of stock" }
     )).toBeVisible();
 
-    await page.getByRole("button", { name: "Restore notification" }).click();
-    await page.getByRole("button", { name: "Active" }).click();
+    await page.getByRole("button", { name: "Restore all" }).click();
     await expect(page.locator(
         ".notification-item-content strong",
         { hasText: "Out of stock" }
     )).toBeVisible();
+    await expect(page.locator("#notificationDropdownSummary")).toContainText(
+        "1 active, 1 unread"
+    );
 });
 
 test("equipment service notifications show due and overdue schedules", async ({ page }) => {

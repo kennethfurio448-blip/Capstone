@@ -508,6 +508,7 @@
             '  <button type="button" data-notification-view="history">History</button>',
             '  <button type="button" data-notification-action="read-all">Mark all read</button>',
             '  <button type="button" data-notification-action="unread-all">Mark all unread</button>',
+            '  <button type="button" data-notification-action="restore-all">Restore all</button>',
             '</div>',
             '<div class="notification-filters" aria-label="Notification filters">',
             '  <label>Category<select data-notification-filter="category"><option value="all">All categories</option></select></label>',
@@ -646,6 +647,8 @@
             activeView === "history" || unread === 0;
         panel.querySelector('[data-notification-action="unread-all"]').hidden =
             activeView === "history" || read === 0;
+        panel.querySelector('[data-notification-action="restore-all"]').hidden =
+            activeView !== "history" || state.dismissed.length === 0;
         list.replaceChildren();
 
         if (notifications.length === 0) {
@@ -787,6 +790,20 @@
         saveNotificationState(state);
     }
 
+    function restoreAllNotifications() {
+        const state = notificationState();
+        const restoredVersions = new Set(state.dismissed.map(function (item) {
+            return `${item.id}@${item.timestamp}`;
+        }));
+        state.dismissed = [];
+        state.readIds = state.readIds.filter(function (version) {
+            return !restoredVersions.has(version);
+        });
+        saveNotificationState(state);
+        activeView = "active";
+        visibleNotificationCount = VISIBLE_NOTIFICATION_PAGE_SIZE;
+    }
+
     function markAllRead() {
         const state = notificationState();
         const active = activeNotifications(buildNotifications(), state);
@@ -825,6 +842,8 @@
             dismissNotification(control.dataset.notificationId);
         } else if (control.dataset.notificationAction === "restore") {
             restoreNotification(control.dataset.notificationId);
+        } else if (control.dataset.notificationAction === "restore-all") {
+            restoreAllNotifications();
         } else if (control.dataset.notificationAction === "load-more") {
             loadMoreNotifications();
             return;
