@@ -17,8 +17,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const mobilityCount =
         document.getElementById("mobilityCount");
 
-    const borrowingCount =
-        document.getElementById("borrowingCount");
+    const emergencyCount =
+        document.getElementById("emergencyCount");
 
     const reportType =
         document.getElementById("reportType");
@@ -122,16 +122,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return getStoredArray("medtrackMobilityAssets");
     }
 
-    function getBorrowing() {
-        return getStoredArray("medtrackBorrowTransactions")
-            .filter(function (transaction) {
-                return [
-                    "Medical Equipment",
-                    "Mobility Asset"
-                ].includes(transaction.itemType);
-            });
-    }
-
     function getEmergencyRequests() {
         return getStoredArray("medtrackEmergencyRequests");
     }
@@ -141,7 +131,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         suppliesCount.textContent = getSupplies().length;
         equipmentCount.textContent = getEquipment().length;
         mobilityCount.textContent = getMobility().length;
-        borrowingCount.textContent = getBorrowing().length;
+        emergencyCount.textContent = getEmergencyRequests().length;
     }
 
 

@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v52-report-options-cleanup";
+const CACHE_NAME = "medtrack-shell-v53-emergency-report-summary";
 const APP_SHELL = [
     "/",
     "/index.html",

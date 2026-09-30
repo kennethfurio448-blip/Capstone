@@ -101,6 +101,29 @@ test("reports omit user accounts and status history", async ({ request }) => {
     expect(script).not.toContain('getStoredArray("medtrackAccounts")');
 });
 
+test("reports show the emergency response summary", async ({ request }) => {
+    const responses = await Promise.all([
+        request.get("/reports.html"),
+        request.get("/reports.js")
+    ]);
+    const [html, script] = await Promise.all(
+        responses.map(function (response) {
+            expect(response.ok()).toBeTruthy();
+            return response.text();
+        })
+    );
+
+    expect(html).toContain("Emergency Responses");
+    expect(html).toContain('id="emergencyCount"');
+    expect(html).toContain('data-filter-value="emergency"');
+    expect(html).toContain("Total requests");
+    expect(html).not.toContain("Status Records");
+    expect(html).not.toContain('id="borrowingCount"');
+    expect(script).toContain(
+        "emergencyCount.textContent = getEmergencyRequests().length;"
+    );
+});
+
 test("inventory creation uses database-issued IDs and atomic saves", async ({ request }) => {
     const responses = await Promise.all([
         request.get("/medical-supplies.js"),
