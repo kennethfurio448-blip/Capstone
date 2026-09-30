@@ -175,6 +175,7 @@ test("inventory distribution percentages total exactly 100 percent", async ({ pa
         return Number(label.replace("%", ""));
     });
 
+    expect(percentages).toEqual([42.3, 42.3, 15.4]);
     expect(percentages.reduce(function (sum, value) {
         return sum + value;
     }, 0)).toBe(100);

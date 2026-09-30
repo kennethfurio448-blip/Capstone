@@ -364,22 +364,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (!total) return values.map(function () { return 0; });
 
-        const exactTenths = values.map(function (value) {
-            return Math.max(0, Number(value) || 0) / total * 1000;
+        const roundedTenths = values.map(function (value) {
+            return Math.round(
+                Math.max(0, Number(value) || 0) / total * 1000
+            );
         });
-        const roundedTenths = exactTenths.map(Math.floor);
-        let remainingTenths = 1000 - roundedTenths.reduce(function (sum, value) {
+        const correction = 1000 - roundedTenths.reduce(function (sum, value) {
             return sum + value;
         }, 0);
-        const priority = exactTenths.map(function (value, index) {
-            return { index: index, remainder: value - Math.floor(value) };
-        }).sort(function (left, right) {
-            return right.remainder - left.remainder || left.index - right.index;
+        const correctionIndex = values.findLastIndex(function (value) {
+            return Math.max(0, Number(value) || 0) > 0;
         });
 
-        for (let index = 0; index < remainingTenths; index++) {
-            roundedTenths[priority[index % priority.length].index]++;
-        }
+        if (correctionIndex >= 0) roundedTenths[correctionIndex] += correction;
 
         return roundedTenths.map(function (value) { return value / 10; });
     }
