@@ -356,7 +356,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </span>
                 </td>
 
-                <td>${escapeHTML(vehicle.driver)}</td>
+                <td>${escapeHTML(vehicle.driver || "—")}</td>
 
                 <td>${escapeHTML(vehicle.location)}</td>
 

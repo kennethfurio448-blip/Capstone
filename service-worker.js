@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v48-all-inventory-statuses";
+const CACHE_NAME = "medtrack-shell-v49-driver-dash";
 const APP_SHELL = [
     "/",
     "/index.html",

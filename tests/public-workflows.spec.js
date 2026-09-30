@@ -61,6 +61,14 @@ test("medical equipment uses flexible inspection and service fields", async ({ r
     expect(html).not.toContain("Next Maintenance Date");
 });
 
+test("mobility shows a dash when no driver was imported", async ({ request }) => {
+    const response = await request.get("/mobility.js");
+    const source = await response.text();
+
+    expect(response.ok()).toBeTruthy();
+    expect(source).toContain('vehicle.driver || "—"');
+});
+
 test("inventory creation uses database-issued IDs and atomic saves", async ({ request }) => {
     const responses = await Promise.all([
         request.get("/medical-supplies.js"),
