@@ -352,6 +352,39 @@
     function inventoryStatusNotifications() {
         const notifications = [];
 
+        storedArray("medtrackMedicalSupplies").forEach(function (supply) {
+            const id = text(supply.id);
+            if (!id) return;
+            const name = text(supply.name, id);
+            const quantity = Math.max(0, number(supply.quantity));
+            const threshold = Math.max(0, number(supply.lowStockLevel));
+            const expiration = localDate(supply.expirationDate, true);
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+            const status = expiration && expiration < startOfToday
+                ? "Expired"
+                : (quantity <= 0
+                    ? "Out of stock"
+                    : (quantity <= threshold ? "Low stock" : "Available"));
+            const unit = text(supply.unit, "units");
+            notifications.push({
+                id: `current-status:medical-supply:${id}`,
+                type: "inventory-status",
+                icon: "fa-pills",
+                label: "Medical supply status",
+                message: `${name} is currently ${status} with ` +
+                    `${quantity} ${unit} on hand.`,
+                category: "Medical Supplies",
+                status: status,
+                timestamp: detectionTimestamp(supply),
+                href: inventoryItemLink(
+                    "medical-supplies.html",
+                    "supplySearch",
+                    id
+                )
+            });
+        });
+
         storedArray("medtrackMedicalEquipment").forEach(function (equipment) {
             const id = text(equipment.id);
             if (!id) return;

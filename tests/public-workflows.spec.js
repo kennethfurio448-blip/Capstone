@@ -217,8 +217,14 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
 
     await expect(page.getByRole("button", { name: "Mark all read" })).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Dismiss notification" }).click();
-    await expect(page.getByText("No current notifications.")).toBeVisible();
+    await page.locator(
+        ".notification-row:has(.notification-out-of-stock) " +
+        '[data-notification-action="dismiss"]'
+    ).click();
+    await expect(page.locator(".notification-out-of-stock")).toHaveCount(0);
+    await expect(page.getByText(
+        /Test Gauze is currently Out of stock with 0 Boxes on hand/
+    )).toBeVisible();
     await page.getByRole("button", { name: "History" }).click();
     await expect(page.locator(
         ".notification-item-content strong",
@@ -231,7 +237,7 @@ test("notification center supports out-of-stock, dismiss, history, and restore",
         { hasText: "Out of stock" }
     )).toBeVisible();
     await expect(page.locator("#notificationDropdownSummary")).toContainText(
-        "1 active, 1 unread"
+        "2 active, 2 unread"
     );
 });
 
@@ -428,9 +434,19 @@ test("notification center shows every unique new inventory item with details", a
     await expect(page.getByText(/Emergency Gauze.*Status: Available/)).toBeVisible();
 });
 
-test("equipment and mobility filters show actual current item statuses", async ({ page }) => {
+test("all inventory filters show actual current item statuses", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(function () {
+        localStorage.setItem("medtrackMedicalSupplies", JSON.stringify([{
+            id: "MED-STATUS-001",
+            name: "Trauma Dressing",
+            category: "First Aid",
+            quantity: 25,
+            lowStockLevel: 5,
+            unit: "Pieces",
+            expirationDate: "2027-10-01",
+            serverUpdatedAt: "2026-10-01T07:55:00+08:00"
+        }]));
         localStorage.setItem("medtrackMedicalEquipment", JSON.stringify([{
             id: "EQP-STATUS-001",
             name: "Portable Ventilator",
@@ -465,6 +481,20 @@ test("equipment and mobility filters show actual current item statuses", async (
     await page.addScriptTag({ url: "/notification-center.js" });
 
     await page.locator(".notification-button").click();
+    await page.locator('[data-notification-filter="category"]').selectOption(
+        "Medical Supplies"
+    );
+    await page.locator('[data-notification-filter="status"]').selectOption(
+        "Available"
+    );
+    await expect(page.getByText(
+        "Trauma Dressing is currently Available with 25 Pieces on hand."
+    )).toBeVisible();
+    await expect(page.locator(".notification-inventory-status")).toHaveAttribute(
+        "href",
+        /medical-supplies\.html\?.*action=details.*item=MED-STATUS-001/
+    );
+
     await page.locator('[data-notification-filter="category"]').selectOption(
         "Medical Equipment"
     );
