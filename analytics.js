@@ -4,7 +4,8 @@ document.addEventListener("DOMContentLoaded", function () {
         ["available", "Available / Normal", "#0b2d63"],
         ["attention", "Low Stock / Borrowed / Deployed", "#f2b514"],
         ["unavailable", "For Repair / Unavailable", "#d9252a"],
-        ["expiration", "Expiring Soon / Expired", "#ef6c00"]
+        ["expiring", "Expiring Soon", "#ef6c00"],
+        ["expired", "Expired", "#6f2da8"]
     ];
 
     function getStoredData(key) {
@@ -182,7 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 available: 0,
                 attention: 0,
                 unavailable: 0,
-                expiration: 0
+                expiring: 0,
+                expired: 0
             };
         }
 
@@ -224,9 +226,15 @@ document.addEventListener("DOMContentLoaded", function () {
             if (
                 expiration &&
                 !Number.isNaN(expiration.getTime()) &&
+                expiration < today
+            ) {
+                supplyValues.expired += 1;
+            } else if (
+                expiration &&
+                !Number.isNaN(expiration.getTime()) &&
                 expiration <= expirationCutoff
             ) {
-                supplyValues.expiration += 1;
+                supplyValues.expiring += 1;
             } else if (quantity <= 0) {
                 supplyValues.unavailable += 1;
             } else if (quantity <= threshold) {
