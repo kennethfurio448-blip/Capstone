@@ -105,8 +105,23 @@ document.addEventListener("DOMContentLoaded", async function () {
     const requestStatus =
         document.getElementById("requestStatus");
 
-    const resourceItems =
-        document.getElementById("resourceItems");
+    const resourceInventoryType =
+        document.getElementById("resourceInventoryType");
+
+    const resourceItem =
+        document.getElementById("resourceItem");
+
+    const resourceQuantity =
+        document.getElementById("resourceQuantity");
+
+    const resourceAvailability =
+        document.getElementById("resourceAvailability");
+
+    const resourceItemsList =
+        document.getElementById("resourceItemsList");
+
+    const resourceItemCount =
+        document.getElementById("resourceItemCount");
 
     const addResourceItemButton =
         document.getElementById("addResourceItem");
@@ -140,6 +155,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let requestToComplete = null;
     let requestToDelete = null;
+    let formInventoryUsages = [];
+    let inventoryItemsLocked = false;
 
 
     const inventoryKeys = {
@@ -584,39 +601,36 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    function populateResourceItems(row, selectedId = "") {
-        const inventoryType =
-            row.querySelector(".resource-inventory-type");
-        const itemSelect =
-            row.querySelector(".resource-item-select");
-        const quantityInput =
-            row.querySelector(".resource-quantity");
-        const availability =
-            row.querySelector(".resource-availability");
-        const itemType = inventoryType.value;
+    function populateResourceItems(selectedId = "") {
+        const itemType = resourceInventoryType.value;
         const normalizedSelectedId = normalizeId(selectedId);
-        const locked = row.dataset.locked === "true";
-
-        itemSelect.innerHTML = "";
+        resourceItem.innerHTML = "";
 
         if (!itemType) {
-            itemSelect.disabled = true;
-            quantityInput.disabled = true;
-            availability.textContent =
+            resourceItem.disabled = true;
+            resourceQuantity.disabled = true;
+            resourceAvailability.textContent =
                 "Select an inventory type to view available items.";
 
             const option = document.createElement("option");
             option.value = "";
             option.textContent = "Select inventory type first";
-            itemSelect.appendChild(option);
+            resourceItem.appendChild(option);
             return;
         }
 
+        const selectedKeys = new Set(
+            formInventoryUsages.map(function (usage) {
+                return `${usage.itemType}:${normalizeId(usage.itemId)}`;
+            })
+        );
         const selectableRecords = getInventoryRecords(itemType)
             .filter(function (item) {
+                const itemId = normalizeId(item.id);
                 return (
-                    isInventoryItemUsable(itemType, item) ||
-                    normalizeId(item.id) === normalizedSelectedId
+                    (isInventoryItemUsable(itemType, item) &&
+                        !selectedKeys.has(`${itemType}:${itemId}`)) ||
+                    itemId === normalizedSelectedId
                 );
             });
         const placeholder = document.createElement("option");
@@ -624,7 +638,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         placeholder.textContent = selectableRecords.length > 0
             ? "Select an available item"
             : "No available items";
-        itemSelect.appendChild(placeholder);
+        resourceItem.appendChild(placeholder);
 
         selectableRecords.forEach(function (item) {
             const option = document.createElement("option");
@@ -632,35 +646,27 @@ document.addEventListener("DOMContentLoaded", async function () {
                 ? 1
                 : Number(item.quantity) || 0;
             option.value = normalizeId(item.id);
-            option.textContent =
-                `${item.name} (${quantity} available)`;
-            itemSelect.appendChild(option);
+            option.textContent = `${item.name} (${quantity} available)`;
+            resourceItem.appendChild(option);
         });
 
-        itemSelect.value = normalizedSelectedId;
-        itemSelect.disabled = locked || selectableRecords.length === 0;
-        quantityInput.disabled =
-            locked ||
+        resourceItem.value = normalizedSelectedId;
+        resourceItem.disabled =
+            inventoryItemsLocked || selectableRecords.length === 0;
+        resourceQuantity.disabled =
+            inventoryItemsLocked ||
             selectableRecords.length === 0 ||
             itemType === "Mobility Asset";
-        updateResourceAvailability(row);
+        updateResourceAvailability();
     }
 
 
-    function updateResourceAvailability(row) {
-        const itemType = row
-            .querySelector(".resource-inventory-type").value;
-        const itemId = normalizeId(
-            row.querySelector(".resource-item-select").value
-        );
-        const quantityInput =
-            row.querySelector(".resource-quantity");
-        const availability =
-            row.querySelector(".resource-availability");
-        const locked = row.dataset.locked === "true";
+    function updateResourceAvailability() {
+        const itemType = resourceInventoryType.value;
+        const itemId = normalizeId(resourceItem.value);
 
         if (!itemType || !itemId) {
-            availability.textContent =
+            resourceAvailability.textContent =
                 "Select an inventory item to see its available quantity.";
             return;
         }
@@ -671,7 +677,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
 
         if (!item) {
-            availability.textContent =
+            resourceAvailability.textContent =
                 "This inventory item could not be found.";
             return;
         }
@@ -679,161 +685,168 @@ document.addEventListener("DOMContentLoaded", async function () {
         const availableQuantity = itemType === "Mobility Asset"
             ? 1
             : Number(item.quantity) || 0;
-        quantityInput.max = String(availableQuantity);
+        resourceQuantity.max = String(availableQuantity);
 
         if (itemType === "Mobility Asset") {
-            quantityInput.value = "1";
-            quantityInput.disabled = true;
+            resourceQuantity.value = "1";
+            resourceQuantity.disabled = true;
         } else {
-            quantityInput.disabled = locked;
+            resourceQuantity.disabled = inventoryItemsLocked;
         }
 
-        availability.textContent = locked
-            ? "This item was already deducted from inventory."
-            : `${availableQuantity} available for emergency use.`;
-
-        if (!requiredResources.value.trim()) {
-            requiredResources.value = item.name || "";
-        }
+        resourceAvailability.textContent =
+            `${availableQuantity} available for emergency use.`;
     }
 
 
-    function addResourceRow(usage = null, locked = false) {
-        const row = document.createElement("div");
-        row.className = "resource-item-row";
-        row.dataset.locked = String(locked);
-        row.innerHTML = `
-            <div class="resource-row-field">
-                <label>Inventory Type</label>
-                <select class="resource-inventory-type" ${locked ? "disabled" : ""}>
-                    <option value="" selected disabled hidden>Select inventory type</option>
-                    <option value="Medical Supply">Medical Supply</option>
-                    <option value="Medical Equipment">Medical Equipment</option>
-                    <option value="Mobility Asset">Mobility Asset</option>
-                </select>
-            </div>
-            <div class="resource-row-field">
-                <label>Item</label>
-                <select class="resource-item-select" disabled>
-                    <option value="">Select inventory type first</option>
-                </select>
-            </div>
-            <div class="resource-row-field">
-                <label>Quantity</label>
-                <input class="resource-quantity" type="number" min="1" value="1" disabled>
-            </div>
-            <button type="button" class="remove-resource-button" title="Remove item" aria-label="Remove item" ${locked ? "disabled" : ""}>
-                <i class="fa-solid fa-trash"></i>
-            </button>
-            <small class="field-help resource-availability">
-                Select an inventory item to see its available quantity.
-            </small>
-        `;
-        resourceItems.appendChild(row);
-
-        if (usage) {
-            row.querySelector(".resource-inventory-type").value =
-                usage.itemType || "";
-            row.querySelector(".resource-quantity").value =
-                String(usage.quantity || 1);
-            populateResourceItems(row, usage.itemId || "");
-        }
-
-        return row;
+    function resetResourceInputs() {
+        resourceInventoryType.value = "";
+        resourceItem.innerHTML =
+            '<option value="">Select inventory type first</option>';
+        resourceItem.disabled = true;
+        resourceQuantity.value = "1";
+        resourceQuantity.removeAttribute("max");
+        resourceQuantity.disabled = true;
+        resourceAvailability.textContent = inventoryItemsLocked
+            ? "Items already deducted from inventory cannot be changed."
+            : "Select an inventory item to see its available quantity.";
     }
 
 
-    function renderResourceRows(usages = [], locked = false) {
-        resourceItems.innerHTML = "";
-        addResourceItemButton.disabled = locked;
+    function renderResourceList() {
+        resourceItemsList.innerHTML = "";
+        resourceItemCount.textContent =
+            `${formInventoryUsages.length} ${formInventoryUsages.length === 1 ? "item" : "items"}`;
 
-        if (usages.length === 0) {
-            addResourceRow(null, false);
+        if (formInventoryUsages.length === 0) {
+            const emptyState = document.createElement("p");
+            emptyState.className = "resource-list-empty";
+            emptyState.textContent = "No items added yet.";
+            resourceItemsList.appendChild(emptyState);
             return;
         }
 
-        usages.forEach(function (usage) {
-            addResourceRow(usage, locked || usage.deducted === true);
+        formInventoryUsages.forEach(function (usage, index) {
+            const listItem = document.createElement("div");
+            listItem.className = "resource-list-item";
+            listItem.innerHTML = `
+                <span class="resource-list-check" aria-hidden="true">
+                    <i class="fa-solid fa-check"></i>
+                </span>
+                <div class="resource-list-details">
+                    <strong>${escapeHTML(usage.itemName)}</strong>
+                    <small>${escapeHTML(usage.itemType)} · ${escapeHTML(usage.itemId)}</small>
+                </div>
+                <span class="resource-list-quantity">Qty: ${escapeHTML(usage.quantity)}</span>
+                <button type="button" class="remove-resource-button" data-index="${index}" title="Remove item" aria-label="Remove ${escapeHTML(usage.itemName)}" ${inventoryItemsLocked ? "disabled" : ""}>
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+            resourceItemsList.appendChild(listItem);
         });
     }
 
 
-    function getInventoryUsagesFromForm() {
-        const usages = [];
-        const selectedKeys = new Set();
-        const rows = Array.from(
-            resourceItems.querySelectorAll(".resource-item-row")
-        );
+    function setResourceList(usages = [], locked = false) {
+        formInventoryUsages = usages.map(function (usage) {
+            return { ...usage };
+        });
+        inventoryItemsLocked = locked;
+        resourceInventoryType.disabled = locked;
+        addResourceItemButton.disabled = locked;
+        resetResourceInputs();
+        renderResourceList();
+    }
 
-        for (const row of rows) {
-            const itemType = row
-                .querySelector(".resource-inventory-type").value;
-            const itemId = normalizeId(
-                row.querySelector(".resource-item-select").value
-            );
 
-            if (!itemType && !itemId) continue;
+    function addSelectedResourceToList() {
+        const itemType = resourceInventoryType.value;
+        const itemId = normalizeId(resourceItem.value);
 
-            if (!itemType || !itemId) {
-                return {
-                    ok: false,
-                    message: "Select an inventory type and item for every row."
-                };
-            }
-
-            const selectedItem = getInventoryRecords(itemType)
-                .find(function (item) {
-                    return normalizeId(item.id) === itemId;
-                });
-
-            if (!selectedItem) {
-                return {
-                    ok: false,
-                    message: "A selected inventory item could not be found."
-                };
-            }
-
-            const itemKey = `${itemType}:${itemId}`;
-            if (selectedKeys.has(itemKey)) {
-                return {
-                    ok: false,
-                    message: `${selectedItem.name} was selected more than once.`
-                };
-            }
-            selectedKeys.add(itemKey);
-
-            const quantity = itemType === "Mobility Asset"
-                ? 1
-                : Number(row.querySelector(".resource-quantity").value);
-            const availableQuantity = itemType === "Mobility Asset"
-                ? 1
-                : Number(selectedItem.quantity) || 0;
-
-            if (!Number.isInteger(quantity) || quantity < 1) {
-                return {
-                    ok: false,
-                    message: "Every item quantity must be at least 1."
-                };
-            }
-
-            if (quantity > availableQuantity && row.dataset.locked !== "true") {
-                return {
-                    ok: false,
-                    message: `Only ${availableQuantity} ${selectedItem.name} available.`
-                };
-            }
-
-            usages.push({
-                itemType: itemType,
-                itemId: itemId,
-                itemName: selectedItem.name || "Unnamed item",
-                quantity: quantity,
-                deducted: row.dataset.locked === "true",
-                deductedAt: ""
-            });
+        if (!itemType || !itemId) {
+            return {
+                ok: false,
+                message: "Select an inventory type and item before adding."
+            };
         }
 
-        return { ok: true, usages: usages };
+        const selectedItem = getInventoryRecords(itemType)
+            .find(function (item) {
+                return normalizeId(item.id) === itemId;
+            });
+
+        if (!selectedItem) {
+            return {
+                ok: false,
+                message: "The selected inventory item could not be found."
+            };
+        }
+
+        const duplicate = formInventoryUsages.some(function (usage) {
+            return usage.itemType === itemType &&
+                normalizeId(usage.itemId) === itemId;
+        });
+        if (duplicate) {
+            return {
+                ok: false,
+                message: `${selectedItem.name} is already in the Items List.`
+            };
+        }
+
+        const quantity = itemType === "Mobility Asset"
+            ? 1
+            : Number(resourceQuantity.value);
+        const availableQuantity = itemType === "Mobility Asset"
+            ? 1
+            : Number(selectedItem.quantity) || 0;
+
+        if (!Number.isInteger(quantity) || quantity < 1) {
+            return {
+                ok: false,
+                message: "Quantity must be at least 1."
+            };
+        }
+
+        if (quantity > availableQuantity) {
+            return {
+                ok: false,
+                message: `Only ${availableQuantity} ${selectedItem.name} available.`
+            };
+        }
+
+        formInventoryUsages.push({
+            itemType: itemType,
+            itemId: itemId,
+            itemName: selectedItem.name || "Unnamed item",
+            quantity: quantity,
+            deducted: false,
+            deductedAt: ""
+        });
+
+        if (!requiredResources.value.trim()) {
+            requiredResources.value = selectedItem.name || "";
+        }
+
+        resetResourceInputs();
+        renderResourceList();
+        return { ok: true };
+    }
+
+
+    function getInventoryUsagesFromForm() {
+        if (resourceInventoryType.value || normalizeId(resourceItem.value)) {
+            return {
+                ok: false,
+                message: "Click Add Item to move the selected item into the Items List."
+            };
+        }
+
+        return {
+            ok: true,
+            usages: formInventoryUsages.map(function (usage) {
+                return { ...usage };
+            })
+        };
     }
 
 
@@ -1291,7 +1304,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         requestTime.value = getCurrentTime();
         requestStatus.value = "Pending";
 
-        renderResourceRows();
+        setResourceList();
 
         modalTitle.textContent =
             "New Emergency Request";
@@ -1360,7 +1373,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     .inventoryDeducted
             );
 
-        renderResourceRows(
+        setResourceList(
             getRequestInventoryUsages(selectedRequest),
             inventoryAlreadyUsed
         );
@@ -1381,8 +1394,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         editingRequestId.value = "";
         formMessage.textContent = "";
 
-        resourceItems.innerHTML = "";
-        addResourceItemButton.disabled = false;
+        setResourceList();
     }
 
 
@@ -1872,29 +1884,28 @@ document.addEventListener("DOMContentLoaded", async function () {
     addResourceItemButton.addEventListener(
         "click",
         function () {
-            addResourceRow();
+            formMessage.textContent = "";
+            const result = addSelectedResourceToList();
+            if (!result.ok) {
+                formMessage.textContent = result.message;
+            }
         }
     );
 
-    resourceItems.addEventListener(
+    resourceInventoryType.addEventListener(
         "change",
-        function (event) {
-            const row = event.target.closest(".resource-item-row");
-            if (!row) return;
-
-            if (event.target.matches(".resource-inventory-type")) {
-                row.querySelector(".resource-quantity").value = "1";
-                populateResourceItems(row);
-                return;
-            }
-
-            if (event.target.matches(".resource-item-select")) {
-                updateResourceAvailability(row);
-            }
+        function () {
+            resourceQuantity.value = "1";
+            populateResourceItems();
         }
     );
 
-    resourceItems.addEventListener(
+    resourceItem.addEventListener(
+        "change",
+        updateResourceAvailability
+    );
+
+    resourceItemsList.addEventListener(
         "click",
         function (event) {
             const removeButton = event.target.closest(
@@ -1902,8 +1913,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             );
             if (!removeButton || removeButton.disabled) return;
 
-            const row = removeButton.closest(".resource-item-row");
-            if (row) row.remove();
+            const index = Number(removeButton.dataset.index);
+            if (!Number.isInteger(index) || index < 0) return;
+
+            formInventoryUsages.splice(index, 1);
+            renderResourceList();
         }
     );
 

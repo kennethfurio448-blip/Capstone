@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v55-emergency-multiple-items";
+const CACHE_NAME = "medtrack-shell-v56-emergency-items-list";
 const APP_SHELL = [
     "/",
     "/index.html",

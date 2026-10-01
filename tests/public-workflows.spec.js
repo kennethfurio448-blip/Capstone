@@ -139,15 +139,118 @@ test("emergency responses support multiple inventory items", async ({ request })
 
     expect(html).not.toContain("No inventory item");
     expect(html).toContain("Items Used");
+    expect(html).toContain("Items List");
     expect(html).toContain('id="addResourceItem"');
-    expect(html).toContain('id="resourceItems"');
+    expect(html).toContain('id="resourceItemsList"');
+    expect(html).toContain('id="resourceInventoryType"');
+    expect(html).toContain('id="resourceQuantity"');
     expect(html).toContain("Add Item");
-    expect(script).toContain("function addResourceRow(");
+    expect(script).toContain("function addSelectedResourceToList(");
+    expect(script).toContain("function resetResourceInputs(");
+    expect(script).toContain("function renderResourceList(");
     expect(script).toContain("function getInventoryUsagesFromForm(");
     expect(script).toContain('class="remove-resource-button"');
+    expect(script).toContain("formInventoryUsages.push({");
     expect(script).toContain("request.inventoryUsages = usages;");
     expect(dataAdapter).toContain("items: inventoryUsages");
     expect(dataAdapter).toContain("inventoryUsages: inventoryUsages");
+});
+
+test("emergency Add Item moves selections into the Items List", async ({ page }) => {
+    const emptyScript = {
+        status: 200,
+        contentType: "application/javascript",
+        body: ""
+    };
+    await page.route("**/api/supabase-js", function (route) {
+        return route.fulfill(emptyScript);
+    });
+    await page.route("**/auth/supabase-client.js", function (route) {
+        return route.fulfill(emptyScript);
+    });
+    await page.route("**/auth/supabase-auth.js", function (route) {
+        return route.fulfill({
+            ...emptyScript,
+            body: `
+                window.medtrackAuth = {
+                    requireRoles: async function () {
+                        document.body.hidden = false;
+                        return {
+                            role: "staff",
+                            status: "active",
+                            fullname: "Workflow Tester"
+                        };
+                    },
+                    logout: async function () {}
+                };
+            `
+        });
+    });
+    await page.route("**/auth/supabase-data.js**", function (route) {
+        return route.fulfill({
+            ...emptyScript,
+            body: `
+                window.medtrackData = {
+                    refresh: async function () {}
+                };
+            `
+        });
+    });
+    await page.route("**/pwa.js", function (route) {
+        return route.fulfill(emptyScript);
+    });
+    await page.route("**/notification-center.js", function (route) {
+        return route.fulfill(emptyScript);
+    });
+    await page.addInitScript(function () {
+        localStorage.setItem("medtrackEmergencyRequests", "[]");
+        localStorage.setItem("medtrackMedicalSupplies", JSON.stringify([
+            {
+                id: "MED-TEST-001",
+                name: "Emergency Gauze",
+                quantity: 20,
+                expirationDate: "2027-12-31"
+            }
+        ]));
+        localStorage.setItem("medtrackMedicalEquipment", JSON.stringify([
+            {
+                id: "EQP-TEST-001",
+                name: "Pulse Oximeter",
+                quantity: 3,
+                status: "Available"
+            }
+        ]));
+        localStorage.setItem("medtrackMobilityAssets", "[]");
+    });
+
+    await page.goto("/emergency-response.html");
+    await page.locator("#openAddModal").click();
+    await page.locator("#resourceInventoryType").selectOption("Medical Supply");
+    await page.locator("#resourceItem").selectOption("MED-TEST-001");
+    await page.locator("#resourceQuantity").fill("4");
+    await page.locator("#addResourceItem").click();
+
+    await expect(page.locator(".resource-list-item")).toHaveCount(1);
+    await expect(page.locator(".resource-list-item")).toContainText(
+        "Emergency Gauze"
+    );
+    await expect(page.locator(".resource-list-item")).toContainText("Qty: 4");
+    await expect(page.locator("#resourceInventoryType")).toHaveValue("");
+    await expect(page.locator("#resourceItem")).toBeDisabled();
+    await expect(page.locator("#resourceQuantity")).toHaveValue("1");
+
+    await page.locator("#resourceInventoryType").selectOption("Medical Equipment");
+    await page.locator("#resourceItem").selectOption("EQP-TEST-001");
+    await page.locator("#resourceQuantity").fill("1");
+    await page.locator("#addResourceItem").click();
+
+    await expect(page.locator(".resource-list-item")).toHaveCount(2);
+    await expect(page.locator("#resourceItemCount")).toHaveText("2 items");
+    await page.locator(".remove-resource-button").first().click();
+    await expect(page.locator(".resource-list-item")).toHaveCount(1);
+    await expect(page.locator(".resource-list-item")).toContainText(
+        "Pulse Oximeter"
+    );
 });
 
 test("inventory creation uses database-issued IDs and atomic saves", async ({ request }) => {

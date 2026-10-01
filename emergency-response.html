@@ -603,7 +603,31 @@
                     <div class="items-used-header">
                         <div>
                             <h3>Items Used</h3>
-                            <p>Add every inventory item needed for this response.</p>
+                            <p>Select an item and quantity, then add it to the list.</p>
+                        </div>
+                    </div>
+
+                    <div class="resource-entry">
+                        <div class="resource-row-field">
+                            <label for="resourceInventoryType">Inventory Type</label>
+                            <select id="resourceInventoryType">
+                                <option value="" selected disabled hidden>Select inventory type</option>
+                                <option value="Medical Supply">Medical Supply</option>
+                                <option value="Medical Equipment">Medical Equipment</option>
+                                <option value="Mobility Asset">Mobility Asset</option>
+                            </select>
+                        </div>
+
+                        <div class="resource-row-field">
+                            <label for="resourceItem">Item</label>
+                            <select id="resourceItem" disabled>
+                                <option value="">Select inventory type first</option>
+                            </select>
+                        </div>
+
+                        <div class="resource-row-field">
+                            <label for="resourceQuantity">Quantity</label>
+                            <input id="resourceQuantity" type="number" min="1" value="1" disabled>
                         </div>
 
                         <button
@@ -616,7 +640,16 @@
                         </button>
                     </div>
 
-                    <div id="resourceItems" class="resource-items"></div>
+                    <small class="field-help" id="resourceAvailability">
+                        Select an inventory item to see its available quantity.
+                    </small>
+
+                    <div class="items-list-header">
+                        <h4>Items List</h4>
+                        <span id="resourceItemCount">0 items</span>
+                    </div>
+
+                    <div id="resourceItemsList" class="resource-items-list"></div>
 
                 </section>
 
@@ -767,7 +800,7 @@
 <script src="pwa.js"></script>
 <script src="notification-center.js"></script>
 <script src="card-navigation.js"></script>
-<script src="emergency-response.js?v=20261001-emergency-multiple-items"></script>
+<script src="emergency-response.js?v=20261001-emergency-items-list"></script>
 
 </body>
 </html>
