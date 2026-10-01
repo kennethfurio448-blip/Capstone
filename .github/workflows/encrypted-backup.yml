@@ -18,7 +18,7 @@ jobs:
       MEDTRACK_BACKUP_PASSWORD: ${{ secrets.MEDTRACK_BACKUP_PASSWORD }}
       MEDTRACK_BACKUP_FILE: backup-output/medtrack-encrypted-backup.json
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
