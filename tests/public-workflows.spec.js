@@ -124,16 +124,30 @@ test("reports show the emergency response summary", async ({ request }) => {
     );
 });
 
-test("emergency response hides the empty inventory option", async ({ request }) => {
-    const response = await request.get("/emergency-response.html");
-    const html = await response.text();
-
-    expect(response.ok()).toBeTruthy();
-    expect(html).not.toContain("No inventory item");
-    expect(html).toContain(
-        '<option value="" selected disabled hidden>'
+test("emergency responses support multiple inventory items", async ({ request }) => {
+    const responses = await Promise.all([
+        request.get("/emergency-response.html"),
+        request.get("/emergency-response.js"),
+        request.get("/auth/supabase-data.js")
+    ]);
+    const [html, script, dataAdapter] = await Promise.all(
+        responses.map(function (response) {
+            expect(response.ok()).toBeTruthy();
+            return response.text();
+        })
     );
-    expect(html).toContain("Select inventory type");
+
+    expect(html).not.toContain("No inventory item");
+    expect(html).toContain("Items Used");
+    expect(html).toContain('id="addResourceItem"');
+    expect(html).toContain('id="resourceItems"');
+    expect(html).toContain("Add Item");
+    expect(script).toContain("function addResourceRow(");
+    expect(script).toContain("function getInventoryUsagesFromForm(");
+    expect(script).toContain('class="remove-resource-button"');
+    expect(script).toContain("request.inventoryUsages = usages;");
+    expect(dataAdapter).toContain("items: inventoryUsages");
+    expect(dataAdapter).toContain("inventoryUsages: inventoryUsages");
 });
 
 test("inventory creation uses database-issued IDs and atomic saves", async ({ request }) => {
@@ -364,7 +378,10 @@ test("equipment service notifications show due and overdue schedules", async ({ 
     await expect(page.getByText("Inspection/service due soon", { exact: true })).toBeVisible();
     await expect(page.getByText(/BP Apparatus requires calibration/)).toBeVisible();
     await expect(page.getByText(/Hydraulic Rescue Tool has inspection scheduled/)).toBeVisible();
-    await expect(page.getByText(/Bandage Scissors/)).toHaveCount(0);
+    await expect(page.locator(
+        ".notification-service-due, .notification-service-overdue",
+        { hasText: "Bandage Scissors" }
+    )).toHaveCount(0);
 
     const dueLink = page.locator(".notification-service-due");
     await expect(dueLink).toHaveAttribute(

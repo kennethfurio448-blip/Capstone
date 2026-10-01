@@ -235,6 +235,27 @@
             table: "emergency_requests",
 
             toCloud: function (item) {
+                const legacyUsage = item.inventoryUsage || null;
+                let inventoryUsages = [];
+
+                if (Array.isArray(item.inventoryUsages)) {
+                    inventoryUsages = item.inventoryUsages;
+                } else if (
+                    legacyUsage &&
+                    Array.isArray(legacyUsage.items)
+                ) {
+                    inventoryUsages = legacyUsage.items;
+                } else if (legacyUsage) {
+                    inventoryUsages = [legacyUsage];
+                }
+
+                const inventoryUsagePayload = inventoryUsages.length > 0
+                    ? {
+                        ...inventoryUsages[0],
+                        items: inventoryUsages
+                    }
+                    : null;
+
                 return {
                     id: text(item.id),
                     request_date: nullable(item.date),
@@ -254,7 +275,7 @@
                     status: text(item.status, "Pending"),
                     resources: text(item.resources, "Not specified"),
                     description: text(item.description, "No description"),
-                    inventory_usage: item.inventoryUsage || null,
+                    inventory_usage: inventoryUsagePayload,
                     inventory_deducted: Boolean(item.inventoryDeducted),
                     inventory_deducted_at: nullable(
                         item.inventoryDeductedAt
@@ -265,6 +286,14 @@
             },
 
             fromCloud: function (item) {
+                const inventoryUsage = item.inventory_usage || null;
+                const inventoryUsages =
+                    inventoryUsage && Array.isArray(inventoryUsage.items)
+                        ? inventoryUsage.items
+                        : inventoryUsage
+                            ? [inventoryUsage]
+                            : [];
+
                 return {
                     id: item.id,
                     date: item.request_date,
@@ -278,7 +307,8 @@
                     status: item.status,
                     resources: item.resources,
                     description: item.description,
-                    inventoryUsage: item.inventory_usage,
+                    inventoryUsage: inventoryUsages[0] || null,
+                    inventoryUsages: inventoryUsages,
                     inventoryDeducted: item.inventory_deducted,
                     inventoryDeductedAt:
                         item.inventory_deducted_at || "",

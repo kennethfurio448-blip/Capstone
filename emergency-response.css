@@ -889,6 +889,118 @@ a {
     line-height: 1.4;
 }
 
+.items-used-section {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+.items-used-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.items-used-header h3 {
+    margin-bottom: 4px;
+    font-size: 15px;
+}
+
+.items-used-header p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.add-resource-button {
+    min-height: 38px;
+    padding: 0 14px;
+    flex-shrink: 0;
+    color: var(--primary);
+    background-color: #fff;
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.add-resource-button:hover {
+    color: var(--white);
+    background-color: var(--primary);
+}
+
+.resource-items {
+    margin-top: 14px;
+    display: grid;
+    gap: 12px;
+}
+
+.resource-item-row {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: minmax(150px, 0.9fr) minmax(190px, 1.4fr) minmax(90px, 0.45fr) 38px;
+    gap: 10px;
+    align-items: end;
+    background-color: var(--white);
+    border: 1px solid #e5e5e5;
+    border-radius: 9px;
+}
+
+.resource-row-field {
+    min-width: 0;
+}
+
+.resource-row-field label {
+    display: block;
+    margin-bottom: 6px;
+    color: #555;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.resource-row-field select,
+.resource-row-field input {
+    width: 100%;
+    height: 42px;
+    padding: 0 10px;
+    color: var(--text);
+    background-color: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.resource-row-field select:disabled,
+.resource-row-field input:disabled {
+    color: #888;
+    background-color: #eee;
+}
+
+.resource-availability {
+    grid-column: 1 / -1;
+    margin-top: -4px;
+}
+
+.remove-resource-button {
+    width: 38px;
+    height: 42px;
+    color: var(--red);
+    background-color: #ffebee;
+    border: none;
+    border-radius: 8px;
+}
+
+.remove-resource-button:hover:not(:disabled) {
+    color: var(--white);
+    background-color: var(--red);
+}
+
+.remove-resource-button:disabled {
+    color: #999;
+    background-color: #eee;
+    cursor: not-allowed;
+}
+
 .form-message {
     min-height: 19px;
     margin-top: 14px;
@@ -1113,6 +1225,27 @@ a {
     }
 
     .input-group.full-width {
+        grid-column: auto;
+    }
+
+    .items-used-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .add-resource-button {
+        width: 100%;
+    }
+
+    .resource-item-row {
+        grid-template-columns: 1fr;
+    }
+
+    .remove-resource-button {
+        width: 100%;
+    }
+
+    .resource-availability {
         grid-column: auto;
     }
 

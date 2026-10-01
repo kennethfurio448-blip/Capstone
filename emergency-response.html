@@ -598,71 +598,27 @@
 
                 </div>
 
-                <div class="input-group">
+                <section class="items-used-section input-group full-width">
 
-                    <label for="resourceInventoryType">
-                        Inventory Type
-                    </label>
+                    <div class="items-used-header">
+                        <div>
+                            <h3>Items Used</h3>
+                            <p>Add every inventory item needed for this response.</p>
+                        </div>
 
-                    <select id="resourceInventoryType">
-                        <option value="" selected disabled hidden>
-                            Select inventory type
-                        </option>
+                        <button
+                            type="button"
+                            class="add-resource-button"
+                            id="addResourceItem"
+                        >
+                            <i class="fa-solid fa-plus"></i>
+                            Add Item
+                        </button>
+                    </div>
 
-                        <option value="Medical Supply">
-                            Medical Supply
-                        </option>
+                    <div id="resourceItems" class="resource-items"></div>
 
-                        <option value="Medical Equipment">
-                            Medical Equipment
-                        </option>
-
-                        <option value="Mobility Asset">
-                            Mobility Asset
-                        </option>
-                    </select>
-
-                </div>
-
-                <div class="input-group">
-
-                    <label for="resourceItem">
-                        Item Used
-                    </label>
-
-                    <select
-                        id="resourceItem"
-                        disabled
-                    >
-                        <option value="">
-                            Select inventory type first
-                        </option>
-                    </select>
-
-                </div>
-
-                <div class="input-group full-width">
-
-                    <label for="resourceQuantity">
-                        Quantity Used
-                    </label>
-
-                    <input
-                        type="number"
-                        id="resourceQuantity"
-                        min="1"
-                        value="1"
-                        disabled
-                    >
-
-                    <small
-                        class="field-help"
-                        id="resourceAvailability"
-                    >
-                        Select an inventory item to see its available quantity.
-                    </small>
-
-                </div>
+                </section>
 
                 <div class="input-group full-width">
 
@@ -807,11 +763,11 @@
 <script src="auth/supabase-client.js"></script>
 <script src="auth/offline-store.js"></script>
 <script src="auth/supabase-auth.js"></script>
-<script src="auth/supabase-data.js?v=20260928-staff-inventory"></script>
+<script src="auth/supabase-data.js?v=20261001-emergency-multiple-items"></script>
 <script src="pwa.js"></script>
 <script src="notification-center.js"></script>
 <script src="card-navigation.js"></script>
-<script src="emergency-response.js?v=20260928-staff-inventory"></script>
+<script src="emergency-response.js?v=20261001-emergency-multiple-items"></script>
 
 </body>
 </html>
