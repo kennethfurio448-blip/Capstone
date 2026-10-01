@@ -16,6 +16,7 @@
         "Medical Supplies": [
             "Available",
             "Low stock",
+            "Near Expiry",
             "Out of stock",
             "Expired"
         ],
@@ -64,6 +65,27 @@
         } catch (error) {
             console.error(`Unable to read ${key} notifications:`, error);
             return [];
+        }
+    }
+
+    function expirationPreferences() {
+        try {
+            const settings = JSON.parse(
+                localStorage.getItem("medtrackSettings") || "{}"
+            );
+            const configuredDays = Number(
+                settings.inventory &&
+                settings.inventory.expirationWarningDays
+            );
+            return {
+                days: Number.isFinite(configuredDays) && configuredDays > 0
+                    ? Math.floor(configuredDays)
+                    : 30,
+                enabled: !settings.notifications ||
+                    settings.notifications.expirationAlerts !== false
+            };
+        } catch (error) {
+            return { days: 30, enabled: true };
         }
     }
 
@@ -289,6 +311,7 @@
         const status = text(value).toLowerCase();
         if (category === "Medical Supplies") {
             if (status === "expired") return "Expired";
+            if (status === "near expiry") return "Near Expiry";
             if (["out of stock", "unavailable"].includes(status)) {
                 return "Out of stock";
             }
@@ -361,11 +384,16 @@
             const expiration = localDate(supply.expirationDate, true);
             const startOfToday = new Date();
             startOfToday.setHours(0, 0, 0, 0);
+            const expirySettings = expirationPreferences();
+            const warningDate = new Date(startOfToday);
+            warningDate.setDate(warningDate.getDate() + expirySettings.days);
             const status = expiration && expiration < startOfToday
                 ? "Expired"
+                : (expiration && expiration <= warningDate
+                    ? "Near Expiry"
                 : (quantity <= 0
                     ? "Out of stock"
-                    : (quantity <= threshold ? "Low stock" : "Available"));
+                    : (quantity <= threshold ? "Low stock" : "Available")));
             const unit = text(supply.unit, "units");
             notifications.push({
                 id: `current-status:medical-supply:${id}`,
@@ -517,6 +545,11 @@
         startOfToday.setHours(0, 0, 0, 0);
         const serviceWindowEnd = new Date(startOfToday);
         serviceWindowEnd.setDate(serviceWindowEnd.getDate() + 30);
+        const expirySettings = expirationPreferences();
+        const expirationWindowEnd = new Date(startOfToday);
+        expirationWindowEnd.setDate(
+            expirationWindowEnd.getDate() + expirySettings.days
+        );
 
         storedArray("medtrackMedicalSupplies").forEach(function (supply) {
             const id = text(supply.id);
@@ -566,6 +599,32 @@
                     message: `${name} expired on ${expiration.toLocaleDateString()}.`,
                     category: "Medical Supplies",
                     status: "Expired",
+                    timestamp: expiration,
+                    href: href
+                });
+            } else if (
+                expirySettings.enabled &&
+                expiration &&
+                expiration <= expirationWindowEnd
+            ) {
+                const daysRemaining = Math.max(
+                    0,
+                    Math.round(
+                        (expiration.getTime() - startOfToday.getTime()) /
+                        86400000
+                    )
+                );
+                const remainingText = daysRemaining === 0
+                    ? "today"
+                    : `in ${daysRemaining} day${daysRemaining === 1 ? "" : "s"}`;
+                notifications.push({
+                    id: `near-expiry:${id || name}:${supply.expirationDate}`,
+                    type: "near-expiry",
+                    icon: "fa-calendar-day",
+                    label: "Supply near expiry",
+                    message: `${name} expires ${remainingText} (${expiration.toLocaleDateString()}).`,
+                    category: "Medical Supplies",
+                    status: "Near Expiry",
                     timestamp: expiration,
                     href: href
                 });
@@ -665,6 +724,7 @@
                 "service-overdue": 5,
                 "out-of-stock": 4,
                 expired: 3,
+                "near-expiry": 3,
                 "service-due": 2,
                 overdue: 2,
                 "low-stock": 1,

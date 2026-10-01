@@ -206,6 +206,20 @@
 
             </article>
 
+            <article class="stat-card yellow" data-filter-target="statusFilter" data-filter-value="Near Expiry" data-action-label="Show near-expiry Medical Supplies">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-calendar-day"></i>
+                </div>
+
+                <div>
+                    <p>Near Expiry</p>
+                    <h3 id="nearExpirySupplies">0</h3>
+                    <small>Items within the warning period</small>
+                </div>
+
+            </article>
+
             <article class="stat-card red" data-filter-target="statusFilter" data-filter-value="Out of Stock" data-action-label="Show out-of-stock Medical Supplies">
 
                 <div class="stat-icon">
@@ -220,7 +234,7 @@
 
             </article>
 
-            <article class="stat-card blue" data-filter-target="statusFilter" data-filter-value="Expired" data-action-label="Show expired Medical Supplies">
+            <article class="stat-card purple" data-filter-target="statusFilter" data-filter-value="Expired" data-action-label="Show expired Medical Supplies">
 
                 <div class="stat-icon">
                     <i class="fa-solid fa-calendar-xmark"></i>
@@ -297,6 +311,7 @@
                     <option value="all">All Status</option>
                     <option value="Available">Available</option>
                     <option value="Low Stock">Low Stock</option>
+                    <option value="Near Expiry">Near Expiry</option>
                     <option value="Out of Stock">Out of Stock</option>
                     <option value="Expired">Expired</option>
                 </select>
@@ -619,7 +634,7 @@
 <script src="notification-center.js"></script>
 <script src="card-navigation.js"></script>
 <script src="table-pagination.js"></script>
-<script src="medical-supplies.js?v=20260928-staff-inventory"></script>
+<script src="medical-supplies.js?v=20261001-near-expiry"></script>
 
 </body>
 </html>

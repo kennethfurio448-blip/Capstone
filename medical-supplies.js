@@ -25,6 +25,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const lowStockSupplies =
         document.getElementById("lowStockSupplies");
 
+    const nearExpirySupplies =
+        document.getElementById("nearExpirySupplies");
+
     const outOfStockSupplies =
         document.getElementById("outOfStockSupplies");
 
@@ -146,6 +149,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         totalSupplies,
         availableSupplies,
         lowStockSupplies,
+        nearExpirySupplies,
         outOfStockSupplies,
         expiredSupplies,
         supplyTableBody,
@@ -314,6 +318,23 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
+    function getExpirationWarningDays() {
+        try {
+            const settings = JSON.parse(
+                localStorage.getItem("medtrackSettings") || "{}"
+            );
+            const configuredDays = Number(
+                settings.inventory &&
+                settings.inventory.expirationWarningDays
+            );
+            return Number.isFinite(configuredDays) && configuredDays > 0
+                ? Math.floor(configuredDays)
+                : 30;
+        } catch (error) {
+            return 30;
+        }
+    }
+
     function getSupplyStatus(supply) {
         const quantity =
             Number(supply.quantity) || 0;
@@ -339,6 +360,18 @@ document.addEventListener("DOMContentLoaded", async function () {
             ) {
                 return "Expired";
             }
+
+            const warningDate = new Date(today);
+            warningDate.setDate(
+                warningDate.getDate() + getExpirationWarningDays()
+            );
+
+            if (
+                !Number.isNaN(expiration.getTime()) &&
+                expiration <= warningDate
+            ) {
+                return "Near Expiry";
+            }
         }
 
         if (quantity <= 0) {
@@ -356,6 +389,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const classes = {
             "Available": "status-available",
             "Low Stock": "status-low-stock",
+            "Near Expiry": "status-near-expiry",
             "Out of Stock": "status-out-of-stock",
             "Expired": "status-expired"
         };
@@ -506,6 +540,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function updateStatistics(supplies) {
         let availableCount = 0;
         let lowStockCount = 0;
+        let nearExpiryCount = 0;
         let outOfStockCount = 0;
         let expiredCount = 0;
         let notificationTotal = 0;
@@ -520,6 +555,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (status === "Low Stock") {
                 lowStockCount++;
+                notificationTotal++;
+            }
+
+            if (status === "Near Expiry") {
+                nearExpiryCount++;
                 notificationTotal++;
             }
 
@@ -542,6 +582,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         lowStockSupplies.textContent =
             String(lowStockCount);
+
+        nearExpirySupplies.textContent =
+            String(nearExpiryCount);
 
         outOfStockSupplies.textContent =
             String(outOfStockCount);

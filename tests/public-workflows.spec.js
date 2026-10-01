@@ -61,6 +61,31 @@ test("medical equipment uses flexible inspection and service fields", async ({ r
     expect(html).not.toContain("Next Maintenance Date");
 });
 
+test("medical supplies clearly identify and notify near-expiry items", async ({ request }) => {
+    const responses = await Promise.all([
+        request.get("/medical-supplies.html"),
+        request.get("/medical-supplies.js"),
+        request.get("/notification-center.js"),
+        request.get("/analytics.js")
+    ]);
+    const [html, supplies, notifications, analytics] = await Promise.all(
+        responses.map(function (response) {
+            expect(response.ok()).toBeTruthy();
+            return response.text();
+        })
+    );
+
+    expect(html).toContain('id="nearExpirySupplies"');
+    expect(html).toContain('<option value="Near Expiry">Near Expiry</option>');
+    expect(supplies).toContain('return "Near Expiry";');
+    expect(supplies).toContain('"Near Expiry": "status-near-expiry"');
+    expect(notifications).toContain('type: "near-expiry"');
+    expect(notifications).toContain('status: "Near Expiry"');
+    expect(notifications).toContain("expirationWarningDays");
+    expect(analytics).toContain("nearExpiryItems");
+    expect(analytics).toContain("daysRemaining");
+});
+
 test("mobility shows a dash when no driver was imported", async ({ request }) => {
     const response = await request.get("/mobility.js");
     const source = await response.text();
@@ -678,6 +703,7 @@ test("notification center shows every unique new inventory item with details", a
         "All statuses",
         "Available",
         "Low stock",
+        "Near Expiry",
         "Out of stock",
         "Expired"
     ]);

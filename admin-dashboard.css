@@ -860,6 +860,11 @@ a {
     background-color: #fff3e0;
 }
 
+.alert-icon.expired {
+    color: #6f2da8;
+    background-color: #f1e7fa;
+}
+
 .alert-icon.information {
     color: var(--blue);
     background-color: #e3f2fd;
@@ -896,6 +901,11 @@ a {
 .warning-text {
     color: var(--orange);
     background-color: #fff3e0;
+}
+
+.expired-text {
+    color: #6f2da8;
+    background-color: #f1e7fa;
 }
 
 .information-text {

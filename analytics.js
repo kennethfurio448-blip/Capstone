@@ -35,6 +35,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const settings = getStoredObject("medtrackSettings");
+        const configuredWarningDays = Number(
+            settings.inventory && settings.inventory.expirationWarningDays
+        );
+        const expirationWarningDays =
+            Number.isFinite(configuredWarningDays) && configuredWarningDays > 0
+                ? Math.floor(configuredWarningDays)
+                : 30;
+        const expirationCutoff = new Date(today);
+        expirationCutoff.setDate(
+            expirationCutoff.getDate() + expirationWarningDays
+        );
 
         const lowStockItems = supplies.filter(function (item) {
             return Number(item.quantity) <= Number(item.lowStockLevel);
@@ -50,6 +62,19 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
             return expirationDate < today;
+        });
+
+        const nearExpiryItems = supplies.filter(function (item) {
+            if (!item.expirationDate) {
+                return false;
+            }
+
+            const expirationDate = new Date(
+                item.expirationDate + "T00:00:00"
+            );
+
+            return expirationDate >= today &&
+                expirationDate <= expirationCutoff;
         });
 
         const overdueItems = borrowing.filter(function (item) {
@@ -69,6 +94,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const totalAlerts =
             lowStockItems.length +
+            nearExpiryItems.length +
             expiredItems.length +
             overdueItems.length +
             statusAlerts.length;
@@ -88,6 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         displayInventoryAlerts(
             lowStockItems,
+            nearExpiryItems,
             expiredItems,
             overdueItems,
             statusAlerts
@@ -577,6 +604,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function displayInventoryAlerts(
         lowStockItems,
+        nearExpiryItems,
         expiredItems,
         overdueItems,
         statusAlerts
@@ -609,10 +637,40 @@ document.addEventListener("DOMContentLoaded", function () {
             `);
         });
 
+        nearExpiryItems.forEach(function (item) {
+            const expiration = new Date(
+                item.expirationDate + "T00:00:00"
+            );
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const daysRemaining = Math.max(
+                0,
+                Math.round((expiration.getTime() - today.getTime()) / 86400000)
+            );
+            alerts.push(`
+                <div class="alert-item">
+                    <div class="alert-icon warning">
+                        <i class="fa-solid fa-calendar-day"></i>
+                    </div>
+
+                    <div>
+                        <strong>Near Expiry</strong>
+                        <p>${escapeHTML(item.name)}</p>
+                    </div>
+
+                    <span class="alert-status warning-text">
+                        ${daysRemaining === 0
+                            ? "Expires today"
+                            : `${daysRemaining} day${daysRemaining === 1 ? "" : "s"} left`}
+                    </span>
+                </div>
+            `);
+        });
+
         expiredItems.forEach(function (item) {
             alerts.push(`
                 <div class="alert-item">
-                    <div class="alert-icon danger">
+                    <div class="alert-icon expired">
                         <i class="fa-solid fa-calendar-xmark"></i>
                     </div>
 
@@ -621,7 +679,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         <p>${escapeHTML(item.name)}</p>
                     </div>
 
-                    <span class="alert-status danger-text">
+                    <span class="alert-status expired-text">
                         Expired
                     </span>
                 </div>

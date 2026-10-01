@@ -401,8 +401,13 @@ body[hidden] {
 }
 
 .notification-expired .notification-item-icon {
-    background: #fde8ec;
-    color: #c71f37;
+    background: #f1e7fa;
+    color: #6f2da8;
+}
+
+.notification-near-expiry .notification-item-icon {
+    background: #fff4dd;
+    color: #b56f00;
 }
 
 .notification-overdue .notification-item-icon {

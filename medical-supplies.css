@@ -424,6 +424,11 @@ a {
     background-color: #e3f2fd;
 }
 
+.stat-card.purple .stat-icon {
+    color: #6f2da8;
+    background-color: #f1e7fa;
+}
+
 
 .inventory-card {
     padding: 24px;
@@ -605,15 +610,20 @@ a {
     background-color: #e8f5e9;
 }
 
-.status-low-stock {
+.status-low-stock,
+.status-near-expiry {
     color: var(--orange);
     background-color: #fff3e0;
 }
 
-.status-out-of-stock,
-.status-expired {
+.status-out-of-stock {
     color: var(--red);
     background-color: #ffebee;
+}
+
+.status-expired {
+    color: #6f2da8;
+    background-color: #f1e7fa;
 }
 
 
