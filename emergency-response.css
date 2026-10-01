@@ -415,7 +415,7 @@ a {
 }
 
 .stat-card small {
-    color: #999999;
+    color: #666666;
     font-size: 11px;
 }
 
@@ -649,6 +649,7 @@ a {
 
 .start-action,
 .complete-action,
+.release-action,
 .edit-button,
 .remove-button {
     width: 34px;
@@ -674,6 +675,16 @@ a {
 .complete-action {
     color: var(--green);
     background-color: #e8f5e9;
+}
+
+.release-action {
+    color: var(--blue);
+    background-color: #e3f2fd;
+}
+
+.release-action:hover {
+    color: var(--white);
+    background-color: var(--blue);
 }
 
 .complete-action:hover {
@@ -725,7 +736,7 @@ a {
 }
 
 .empty-state p {
-    color: #999999;
+    color: #666666;
     font-size: 13px;
 }
 
@@ -1192,6 +1203,63 @@ a {
     justify-content: center;
 }
 
+.release-resources-modal {
+    max-width: 720px;
+}
+
+.release-resources-list {
+    display: grid;
+    gap: 10px;
+}
+
+.release-resource-row {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(145px, 0.55fr) 90px;
+    gap: 12px;
+    align-items: end;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background-color: #fafafa;
+}
+
+.release-resource-name strong,
+.release-resource-name small {
+    display: block;
+}
+
+.release-resource-name strong {
+    font-size: 13px;
+}
+
+.release-resource-name small {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.release-resource-row label {
+    display: block;
+    margin-bottom: 6px;
+    color: #555;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.release-resource-row select,
+.release-resource-row input {
+    width: 100%;
+    height: 40px;
+    padding: 0 9px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: var(--white);
+}
+
+.release-details-grid {
+    margin-top: 16px;
+}
+
 
 @media (max-width: 1200px) {
     .statistics-grid {
@@ -1314,6 +1382,10 @@ a {
 
     .resource-list-item .remove-resource-button {
         grid-column: 1 / -1;
+    }
+
+    .release-resource-row {
+        grid-template-columns: 1fr;
     }
 
     .modal-actions {

@@ -157,6 +157,50 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
+    function getEmergencyUsages(request) {
+        if (Array.isArray(request.inventoryUsages)) {
+            return request.inventoryUsages;
+        }
+        if (request.inventoryUsage && Array.isArray(request.inventoryUsage.items)) {
+            return request.inventoryUsage.items;
+        }
+        return request.inventoryUsage ? [request.inventoryUsage] : [];
+    }
+
+    function formatEmergencyItems(request) {
+        const usages = getEmergencyUsages(request);
+        return usages.length === 0
+            ? "—"
+            : usages.map(function (usage) {
+                return `${usage.itemName || usage.itemId} (${usage.quantity || 1})`;
+            }).join("; ");
+    }
+
+    function formatEmergencyReleaseStatus(request) {
+        const reusable = getEmergencyUsages(request).filter(function (usage) {
+            return ["Medical Equipment", "Mobility Asset"].includes(
+                usage.itemType
+            );
+        });
+        if (reusable.length === 0) return "Not applicable";
+        return reusable.map(function (usage) {
+            return `${usage.itemName || usage.itemId}: ${
+                usage.released ? usage.releaseStatus || "Released" : "Not released"
+            }`;
+        }).join("; ");
+    }
+
+    function formatResponseDuration(request) {
+        if (!request.completedAt || !request.date) return "—";
+        const start = new Date(`${request.date}T${request.time || "00:00"}`);
+        const completed = new Date(request.completedAt);
+        const durationMinutes = Math.round((completed - start) / 60000);
+        if (!Number.isFinite(durationMinutes) || durationMinutes < 0) return "—";
+        const hours = Math.floor(durationMinutes / 60);
+        const minutes = durationMinutes % 60;
+        return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    }
+
     function isWithinDateRange(dateValue) {
         if (!startDate.value && !endDate.value) {
             return true;
@@ -380,7 +424,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                     "Contact Person",
                     "Assigned Team",
                     "Priority",
-                    "Status"
+                    "Status",
+                    "Required Resources",
+                    "Items Used",
+                    "Resource Release Status",
+                    "Completed At",
+                    "Response Duration"
                 ],
                 rows: records.map(function (request) {
                     return [
@@ -392,7 +441,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                         request.contactPerson,
                         request.assignedTeam,
                         request.priority,
-                        request.status
+                        request.status,
+                        request.resources,
+                        formatEmergencyItems(request),
+                        formatEmergencyReleaseStatus(request),
+                        request.completedAt
+                            ? new Date(request.completedAt).toLocaleString("en-US")
+                            : "—",
+                        formatResponseDuration(request)
                     ];
                 }),
                 statusColumn: 8

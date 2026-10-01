@@ -13,6 +13,21 @@ test("test staff account reaches the staff dashboard", async ({ page }) => {
     await page.getByRole("button", { name: /Sign In/i }).click();
     await expect(page).toHaveURL(/staff-dashboard\.html/, { timeout: 20000 });
     await expect(page.locator("#currentUserRole")).toContainText(/staff/i);
+
+    for (const path of [
+        "/medical-supplies.html",
+        "/medical-equipment.html",
+        "/mobility.html",
+        "/status.html",
+        "/emergency-response.html"
+    ]) {
+        await page.goto(path);
+        await expect(page.locator("#currentUserRole")).toContainText(/staff/i);
+        await expect(page).not.toHaveURL(/login\/login\.html/);
+    }
+
+    await page.goto("/manage-users.html");
+    await expect(page).toHaveURL(/staff-dashboard\.html/);
 });
 
 test("test administrator account reaches its MFA gate or dashboard", async ({ page }) => {

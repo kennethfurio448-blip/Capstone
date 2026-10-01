@@ -902,3 +902,205 @@ body.system-dialog-open {
 .stat-card[data-scroll-target]:active {
     transform: translateY(-1px);
 }
+/* Shared offline synchronization status */
+.medtrack-sync-center {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 9500;
+    font-family: inherit;
+}
+
+.medtrack-sync-button {
+    min-height: 40px;
+    padding: 0 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+    font: 700 12px/1 system-ui, sans-serif;
+}
+
+.medtrack-sync-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #16a34a;
+}
+
+.medtrack-sync-button[data-state="offline"] .medtrack-sync-dot,
+.medtrack-sync-button[data-state="pending"] .medtrack-sync-dot {
+    background: #d97706;
+}
+
+.medtrack-sync-button[data-state="syncing"] .medtrack-sync-dot {
+    background: #2563eb;
+    animation: medtrack-sync-pulse 1s infinite alternate;
+}
+
+.medtrack-sync-button[data-state="failed"] .medtrack-sync-dot {
+    background: #dc2626;
+}
+
+.medtrack-sync-count:empty {
+    display: none;
+}
+
+.medtrack-sync-count {
+    min-width: 20px;
+    padding: 3px 6px;
+    color: #fff;
+    background: #b91c1c;
+    border-radius: 999px;
+    text-align: center;
+    font-size: 10px;
+}
+
+.medtrack-sync-panel {
+    position: absolute;
+    right: 0;
+    bottom: 50px;
+    width: min(340px, calc(100vw - 36px));
+    padding: 15px;
+    color: #1e293b;
+    background: #fff;
+    border: 1px solid #dbe3ec;
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
+}
+
+.medtrack-sync-panel[hidden] {
+    display: none;
+}
+
+.medtrack-sync-panel h2 {
+    margin: 0 0 5px;
+    font-size: 15px;
+}
+
+.medtrack-sync-description {
+    margin: 0 0 12px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.medtrack-sync-list {
+    max-height: 180px;
+    margin: 0 0 12px;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.medtrack-sync-list li {
+    padding: 8px 0;
+    border-top: 1px solid #eef2f7;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.medtrack-sync-list strong,
+.medtrack-sync-list span {
+    display: block;
+}
+
+.medtrack-sync-list span {
+    margin-top: 2px;
+    color: #b91c1c;
+}
+
+.medtrack-sync-retry {
+    width: 100%;
+    min-height: 38px;
+    color: #fff;
+    background: #0f766e;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+.medtrack-sync-retry:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@keyframes medtrack-sync-pulse {
+    to { opacity: 0.35; transform: scale(0.8); }
+}
+
+@media (max-width: 600px) {
+    .medtrack-sync-center {
+        right: 12px;
+        bottom: 12px;
+    }
+}
+
+.table-pagination {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.table-pagination[hidden] {
+    display: none;
+}
+
+.table-pagination div {
+    display: flex;
+    gap: 8px;
+}
+
+.table-pagination button {
+    min-height: 34px;
+    padding: 0 12px;
+    color: #334155;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-weight: 700;
+}
+
+.table-pagination button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.audit-load-more-wrap {
+    margin-top: 14px;
+    text-align: center;
+}
+
+.audit-load-more {
+    min-height: 38px;
+    padding: 0 16px;
+    color: #0f172a;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+.audit-load-more:disabled {
+    opacity: 0.5;
+}
+
+@media (max-width: 480px) {
+    .table-pagination {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .table-pagination div,
+    .table-pagination button {
+        width: 100%;
+    }
+}

@@ -194,6 +194,19 @@ const atomicSupplyOfflineMigrationPath = join(
   "migrations",
   "20260930223000_atomic_supply_offline_saves.sql",
 );
+const atomicEmergencyMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20261001100000_atomic_emergency_response_saves.sql",
+);
+const emergencyReleaseMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20261001101000_release_emergency_resources.sql",
+);
+const tablePaginationPath = join(root, "table-pagination.js");
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
 
@@ -246,6 +259,9 @@ for (const [label, path] of [
   ["accessibility and mobile tests", accessibilityTestPath],
   ["authenticated access tests", authenticatedTestPath],
   ["atomic equipment and mobility saves", atomicInventorySaveMigrationPath],
+  ["atomic emergency response saves", atomicEmergencyMigrationPath],
+  ["emergency resource release", emergencyReleaseMigrationPath],
+  ["shared table pagination", tablePaginationPath],
   ["dependency update configuration", dependabotPath],
 ]) {
   if (!existsSync(path)) failures.push(`${label}: required file is missing`);
@@ -598,6 +614,55 @@ try {
   }
 } catch (error) {
   failures.push(`offline supply save: unable to inspect migration (${error.message})`);
+}
+
+try {
+  const atomicEmergencyMigration = readFileSync(
+    atomicEmergencyMigrationPath,
+    "utf8",
+  );
+  const emergencyReleaseMigration = readFileSync(
+    emergencyReleaseMigrationPath,
+    "utf8",
+  );
+  const dataSync = readFileSync(dataSyncPath, "utf8");
+  const pagination = readFileSync(tablePaginationPath, "utf8");
+
+  for (const requiredControl of [
+    "medtrack_save_emergency_response",
+    "for update",
+    "This emergency response was changed by another user",
+    "on conflict (operation_key) do nothing",
+  ]) {
+    if (!atomicEmergencyMigration.includes(requiredControl)) {
+      failures.push(`atomic emergency save: missing ${requiredControl}`);
+    }
+  }
+  for (const requiredControl of [
+    "medtrack_release_emergency_resources",
+    "medtrack_protect_deployed_emergency_resources",
+    "releasedQuantity",
+    "releaseStatus",
+  ]) {
+    if (!emergencyReleaseMigration.includes(requiredControl)) {
+      failures.push(`emergency resource release: missing ${requiredControl}`);
+    }
+  }
+  for (const requiredControl of [
+    "medtrackSyncButton",
+    "Retry Sync",
+    "saveEmergencyResponse",
+    "releaseEmergencyResources",
+  ]) {
+    if (!dataSync.includes(requiredControl)) {
+      failures.push(`data reliability UI: missing ${requiredControl}`);
+    }
+  }
+  if (!pagination.includes("MutationObserver") || !pagination.includes("PAGE_SIZE")) {
+    failures.push("table pagination: dynamic table support is incomplete");
+  }
+} catch (error) {
+  failures.push(`emergency reliability: unable to inspect controls (${error.message})`);
 }
 
 try {

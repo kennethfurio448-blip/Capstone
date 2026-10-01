@@ -26,7 +26,7 @@ jobs:
       - run: npm test
 
   authenticated-smoke:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     env:
       MEDTRACK_E2E_URL: https://www.medtrackmanagement.com

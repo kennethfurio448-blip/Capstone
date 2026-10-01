@@ -16,6 +16,8 @@ MedTrack is a role-based PDRRMO inventory system for medical supplies, medical e
 
 The application requires its configured Supabase project for online authentication and synchronized data. Offline mode uses the service-worker application shell plus encrypted/session-scoped browser storage and queues supported changes until connectivity returns.
 
+Emergency responses save the response and all inventory deductions in one idempotent database transaction. Reusable equipment and mobility assets must be released as Returned, For Repair, Damaged, or Missing before a response with deployed resources can be deleted. The shared synchronization control shows queued changes, failures, and a manual retry action.
+
 ## Quality checks
 
 - `npm run check` validates JavaScript syntax, local assets, content-security policies, deployment headers, authentication controls, and critical project wiring.
@@ -26,7 +28,7 @@ The application requires its configured Supabase project for online authenticati
 - `npm run test:backup-restore` performs a non-destructive restore rehearsal against an encrypted file. It verifies decryption, unique record IDs, collection reconstruction, and JSON round-trip integrity without writing to any database.
 - `npm run verify:deployment` checks production entry points, security headers, Supabase authentication health, and required Edge Functions. Set `MEDTRACK_URL` and `MEDTRACK_SUPABASE_URL` to verify another environment.
 
-The browser suite includes public workflows, responsive phone layouts, WCAG accessibility checks, notification behavior, and optional Admin/Staff authentication smoke tests. Authenticated tests remain skipped until dedicated test credentials are configured as GitHub secrets; never use personal or production operator credentials.
+The browser suite includes public workflows, internal responsive phone layouts, WCAG accessibility checks, notification behavior, and optional Admin/Staff authentication smoke tests. Authenticated tests run on the scheduled quality workflow when dedicated test credentials are configured as GitHub secrets; never use personal or production operator credentials.
 
 GitHub Actions runs the full suite on pushes and pull requests and verifies production after successful pushes to `master`.
 

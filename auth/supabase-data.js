@@ -21,6 +21,8 @@
     let refreshInProgress = null;
     let syncInProgress = null;
     let logoutInProgress = false;
+    let currentSyncState = navigator.onLine ? "online" : "offline";
+    let currentPendingCount = 0;
 
     const uploadTimers = new Map();
     const collectionSnapshots = new Map();
@@ -63,6 +65,126 @@
         const normalized = text(value);
         return normalized || null;
     }
+
+    function syncStateText(state, pending) {
+        if (state === "syncing") return "Syncing changes";
+        if (state === "failed") return "Sync needs attention";
+        if (state === "offline") {
+            return pending > 0 ? "Offline · changes saved" : "Offline mode";
+        }
+        if (state === "pending") return "Changes waiting to sync";
+        return "All changes synced";
+    }
+
+    async function renderSyncOperationList() {
+        const list = document.getElementById("medtrackSyncList");
+        const retry = document.getElementById("medtrackSyncRetry");
+        if (!list || !retry || !offlineStore) return;
+
+        const userId = await getSessionUserId();
+        const operations = userId
+            ? await offlineStore.listOperations(userId)
+            : [];
+        list.innerHTML = "";
+
+        if (operations.length === 0) {
+            const item = document.createElement("li");
+            item.textContent = navigator.onLine
+                ? "No pending changes."
+                : "New changes will be stored securely on this device.";
+            list.appendChild(item);
+        } else {
+            operations.forEach(function (operation) {
+                const item = document.createElement("li");
+                const title = document.createElement("strong");
+                title.textContent = operation.kind === "rpc"
+                    ? text(operation.functionName, "Database change")
+                        .replace(/^medtrack_/, "")
+                        .replaceAll("_", " ")
+                    : "Saved record changes";
+                item.appendChild(title);
+                if (operation.lastError) {
+                    const error = document.createElement("span");
+                    error.textContent = operation.lastError;
+                    item.appendChild(error);
+                }
+                list.appendChild(item);
+            });
+        }
+
+        retry.disabled = !navigator.onLine || operations.length === 0;
+    }
+
+    function updateSyncCenter(state, pending = currentPendingCount) {
+        currentSyncState = state;
+        currentPendingCount = Number(pending) || 0;
+        const button = document.getElementById("medtrackSyncButton");
+        const label = document.getElementById("medtrackSyncLabel");
+        const count = document.getElementById("medtrackSyncCount");
+        const description = document.getElementById(
+            "medtrackSyncDescription"
+        );
+        if (!button || !label || !count || !description) return;
+
+        button.dataset.state = state;
+        label.textContent = syncStateText(state, currentPendingCount);
+        count.textContent = currentPendingCount > 0
+            ? String(currentPendingCount)
+            : "";
+        description.textContent = state === "failed"
+            ? "One or more changes could not sync. Review the error and retry."
+            : state === "offline"
+                ? "You can keep working. Pending changes will sync after reconnection."
+                : state === "pending"
+                    ? "Changes are safely queued and waiting for the database."
+                    : state === "syncing"
+                        ? "Please keep this page open while changes are synchronized."
+                        : "This device and the online database are up to date.";
+        void renderSyncOperationList();
+    }
+
+    function installSyncCenter() {
+        if (document.getElementById("medtrackSyncCenter")) return;
+        const center = document.createElement("aside");
+        center.id = "medtrackSyncCenter";
+        center.className = "medtrack-sync-center";
+        center.innerHTML = `
+            <button type="button" class="medtrack-sync-button" id="medtrackSyncButton" data-state="${currentSyncState}" aria-expanded="false" aria-controls="medtrackSyncPanel">
+                <span class="medtrack-sync-dot" aria-hidden="true"></span>
+                <span id="medtrackSyncLabel">${syncStateText(currentSyncState, 0)}</span>
+                <span class="medtrack-sync-count" id="medtrackSyncCount"></span>
+            </button>
+            <section class="medtrack-sync-panel" id="medtrackSyncPanel" aria-label="Synchronization status" hidden>
+                <h2>Data synchronization</h2>
+                <p class="medtrack-sync-description" id="medtrackSyncDescription"></p>
+                <ul class="medtrack-sync-list" id="medtrackSyncList"></ul>
+                <button type="button" class="medtrack-sync-retry" id="medtrackSyncRetry">Retry Sync</button>
+            </section>
+        `;
+        document.body.appendChild(center);
+
+        const button = document.getElementById("medtrackSyncButton");
+        const panel = document.getElementById("medtrackSyncPanel");
+        const retry = document.getElementById("medtrackSyncRetry");
+        button.addEventListener("click", function () {
+            panel.hidden = !panel.hidden;
+            button.setAttribute("aria-expanded", String(!panel.hidden));
+            if (!panel.hidden) void renderSyncOperationList();
+        });
+        retry.addEventListener("click", async function () {
+            retry.disabled = true;
+            updateSyncCenter("syncing");
+            await syncPending();
+            void renderSyncOperationList();
+        });
+
+        updateSyncCenter(currentSyncState, currentPendingCount);
+    }
+
+    window.addEventListener("medtrack:sync-state", function (event) {
+        const detail = event.detail || {};
+        updateSyncCenter(detail.state || "online", detail.pending || 0);
+    });
 
     const collections = {
         medtrackMedicalSupplies: {
@@ -629,6 +751,8 @@
             "Refresh the page and try again. If the problem continues, " +
             "contact an Administrator.";
 
+        updateSyncCenter("failed", Math.max(currentPendingCount, 1));
+
         window.dispatchEvent(
             new CustomEvent("medtrack:data-error", {
                 detail: {
@@ -873,6 +997,8 @@
                     "medtrack_save_medical_supply",
                     "medtrack_save_medical_equipment",
                     "medtrack_save_mobility_asset",
+                    "medtrack_save_emergency_response",
+                    "medtrack_release_emergency_resources",
                     "medtrack_consume_medical_supply",
                     "medtrack_update_borrow_status"
                 ].includes(functionName) &&
@@ -1137,6 +1263,189 @@
                         }
                         return record;
                     });
+                }
+            }
+        );
+    }
+
+    function emergencyUsages(record) {
+        if (Array.isArray(record.inventoryUsages)) {
+            return record.inventoryUsages.map(function (usage) {
+                return { ...usage };
+            });
+        }
+        if (record.inventoryUsage && Array.isArray(record.inventoryUsage.items)) {
+            return record.inventoryUsage.items.map(function (usage) {
+                return { ...usage };
+            });
+        }
+        return record.inventoryUsage
+            ? [{ ...record.inventoryUsage }]
+            : [];
+    }
+
+    function optimisticallySaveEmergencyResponse(record) {
+        const savedRecord = { ...record };
+        const usages = emergencyUsages(record);
+        const shouldDeduct =
+            ["In Progress", "Completed"].includes(record.status) &&
+            !record.inventoryDeducted;
+
+        if (shouldDeduct) {
+            usages.forEach(function (usage) {
+                const storageKey = {
+                    "Medical Supply": "medtrackMedicalSupplies",
+                    "Medical Equipment": "medtrackMedicalEquipment",
+                    "Mobility Asset": "medtrackMobilityAssets"
+                }[usage.itemType];
+                if (!storageKey) return;
+
+                updateLocalRecord(storageKey, usage.itemId, function (item) {
+                    if (usage.itemType === "Mobility Asset") {
+                        item.status = "Deployed";
+                    } else {
+                        item.quantity = Math.max(
+                            0,
+                            number(item.quantity) - number(usage.quantity, 1)
+                        );
+                        if (
+                            usage.itemType === "Medical Equipment" &&
+                            item.quantity === 0
+                        ) {
+                            item.status = "Unavailable";
+                        }
+                    }
+                    item.pendingSync = true;
+                    return item;
+                });
+
+                usage.deducted = true;
+                usage.deductedAt = new Date().toISOString();
+            });
+            savedRecord.inventoryDeducted = usages.length > 0;
+            savedRecord.inventoryDeductedAt = usages.length > 0
+                ? new Date().toISOString()
+                : "";
+        }
+
+        savedRecord.inventoryUsages = usages;
+        savedRecord.inventoryUsage = usages[0] || null;
+        savedRecord.pendingSync = true;
+
+        const requests = readLocalCollection("medtrackEmergencyRequests");
+        const index = requests.findIndex(function (item) {
+            return text(item.id) === text(savedRecord.id);
+        });
+        if (index >= 0) requests[index] = savedRecord;
+        else requests.push(savedRecord);
+        writeLocalCollection("medtrackEmergencyRequests", requests, false);
+        window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+    }
+
+    async function saveEmergencyResponse(details) {
+        const operationKey = details.operationKey ||
+            createOperationId("EMERGENCY-SAVE");
+        const request = { ...details.request };
+
+        return runInventoryOperation(
+            "medtrack_save_emergency_response",
+            {
+                p_operation_key: operationKey,
+                p_request: request,
+                p_expected_updated_at:
+                    request.serverUpdatedAt || null
+            },
+            [
+                "medtrackEmergencyRequests",
+                "medtrackMedicalSupplies",
+                "medtrackMedicalEquipment",
+                "medtrackMobilityAssets"
+            ],
+            {
+                queueId: `rpc:emergency-save:${text(request.id)}`,
+                optimistic: function () {
+                    optimisticallySaveEmergencyResponse(request);
+                }
+            }
+        );
+    }
+
+    function optimisticallyReleaseEmergencyResources(details) {
+        const releases = Array.isArray(details.releases)
+            ? details.releases
+            : [];
+        const requests = readLocalCollection("medtrackEmergencyRequests");
+        const requestIndex = requests.findIndex(function (request) {
+            return text(request.id) === text(details.requestId);
+        });
+        if (requestIndex < 0) return;
+
+        const request = { ...requests[requestIndex] };
+        const usages = emergencyUsages(request);
+        releases.forEach(function (release) {
+            const usage = usages.find(function (item) {
+                return item.itemType === release.itemType &&
+                    text(item.itemId) === text(release.itemId);
+            });
+            if (!usage || usage.released) return;
+
+            const storageKey = release.itemType === "Medical Equipment"
+                ? "medtrackMedicalEquipment"
+                : "medtrackMobilityAssets";
+            updateLocalRecord(storageKey, release.itemId, function (item) {
+                if (release.itemType === "Medical Equipment") {
+                    item.quantity = number(item.quantity) +
+                        (release.disposition === "Missing"
+                            ? 0
+                            : number(release.quantity, usage.quantity));
+                }
+                item.status = release.disposition === "Returned"
+                    ? "Available"
+                    : release.disposition;
+                if (release.disposition === "Damaged") {
+                    item.condition = "Damaged";
+                }
+                item.pendingSync = true;
+                return item;
+            });
+
+            usage.released = true;
+            usage.releaseStatus = release.disposition;
+            usage.releasedQuantity = release.disposition === "Missing"
+                ? 0
+                : number(release.quantity, usage.quantity);
+            usage.releasedAt = new Date().toISOString();
+            usage.releasedBy = release.releasedBy || "";
+            usage.releaseRemarks = release.remarks || "";
+        });
+
+        request.inventoryUsages = usages;
+        request.inventoryUsage = usages[0] || null;
+        request.pendingSync = true;
+        requests[requestIndex] = request;
+        writeLocalCollection("medtrackEmergencyRequests", requests, false);
+        window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+    }
+
+    async function releaseEmergencyResources(details) {
+        const operationKey = details.operationKey ||
+            createOperationId("EMERGENCY-RELEASE");
+        return runInventoryOperation(
+            "medtrack_release_emergency_resources",
+            {
+                p_operation_key: operationKey,
+                p_request_id: details.requestId,
+                p_releases: details.releases
+            },
+            [
+                "medtrackEmergencyRequests",
+                "medtrackMedicalEquipment",
+                "medtrackMobilityAssets"
+            ],
+            {
+                queueId: `rpc:emergency-release:${text(details.requestId)}`,
+                optimistic: function () {
+                    optimisticallyReleaseEmergencyResources(details);
                 }
             }
         );
@@ -1582,6 +1891,7 @@
         }
     }
 
+    installSyncCenter();
     const ready = refresh();
 
     window.medtrackData = {
@@ -1592,6 +1902,8 @@
         returnBorrowedItem: returnBorrowedItem,
         updateBorrowStatus: updateBorrowStatus,
         useInventoryItem: useInventoryItem,
+        saveEmergencyResponse: saveEmergencyResponse,
+        releaseEmergencyResources: releaseEmergencyResources,
         deleteInventoryItem: deleteInventoryItem,
         allocateInventoryId: allocateInventoryId,
         saveMedicalSupply: saveMedicalSupply,
@@ -1671,6 +1983,15 @@
             if (navigator.onLine) syncPending();
             else refresh();
         }
+    });
+
+    window.addEventListener("online", function () {
+        updateSyncCenter("syncing", currentPendingCount);
+        void syncPending();
+    });
+
+    window.addEventListener("offline", function () {
+        updateSyncCenter("offline", currentPendingCount);
     });
 
     document.addEventListener(

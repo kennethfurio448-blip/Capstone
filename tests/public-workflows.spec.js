@@ -154,6 +154,35 @@ test("emergency responses support multiple inventory items", async ({ request })
     expect(script).toContain("request.inventoryUsages = usages;");
     expect(dataAdapter).toContain("items: inventoryUsages");
     expect(dataAdapter).toContain("inventoryUsages: inventoryUsages");
+    expect(dataAdapter).toContain("medtrack_save_emergency_response");
+    expect(dataAdapter).toContain("medtrack_release_emergency_resources");
+});
+
+test("system exposes sync status, reusable-resource release, and pagination", async ({ request }) => {
+    const responses = await Promise.all([
+        request.get("/auth/supabase-data.js"),
+        request.get("/emergency-response.html"),
+        request.get("/emergency-response.js"),
+        request.get("/table-pagination.js"),
+        request.get("/reports.js"),
+        request.get("/audit-logs.js")
+    ]);
+    const [data, html, emergency, pagination, reports, audit] =
+        await Promise.all(responses.map(function (response) {
+            expect(response.ok()).toBeTruthy();
+            return response.text();
+        }));
+
+    expect(data).toContain("medtrackSyncButton");
+    expect(data).toContain("Retry Sync");
+    expect(html).toContain('id="releaseResourcesModal"');
+    expect(emergency).toContain("getUnreleasedReusableResources");
+    expect(emergency).toContain("releaseEmergencyResources");
+    expect(pagination).toContain("const PAGE_SIZE = 25;");
+    expect(reports).toContain("Resource Release Status");
+    expect(reports).toContain("Response Duration");
+    expect(audit).toContain("AUDIT_PAGE_SIZE = 250");
+    expect(audit).toContain(".range(auditOffset");
 });
 
 test("emergency Add Item moves selections into the Items List", async ({ page }) => {
@@ -190,8 +219,16 @@ test("emergency Add Item moves selections into the Items List", async ({ page })
         return route.fulfill({
             ...emptyScript,
             body: `
+                window.atomicEmergencySaves = [];
                 window.medtrackData = {
-                    refresh: async function () {}
+                    refresh: async function () {},
+                    saveEmergencyResponse: async function (details) {
+                        window.atomicEmergencySaves.push(details);
+                        localStorage.setItem(
+                            "medtrackEmergencyRequests",
+                            JSON.stringify([details.request])
+                        );
+                    }
                 };
             `
         });
@@ -251,6 +288,28 @@ test("emergency Add Item moves selections into the Items List", async ({ page })
     await expect(page.locator(".resource-list-item")).toContainText(
         "Pulse Oximeter"
     );
+
+    await page.locator("#emergencyType").selectOption("Medical Emergency");
+    await page.locator("#requestPriority").selectOption("High");
+    await page.locator("#requestLocation").fill("Barangay Central");
+    await page.locator("#contactPerson").fill("Juan Dela Cruz");
+    await page.locator("#contactNumber").fill("09123456789");
+    await page.locator("#assignedTeam").fill("Response Team A");
+    await page.locator("#requestStatus").selectOption("In Progress");
+    await page.locator("#requestDescription").fill("Medical response test");
+    await page.locator("#requestForm button[type='submit']").click();
+
+    await expect.poll(async function () {
+        return page.evaluate(function () {
+            return window.atomicEmergencySaves.length;
+        });
+    }).toBe(1);
+    const atomicRequest = await page.evaluate(function () {
+        return window.atomicEmergencySaves[0].request;
+    });
+    expect(atomicRequest.status).toBe("In Progress");
+    expect(atomicRequest.inventoryUsages).toHaveLength(1);
+    expect(atomicRequest.inventoryUsages[0].itemId).toBe("EQP-TEST-001");
 });
 
 test("inventory creation uses database-issued IDs and atomic saves", async ({ request }) => {

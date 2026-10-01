@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v56-emergency-items-list";
+const CACHE_NAME = "medtrack-shell-v57-reliability-upgrade";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -8,6 +8,7 @@ const APP_SHELL = [
     "/app-shell.css",
     "/brand-theme.css",
     "/card-navigation.js",
+    "/table-pagination.js",
     "/notification-center.js",
     "/assets/pdrrmo-logo.png",
     "/assets/pdrrmo-logo-transparent.png",

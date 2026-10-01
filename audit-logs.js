@@ -19,7 +19,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const dateFilter = document.getElementById("dateFilter");
     const refreshLogs = document.getElementById("refreshLogs");
     const exportLogs = document.getElementById("exportLogs");
+    const loadMoreLogs = document.getElementById("loadMoreLogs");
     const CSV_FORMULA_PATTERN = /^[\t\r\n ]*[=+\-@]/;
+    const AUDIT_PAGE_SIZE = 250;
 
     const currentUser = await window.medtrackAuth.requireRoles(["admin"]);
 
@@ -32,6 +34,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let auditLogs = [];
     let loadingError = "";
+    let auditOffset = 0;
+    let hasMoreAuditLogs = true;
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -90,10 +94,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    async function loadAuditLogs() {
+    async function loadAuditLogs(reset = true) {
         refreshLogs.disabled = true;
         refreshLogs.setAttribute("aria-busy", "true");
+        loadMoreLogs.disabled = true;
         loadingError = "";
+
+        if (reset) {
+            auditOffset = 0;
+            auditLogs = [];
+        }
 
         const result = await client
             .from("audit_events")
@@ -101,19 +111,25 @@ document.addEventListener("DOMContentLoaded", async function () {
                 "id, occurred_at, actor_id, actor_name, actor_role, action, module, details"
             )
             .order("occurred_at", { ascending: false })
-            .limit(5000);
+            .range(auditOffset, auditOffset + AUDIT_PAGE_SIZE - 1);
 
         if (result.error) {
             console.error("Unable to load audit events:", result.error);
-            auditLogs = [];
+            if (reset) auditLogs = [];
             loadingError =
                 "Audit logs could not be loaded. Confirm that the security migration has been deployed.";
+            hasMoreAuditLogs = false;
         } else {
-            auditLogs = (result.data || []).map(normalizeAuditEvent);
+            const records = (result.data || []).map(normalizeAuditEvent);
+            auditLogs = reset ? records : auditLogs.concat(records);
+            auditOffset += records.length;
+            hasMoreAuditLogs = records.length === AUDIT_PAGE_SIZE;
         }
 
         refreshLogs.disabled = false;
         refreshLogs.removeAttribute("aria-busy");
+        loadMoreLogs.disabled = !hasMoreAuditLogs;
+        loadMoreLogs.hidden = !hasMoreAuditLogs;
         renderLogs();
     }
 
@@ -214,7 +230,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     actionFilter.addEventListener("change", renderLogs);
     moduleFilter.addEventListener("change", renderLogs);
     dateFilter.addEventListener("change", renderLogs);
-    refreshLogs.addEventListener("click", loadAuditLogs);
+    refreshLogs.addEventListener("click", function () {
+        void loadAuditLogs(true);
+    });
+    loadMoreLogs.addEventListener("click", function () {
+        void loadAuditLogs(false);
+    });
 
     exportLogs.addEventListener("click", function () {
         const logs = getFilteredLogs();

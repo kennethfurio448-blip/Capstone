@@ -262,12 +262,13 @@
                     <input
                         type="search"
                         id="requestSearch"
+                        aria-label="Search emergency requests"
                         placeholder="Search request or location..."
                     >
 
                 </div>
 
-                <select id="emergencyTypeFilter">
+                <select id="emergencyTypeFilter" aria-label="Filter by emergency type">
                     <option value="all">
                         All Emergency Types
                     </option>
@@ -297,7 +298,7 @@
                     </option>
                 </select>
 
-                <select id="priorityFilter">
+                <select id="priorityFilter" aria-label="Filter by priority">
                     <option value="all">All Priority</option>
                     <option value="Critical">Critical</option>
                     <option value="High">High</option>
@@ -305,7 +306,7 @@
                     <option value="Low">Low</option>
                 </select>
 
-                <select id="statusFilter">
+                <select id="statusFilter" aria-label="Filter by status">
                     <option value="all">All Status</option>
                     <option value="Pending">Pending</option>
                     <option value="In Progress">
@@ -321,7 +322,7 @@
 
             </div>
 
-            <div class="table-wrapper">
+            <div class="table-wrapper" tabindex="0" aria-label="Emergency response records">
 
                 <table class="response-table">
 
@@ -754,6 +755,49 @@
 
 </div>
 
+<div class="modal-overlay" id="releaseResourcesModal">
+
+    <section class="modal release-resources-modal">
+
+        <div class="modal-header">
+            <div>
+                <h2>Release Emergency Resources</h2>
+                <p>Record the condition of reusable equipment and mobility assets.</p>
+            </div>
+
+            <button type="button" class="close-button" id="closeReleaseResources" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div id="releaseResourcesList" class="release-resources-list"></div>
+
+        <div class="form-grid release-details-grid">
+            <div class="input-group">
+                <label for="releasedBy">Released / checked by</label>
+                <input type="text" id="releasedBy" required>
+            </div>
+
+            <div class="input-group">
+                <label for="releaseRemarks">Remarks</label>
+                <input type="text" id="releaseRemarks" placeholder="Optional release notes">
+            </div>
+        </div>
+
+        <p class="form-message" id="releaseResourcesMessage"></p>
+
+        <div class="modal-actions">
+            <button type="button" class="cancel-button" id="cancelReleaseResources">Cancel</button>
+            <button type="button" class="complete-button" id="confirmReleaseResources">
+                <i class="fa-solid fa-rotate-left"></i>
+                Release Resources
+            </button>
+        </div>
+
+    </section>
+
+</div>
+
 <div class="modal-overlay" id="deleteModal">
 
     <section class="modal action-modal">
@@ -796,11 +840,12 @@
 <script src="auth/supabase-client.js"></script>
 <script src="auth/offline-store.js"></script>
 <script src="auth/supabase-auth.js"></script>
-<script src="auth/supabase-data.js?v=20261001-emergency-multiple-items"></script>
+<script src="auth/supabase-data.js?v=20261001-reliability-upgrade"></script>
 <script src="pwa.js"></script>
 <script src="notification-center.js"></script>
 <script src="card-navigation.js"></script>
-<script src="emergency-response.js?v=20261001-emergency-items-list"></script>
+<script src="table-pagination.js"></script>
+<script src="emergency-response.js?v=20261001-reliability-upgrade"></script>
 
 </body>
 </html>

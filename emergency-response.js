@@ -144,6 +144,30 @@ document.addEventListener("DOMContentLoaded", async function () {
     const confirmComplete =
         document.getElementById("confirmComplete");
 
+    const releaseResourcesModal =
+        document.getElementById("releaseResourcesModal");
+
+    const closeReleaseResources =
+        document.getElementById("closeReleaseResources");
+
+    const cancelReleaseResources =
+        document.getElementById("cancelReleaseResources");
+
+    const confirmReleaseResources =
+        document.getElementById("confirmReleaseResources");
+
+    const releaseResourcesList =
+        document.getElementById("releaseResourcesList");
+
+    const releasedBy =
+        document.getElementById("releasedBy");
+
+    const releaseRemarks =
+        document.getElementById("releaseRemarks");
+
+    const releaseResourcesMessage =
+        document.getElementById("releaseResourcesMessage");
+
     const deleteModal =
         document.getElementById("deleteModal");
 
@@ -155,6 +179,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let requestToComplete = null;
     let requestToDelete = null;
+    let requestToRelease = null;
     let formInventoryUsages = [];
     let inventoryItemsLocked = false;
 
@@ -482,35 +507,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    function generateRequestId(requests) {
-        let highestNumber = 0;
-
-        requests.forEach(function (request) {
-            const requestId =
-                normalizeId(request.id);
-
-            const match =
-                requestId.match(/^RES-(\d+)$/i);
-
-            if (!match) {
-                return;
-            }
-
-            const number = Number(match[1]);
-
-            if (
-                Number.isInteger(number) &&
-                number > highestNumber
-            ) {
-                highestNumber = number;
-            }
-        });
-
-        return (
-            "RES-" +
-            String(highestNumber + 1)
-                .padStart(3, "0")
-        );
+    function generateRequestId() {
+        const datePart = getCurrentDate().replaceAll("-", "");
+        const randomPart = window.crypto && window.crypto.randomUUID
+            ? window.crypto.randomUUID().replaceAll("-", "").slice(0, 10)
+            : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`
+                .slice(0, 10);
+        return `RES-${datePart}-${randomPart.toUpperCase()}`;
     }
 
 
@@ -598,6 +601,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                         ""
                 };
             });
+    }
+
+
+    function getUnreleasedReusableResources(request) {
+        return getRequestInventoryUsages(request).filter(function (usage) {
+            return (
+                ["Medical Equipment", "Mobility Asset"].includes(
+                    usage.itemType
+                ) &&
+                usage.deducted === true &&
+                usage.released !== true
+            );
+        });
     }
 
 
@@ -1020,6 +1036,58 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
+    function createEmergencyOperationKey(requestId, action) {
+        const uniquePart = window.crypto && window.crypto.randomUUID
+            ? window.crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        return `${requestId}:${action}:${uniquePart}`;
+    }
+
+
+    function supportsAtomicEmergencySave() {
+        return Boolean(
+            window.medtrackData &&
+            typeof window.medtrackData.saveEmergencyResponse === "function"
+        );
+    }
+
+
+    async function persistEmergencyRequest(request, requests) {
+        if (supportsAtomicEmergencySave()) {
+            try {
+                await window.medtrackData.saveEmergencyResponse({
+                    operationKey: createEmergencyOperationKey(
+                        request.id,
+                        "save"
+                    ),
+                    request: request
+                });
+                return { ok: true };
+            } catch (error) {
+                return {
+                    ok: false,
+                    message: error.message ||
+                        "Unable to save the emergency response."
+                };
+            }
+        }
+
+        if (["In Progress", "Completed"].includes(request.status)) {
+            const deductionResult = await deductRequestInventory(request);
+            if (!deductionResult.ok) return deductionResult;
+        }
+
+        const index = requests.findIndex(function (item) {
+            return normalizeId(item.id) === normalizeId(request.id);
+        });
+        if (index >= 0) requests[index] = request;
+        else requests.push(request);
+        return saveRequests(requests)
+            ? { ok: true }
+            : { ok: false, message: "Unable to save the emergency response." };
+    }
+
+
     function renderRequests() {
         const requests = getRequests();
 
@@ -1194,6 +1262,23 @@ document.addEventListener("DOMContentLoaded", async function () {
                                             title="Complete response"
                                         >
                                             <i class="fa-solid fa-check"></i>
+                                        </button>
+                                    `
+                                    : ""
+                            }
+
+                            ${
+                                ["Completed", "Cancelled"].includes(request.status) &&
+                                getUnreleasedReusableResources(request).length > 0
+                                    ? `
+                                        <button
+                                            type="button"
+                                            class="release-action"
+                                            data-action="release"
+                                            data-id="${escapeHTML(request.id)}"
+                                            title="Release reusable resources"
+                                        >
+                                            <i class="fa-solid fa-rotate-left"></i>
                                         </button>
                                     `
                                     : ""
@@ -1398,6 +1483,65 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
+    function openReleaseResourcesModal(requestId) {
+        const request = getRequests().find(function (item) {
+            return normalizeId(item.id) === normalizeId(requestId);
+        });
+        if (!request) return;
+
+        const resources = getUnreleasedReusableResources(request);
+        if (resources.length === 0) {
+            window.medtrackDialog.alert(
+                "This response has no reusable resources waiting for release."
+            );
+            return;
+        }
+
+        requestToRelease = request.id;
+        releaseResourcesList.innerHTML = "";
+        releaseResourcesMessage.textContent = "";
+        releasedBy.value = displayName;
+        releaseRemarks.value = "";
+
+        resources.forEach(function (usage) {
+            const row = document.createElement("div");
+            row.className = "release-resource-row";
+            row.dataset.itemType = usage.itemType;
+            row.dataset.itemId = usage.itemId;
+            row.innerHTML = `
+                <div class="release-resource-name">
+                    <strong>${escapeHTML(usage.itemName)}</strong>
+                    <small>${escapeHTML(usage.itemType)} · Used quantity: ${escapeHTML(usage.quantity)}</small>
+                </div>
+                <div>
+                    <label>Condition / status</label>
+                    <select class="release-disposition">
+                        <option value="Returned">Returned / Available</option>
+                        <option value="For Repair">For Repair</option>
+                        <option value="Damaged">Damaged</option>
+                        <option value="Missing">Missing</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Quantity</label>
+                    <input class="release-quantity" type="number" min="1" max="${escapeHTML(usage.quantity)}" value="${escapeHTML(usage.quantity)}" readonly>
+                </div>
+            `;
+            releaseResourcesList.appendChild(row);
+        });
+
+        releaseResourcesModal.classList.add("show");
+    }
+
+
+    function closeReleaseResourcesModal() {
+        requestToRelease = null;
+        releaseResourcesModal.classList.remove("show");
+        releaseResourcesList.innerHTML = "";
+        releaseResourcesMessage.textContent = "";
+    }
+
+
     requestForm.addEventListener(
         "submit",
         async function (event) {
@@ -1483,6 +1627,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 normalizeId(
                     editingRequestId.value
                 );
+            let requestToSave;
 
             if (editId) {
                 const requestIndex =
@@ -1554,27 +1699,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             : ""
                 };
 
-                if (
-                    statusValue ===
-                        "In Progress" ||
-                    statusValue ===
-                        "Completed"
-                ) {
-                    const deductionResult =
-                        await deductRequestInventory(
-                            updatedRequest
-                        );
-
-                    if (!deductionResult.ok) {
-                        formMessage.textContent =
-                            deductionResult.message;
-
-                        return;
-                    }
-                }
-
-                requests[requestIndex] =
-                    updatedRequest;
+                requestToSave = updatedRequest;
             } else {
                 const newRequest = {
                     id:
@@ -1610,29 +1735,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                             : ""
                 };
 
-                if (
-                    statusValue ===
-                        "In Progress" ||
-                    statusValue ===
-                        "Completed"
-                ) {
-                    const deductionResult =
-                        await deductRequestInventory(
-                            newRequest
-                        );
-
-                    if (!deductionResult.ok) {
-                        formMessage.textContent =
-                            deductionResult.message;
-
-                        return;
-                    }
-                }
-
-                requests.push(newRequest);
+                requestToSave = newRequest;
             }
 
-            saveRequests(requests);
+            const saveResult = await persistEmergencyRequest(
+                requestToSave,
+                requests
+            );
+            if (!saveResult.ok) {
+                formMessage.textContent = saveResult.message;
+                return;
+            }
+
             closeRequestModal();
             renderRequests();
         }
@@ -1677,26 +1791,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                     );
 
                 if (requestIndex !== -1) {
-                    const deductionResult =
-                        await deductRequestInventory(
-                            requests[
-                                requestIndex
-                            ]
-                        );
+                    const request = {
+                        ...requests[requestIndex],
+                        status: "In Progress"
+                    };
+                    const saveResult = await persistEmergencyRequest(
+                        request,
+                        requests
+                    );
 
-                    if (!deductionResult.ok) {
+                    if (!saveResult.ok) {
                         window.medtrackDialog.alert(
-                            deductionResult.message
+                            saveResult.message
                         );
 
                         return;
                     }
-
-                    requests[
-                        requestIndex
-                    ].status = "In Progress";
-
-                    saveRequests(requests);
                     renderRequests();
                 }
 
@@ -1719,8 +1829,26 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
+            if (action === "release") {
+                openReleaseResourcesModal(requestId);
+                return;
+            }
+
             if (action === "delete") {
                 if (!canDeleteEmergency) {
+                    return;
+                }
+
+                const request = getRequests().find(function (item) {
+                    return normalizeId(item.id) === requestId;
+                });
+                if (
+                    request &&
+                    getUnreleasedReusableResources(request).length > 0
+                ) {
+                    window.medtrackDialog.alert(
+                        "Release or record the condition of all reusable resources before deleting this response."
+                    );
                     return;
                 }
 
@@ -1768,25 +1896,20 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            const deductionResult =
-                await deductRequestInventory(
-                    requests[requestIndex]
-                );
+            const request = {
+                ...requests[requestIndex],
+                status: "Completed",
+                completedAt: new Date().toISOString()
+            };
+            const saveResult = await persistEmergencyRequest(
+                request,
+                requests
+            );
 
-            if (!deductionResult.ok) {
-                window.medtrackDialog.alert(deductionResult.message);
+            if (!saveResult.ok) {
+                window.medtrackDialog.alert(saveResult.message);
                 return;
             }
-
-            requests[requestIndex].status =
-                "Completed";
-
-            requests[
-                requestIndex
-            ].completedAt =
-                new Date().toISOString();
-
-            saveRequests(requests);
 
             requestToComplete = null;
 
@@ -1807,6 +1930,74 @@ document.addEventListener("DOMContentLoaded", async function () {
                 "show"
             );
         }
+    );
+
+
+    confirmReleaseResources.addEventListener(
+        "click",
+        async function () {
+            if (!requestToRelease) return;
+            if (!releasedBy.value.trim()) {
+                releaseResourcesMessage.textContent =
+                    "Enter the person who checked the returned resources.";
+                return;
+            }
+            if (
+                !window.medtrackData ||
+                typeof window.medtrackData.releaseEmergencyResources !== "function"
+            ) {
+                releaseResourcesMessage.textContent =
+                    "Resource release is unavailable until the database update is installed.";
+                return;
+            }
+
+            const releases = Array.from(
+                releaseResourcesList.querySelectorAll(".release-resource-row")
+            ).map(function (row) {
+                const disposition = row.querySelector(
+                    ".release-disposition"
+                ).value;
+                return {
+                    itemType: row.dataset.itemType,
+                    itemId: row.dataset.itemId,
+                    disposition: disposition,
+                    quantity: disposition === "Missing"
+                        ? 0
+                        : Number(row.querySelector(".release-quantity").value),
+                    releasedBy: releasedBy.value.trim(),
+                    remarks: releaseRemarks.value.trim()
+                };
+            });
+
+            confirmReleaseResources.disabled = true;
+            try {
+                await window.medtrackData.releaseEmergencyResources({
+                    operationKey: createEmergencyOperationKey(
+                        requestToRelease,
+                        "release"
+                    ),
+                    requestId: requestToRelease,
+                    releases: releases
+                });
+                closeReleaseResourcesModal();
+                renderRequests();
+            } catch (error) {
+                releaseResourcesMessage.textContent = error.message ||
+                    "Unable to release the emergency resources.";
+            } finally {
+                confirmReleaseResources.disabled = false;
+            }
+        }
+    );
+
+    closeReleaseResources.addEventListener(
+        "click",
+        closeReleaseResourcesModal
+    );
+
+    cancelReleaseResources.addEventListener(
+        "click",
+        closeReleaseResourcesModal
     );
 
 
@@ -1961,6 +2152,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     );
 
+    releaseResourcesModal.addEventListener(
+        "click",
+        function (event) {
+            if (event.target === releaseResourcesModal) {
+                closeReleaseResourcesModal();
+            }
+        }
+    );
+
     deleteModal.addEventListener(
         "click",
         function (event) {
@@ -1985,10 +2185,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             requestToComplete = null;
             requestToDelete = null;
+            requestToRelease = null;
 
             completeModal.classList.remove(
                 "show"
             );
+
+            releaseResourcesModal.classList.remove("show");
 
             deleteModal.classList.remove(
                 "show"
