@@ -96,3 +96,33 @@ test("Emergency Response remains usable on a phone viewport", async ({ page }) =
     });
     expect(overflow).toBeLessThanOrEqual(1);
 });
+
+test("inventory tables become labeled cards on a phone viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page.setContent(`
+        <div class="table-wrapper">
+            <table class="responsive-card-table">
+                <thead><tr><th>Item ID</th><th>Item Name</th><th>Status</th></tr></thead>
+                <tbody><tr><td>MED-001</td><td>Gauze</td><td>Available</td></tr></tbody>
+            </table>
+        </div>
+    `);
+    await page.addStyleTag({ url: "/app-shell.css" });
+    await page.addScriptTag({ url: "/table-pagination.js" });
+    await page.evaluate(function () {
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+    });
+    await expect(page.locator("tbody td").nth(1)).toHaveAttribute(
+        "data-label",
+        "Item Name"
+    );
+    expect(await page.locator("tbody tr").evaluate(function (row) {
+        return getComputedStyle(row).display;
+    })).toBe("block");
+    const overflow = await page.evaluate(function () {
+        return document.documentElement.scrollWidth -
+            document.documentElement.clientWidth;
+    });
+    expect(overflow).toBeLessThanOrEqual(1);
+});

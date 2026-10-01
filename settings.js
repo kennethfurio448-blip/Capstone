@@ -1028,6 +1028,46 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
+    async function loadSystemHealth() {
+        const health = document.getElementById("scheduledAlertHealth");
+        const count = document.getElementById("activeSystemAlertCount");
+        const lastRun = document.getElementById("lastAlertJobRun");
+        if (!health || !count || !lastRun || !window.medtrackAuth) return;
+
+        try {
+            const client = window.medtrackAuth.client;
+            const [runResult, alertResult] = await Promise.all([
+                client.from("system_alert_job_runs")
+                    .select("status, completed_at, active_alert_count")
+                    .order("started_at", { ascending: false })
+                    .limit(1),
+                client.from("system_alerts")
+                    .select("alert_key", { count: "exact", head: true })
+                    .eq("active", true)
+            ]);
+
+            if (runResult.error || alertResult.error) {
+                throw runResult.error || alertResult.error;
+            }
+
+            const latest = runResult.data && runResult.data[0];
+            health.textContent = latest && latest.status === "completed"
+                ? "Operational"
+                : (latest ? "Needs attention" : "Awaiting first run");
+            count.textContent = String(alertResult.count || 0);
+            lastRun.textContent = latest && latest.completed_at
+                ? new Date(latest.completed_at).toLocaleString()
+                : "Not completed yet";
+        } catch (error) {
+            console.error("Unable to load system health:", error);
+            health.textContent = navigator.onLine
+                ? "Unavailable"
+                : "Offline";
+            count.textContent = "—";
+            lastRun.textContent = "—";
+        }
+    }
+
 
     logoutButton.addEventListener("click", async function () {
         const confirmLogout = await window.medtrackDialog.confirm(
@@ -1043,4 +1083,5 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     loadSettings();
+    loadSystemHealth();
 });

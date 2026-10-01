@@ -4,7 +4,9 @@
     const DROPDOWN_ID = "medtrackNotificationDropdown";
     const STATE_KEY = "medtrackNotificationState";
     const ADDITION_CACHE_KEY = "medtrackInventoryItemAdditions";
+    const SERVER_ALERT_CACHE_KEY = "medtrackPersistentSystemAlerts";
     const REMOTE_ADDITION_PAGE_SIZE = 50;
+    const REMOTE_ALERT_PAGE_SIZE = 250;
     const VISIBLE_NOTIFICATION_PAGE_SIZE = 20;
     const ALWAYS_VISIBLE_CATEGORIES = [
         "Medical Supplies",
@@ -50,6 +52,7 @@
     let additionRefreshTimer = null;
     let additionHasMore = false;
     let additionLoading = false;
+    let serverAlertLoading = false;
     let visibleNotificationCount = VISIBLE_NOTIFICATION_PAGE_SIZE;
     const notificationFilters = {
         category: "all",
@@ -86,6 +89,35 @@
             };
         } catch (error) {
             return { days: 30, enabled: true };
+        }
+    }
+
+    function operationalAlertPreferences() {
+        try {
+            const settings = JSON.parse(
+                localStorage.getItem("medtrackSettings") || "{}"
+            );
+            const inventory = settings.inventory || {};
+            const notifications = settings.notifications || {};
+            const maintenanceDays = Number(inventory.maintenanceWarningDays);
+            return {
+                lowStock: notifications.lowStockAlerts !== false,
+                expiration: notifications.expirationAlerts !== false,
+                maintenance: notifications.maintenanceAlerts !== false,
+                overdue: notifications.overdueAlerts !== false,
+                maintenanceDays:
+                    Number.isFinite(maintenanceDays) && maintenanceDays > 0
+                        ? Math.floor(maintenanceDays)
+                        : 14
+            };
+        } catch (error) {
+            return {
+                lowStock: true,
+                expiration: true,
+                maintenance: true,
+                overdue: true,
+                maintenanceDays: 14
+            };
         }
     }
 
@@ -299,6 +331,95 @@
                 status: itemStatus,
                 timestamp: timestamp,
                 href: inventoryItemLink(module.page, module.searchId, itemId)
+            }];
+        });
+    }
+
+    function persistentSystemAlertNotifications() {
+        const modules = {
+            medical_supplies: {
+                category: "Medical Supplies",
+                page: "medical-supplies.html",
+                searchId: "supplySearch",
+                icon: "fa-pills"
+            },
+            medical_equipment: {
+                category: "Medical Equipment",
+                page: "medical-equipment.html",
+                searchId: "equipmentSearch",
+                icon: "fa-suitcase-medical"
+            },
+            borrow_transactions: {
+                category: "Inventory",
+                page: "status.html",
+                searchId: "transactionSearch",
+                icon: "fa-clock"
+            }
+        };
+        const types = {
+            low_stock: "low-stock",
+            out_of_stock: "out-of-stock",
+            expiring_supply: "near-expiry",
+            expired_supply: "expired",
+            service_due: "service-due",
+            service_overdue: "service-overdue",
+            borrow_overdue: "overdue"
+        };
+        const icons = {
+            low_stock: "fa-arrow-trend-down",
+            out_of_stock: "fa-box-open",
+            expiring_supply: "fa-calendar-day",
+            expired_supply: "fa-calendar-xmark",
+            service_due: "fa-screwdriver-wrench",
+            service_overdue: "fa-screwdriver-wrench",
+            borrow_overdue: "fa-clock"
+        };
+
+        const preferences = operationalAlertPreferences();
+        const expirySettings = expirationPreferences();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const expirationCutoff = new Date(today);
+        expirationCutoff.setDate(expirationCutoff.getDate() + expirySettings.days);
+        const maintenanceCutoff = new Date(today);
+        maintenanceCutoff.setDate(
+            maintenanceCutoff.getDate() + preferences.maintenanceDays
+        );
+
+        return storedArray(SERVER_ALERT_CACHE_KEY).flatMap(function (alert) {
+            const module = modules[text(alert.inventory_module)];
+            const itemId = text(alert.inventory_item_id);
+            const alertType = text(alert.alert_type);
+            const type = types[alertType];
+            const timestamp = localDate(
+                alert.due_date || alert.last_detected_at,
+                Boolean(alert.due_date)
+            );
+            if (!module || !itemId || !type || !timestamp) return [];
+            if (
+                (["low_stock", "out_of_stock"].includes(alertType) &&
+                    !preferences.lowStock) ||
+                (["expiring_supply", "expired_supply"].includes(alertType) &&
+                    !preferences.expiration) ||
+                (["service_due", "service_overdue"].includes(alertType) &&
+                    !preferences.maintenance) ||
+                (alertType === "borrow_overdue" && !preferences.overdue) ||
+                (alertType === "expiring_supply" && timestamp > expirationCutoff) ||
+                (alertType === "service_due" && timestamp > maintenanceCutoff)
+            ) return [];
+
+            return [{
+                id: text(alert.alert_key),
+                type: type,
+                icon: icons[text(alert.alert_type)] || module.icon,
+                label: text(alert.title, "Inventory alert"),
+                message: text(alert.message, "This item needs attention."),
+                category: module.category,
+                status: text(alert.status, "Attention"),
+                timestamp: timestamp,
+                href: type === "overdue"
+                    ? notificationLink(module.page, module.searchId, itemId)
+                    : inventoryItemLink(module.page, module.searchId, itemId)
             }];
         });
     }
@@ -529,6 +650,60 @@
         }
     }
 
+    async function loadPersistentSystemAlerts() {
+        if (
+            !navigator.onLine ||
+            !window.medtrackSupabase ||
+            serverAlertLoading
+        ) return;
+
+        serverAlertLoading = true;
+        try {
+            const alerts = [];
+            let offset = 0;
+            while (true) {
+                const result = await window.medtrackSupabase
+                    .from("system_alerts")
+                    .select(
+                        "alert_key, alert_type, inventory_module, " +
+                        "inventory_item_id, title, message, status, " +
+                        "due_date, last_detected_at"
+                    )
+                    .eq("active", true)
+                    .order("last_detected_at", { ascending: false })
+                    .range(offset, offset + REMOTE_ALERT_PAGE_SIZE - 1);
+
+                if (result.error) {
+                    if (
+                        result.error.code !== "PGRST205" &&
+                        !/system_alerts|schema cache/i.test(
+                            result.error.message || ""
+                        )
+                    ) {
+                        console.error(
+                            "Unable to load persistent system alerts:",
+                            result.error
+                        );
+                    }
+                    return;
+                }
+
+                const page = result.data || [];
+                alerts.push(...page);
+                if (page.length < REMOTE_ALERT_PAGE_SIZE) break;
+                offset += REMOTE_ALERT_PAGE_SIZE;
+            }
+
+            localStorage.setItem(
+                SERVER_ALERT_CACHE_KEY,
+                JSON.stringify(alerts)
+            );
+            scheduleRefresh();
+        } finally {
+            serverAlertLoading = false;
+        }
+    }
+
     function scheduleAdditionRefresh() {
         window.clearTimeout(additionRefreshTimer);
         additionRefreshTimer = window.setTimeout(function () {
@@ -538,13 +713,17 @@
 
     function buildNotifications() {
         const notifications = [
+            ...persistentSystemAlertNotifications(),
             ...inventoryAdditionNotifications(),
             ...inventoryStatusNotifications()
         ];
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
+        const alertSettings = operationalAlertPreferences();
         const serviceWindowEnd = new Date(startOfToday);
-        serviceWindowEnd.setDate(serviceWindowEnd.getDate() + 30);
+        serviceWindowEnd.setDate(
+            serviceWindowEnd.getDate() + alertSettings.maintenanceDays
+        );
         const expirySettings = expirationPreferences();
         const expirationWindowEnd = new Date(startOfToday);
         expirationWindowEnd.setDate(
@@ -563,7 +742,7 @@
                 id || name
             );
 
-            if (quantity <= 0) {
+            if (alertSettings.lowStock && quantity <= 0) {
                 notifications.push({
                     id: `out-of-stock:${id || name}`,
                     type: "out-of-stock",
@@ -575,7 +754,7 @@
                     timestamp: detectionTimestamp(supply),
                     href: href
                 });
-            } else if (quantity <= threshold) {
+            } else if (alertSettings.lowStock && quantity <= threshold) {
                 notifications.push({
                     id: `low-stock:${id || name}`,
                     type: "low-stock",
@@ -590,7 +769,11 @@
             }
 
             const expiration = localDate(supply.expirationDate, true);
-            if (expiration && expiration < startOfToday) {
+            if (
+                expirySettings.enabled &&
+                expiration &&
+                expiration < startOfToday
+            ) {
                 notifications.push({
                     id: `expired:${id || name}`,
                     type: "expired",
@@ -643,7 +826,8 @@
             if (
                 !id ||
                 !serviceDate ||
-                maintenanceType === "Not required"
+                maintenanceType === "Not required" ||
+                !alertSettings.maintenance
             ) return;
 
             const href = inventoryItemLink(
@@ -682,6 +866,7 @@
         });
 
         storedArray("medtrackBorrowTransactions").forEach(function (record) {
+            if (!alertSettings.overdue) return;
             if (!BORROWABLE_ITEM_TYPES.has(text(record.itemType))) {
                 return;
             }
@@ -718,7 +903,17 @@
             });
         });
 
-        return notifications.sort(function (left, right) {
+        const uniqueNotifications = [];
+        const seenNotificationIds = new Set();
+        notifications.forEach(function (notification) {
+            if (!notification.id || seenNotificationIds.has(notification.id)) {
+                return;
+            }
+            seenNotificationIds.add(notification.id);
+            uniqueNotifications.push(notification);
+        });
+
+        return uniqueNotifications.sort(function (left, right) {
             const priority = {
                 "item-added": 5,
                 "service-overdue": 5,
@@ -1218,8 +1413,14 @@
     window.addEventListener("resize", positionDropdown);
     window.addEventListener("scroll", positionDropdown, true);
     window.addEventListener("storage", scheduleRefresh);
-    window.addEventListener("online", loadRemoteNotificationState);
-    window.addEventListener("medtrack:data-ready", scheduleRefresh);
+    window.addEventListener("online", function () {
+        loadRemoteNotificationState();
+        loadPersistentSystemAlerts();
+    });
+    window.addEventListener("medtrack:data-ready", function () {
+        scheduleRefresh();
+        loadPersistentSystemAlerts();
+    });
     window.addEventListener("medtrack:inventory-changed", function () {
         scheduleRefresh();
         scheduleAdditionRefresh();
@@ -1232,5 +1433,6 @@
         window.setTimeout(function () {
             loadInventoryAdditions(true);
         }, 1000);
+        window.setTimeout(loadPersistentSystemAlerts, 1100);
     });
 })();

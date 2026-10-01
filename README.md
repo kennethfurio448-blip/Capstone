@@ -18,6 +18,8 @@ The application requires its configured Supabase project for online authenticati
 
 Emergency responses save the response and all inventory deductions in one idempotent database transaction. Reusable equipment and mobility assets must be released as Returned, For Repair, Damaged, or Missing before a response with deployed resources can be deleted. The shared synchronization control shows queued changes, failures, and a manual retry action.
 
+Inventory collections synchronize from Supabase in bounded 500-row pages while retaining an offline snapshot. Medical Supplies, Medical Equipment, and Mobility tables support keyboard-accessible column sorting, 25-row pagination, consecutive display numbers, and labeled mobile card layouts without changing permanent database IDs.
+
 ## Quality checks
 
 - `npm run check` validates JavaScript syntax, local assets, content-security policies, deployment headers, authentication controls, and critical project wiring.
@@ -59,6 +61,8 @@ Never perform a restore drill against `www.medtrackmanagement.com` or the produc
 Authenticated runtime failures are sanitized, rate-limited, stored in `client_error_events`, and copied into the administrator Audit Logs. Email addresses and token-shaped values are removed before submission. Notification read/dismissed state is synchronized per user across devices when online and remains available locally while offline.
 
 Client-error detail can be purged by a verified administrator with `medtrack_purge_client_errors`; the default retention target is 90 days. Audit records are intentionally retained because their legal retention period must be approved by PDRRMO before automatic archival or deletion is enabled.
+
+Operational inventory alerts are persisted in `system_alerts` and refreshed hourly by `medtrack_refresh_system_alerts` when `pg_cron` is available. Active users can read current alerts; only verified administrators can read scheduler run health. The Security tab in System Settings shows the latest run and active-alert count. Browser-side calculations remain available offline and are de-duplicated against database alerts after reconnection.
 
 ## Release checklist
 

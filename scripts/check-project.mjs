@@ -206,6 +206,12 @@ const emergencyReleaseMigrationPath = join(
   "migrations",
   "20261001101000_release_emergency_resources.sql",
 );
+const persistentAlertsMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20261001120000_persistent_scheduled_alerts.sql",
+);
 const tablePaginationPath = join(root, "table-pagination.js");
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
@@ -261,6 +267,7 @@ for (const [label, path] of [
   ["atomic equipment and mobility saves", atomicInventorySaveMigrationPath],
   ["atomic emergency response saves", atomicEmergencyMigrationPath],
   ["emergency resource release", emergencyReleaseMigrationPath],
+  ["persistent scheduled alerts", persistentAlertsMigrationPath],
   ["shared table pagination", tablePaginationPath],
   ["dependency update configuration", dependabotPath],
 ]) {
@@ -614,6 +621,35 @@ try {
   }
 } catch (error) {
   failures.push(`offline supply save: unable to inspect migration (${error.message})`);
+}
+
+try {
+  const persistentAlertsMigration = readFileSync(
+    persistentAlertsMigrationPath,
+    "utf8",
+  );
+  const notificationCenter = readFileSync(notificationCenterPath, "utf8");
+  const dataAdapter = readFileSync(dataSyncPath, "utf8");
+  for (const requiredControl of [
+    "system_alerts",
+    "system_alert_job_runs",
+    "medtrack_refresh_system_alerts",
+    "cron.schedule",
+    'alert_type in (',
+    'enable row level security',
+  ]) {
+    if (!persistentAlertsMigration.includes(requiredControl)) {
+      failures.push(`persistent alerts: missing ${requiredControl}`);
+    }
+  }
+  if (!notificationCenter.includes('from("system_alerts")')) {
+    failures.push("persistent alerts: notification-center loading is missing");
+  }
+  if (!dataAdapter.includes("CLOUD_DOWNLOAD_PAGE_SIZE = 500")) {
+    failures.push("data synchronization: bounded cloud pagination is missing");
+  }
+} catch (error) {
+  failures.push(`persistent alerts: unable to inspect controls (${error.message})`);
 }
 
 try {

@@ -3,6 +3,7 @@
 
     const client = window.medtrackSupabase;
     const offlineStore = window.medtrackOfflineStore;
+    const CLOUD_DOWNLOAD_PAGE_SIZE = 500;
 
     if (!client) {
         console.error(
@@ -512,21 +513,30 @@
 
     async function downloadCollection(storageKey) {
         const collection = collections[storageKey];
+        const cloudRecords = [];
+        let offset = 0;
 
-        const result = await client
-            .from(collection.table)
-            .select("*")
-            .order("id", { ascending: true });
+        while (true) {
+            const result = await client
+                .from(collection.table)
+                .select("*")
+                .order("id", { ascending: true })
+                .range(offset, offset + CLOUD_DOWNLOAD_PAGE_SIZE - 1);
 
-        if (result.error) {
-            throw new Error(
-                `${collection.table}: ${result.error.message}`
-            );
+            if (result.error) {
+                throw new Error(
+                    `${collection.table}: ${result.error.message}`
+                );
+            }
+
+            const page = result.data || [];
+            cloudRecords.push(...page);
+
+            if (page.length < CLOUD_DOWNLOAD_PAGE_SIZE) break;
+            offset += CLOUD_DOWNLOAD_PAGE_SIZE;
         }
 
-        const localRecords = (result.data || []).map(
-            collection.fromCloud
-        );
+        const localRecords = cloudRecords.map(collection.fromCloud);
 
         writeLocalCollection(storageKey, localRecords);
 

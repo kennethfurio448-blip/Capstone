@@ -113,6 +113,59 @@ test("inventory tables use safe consecutive display numbers", async ({ request }
     }
 });
 
+test("inventory table columns sort accessibly and keep display numbers consecutive", async ({ page }) => {
+    await page.goto("/");
+    await page.setContent(`
+        <div class="table-wrapper">
+            <table class="responsive-card-table sortable-table">
+                <thead><tr><th>No.</th><th>Item Name</th><th>Quantity</th><th>Actions</th></tr></thead>
+                <tbody>
+                    <tr><td class="record-number">1</td><td>Zinc</td><td>2</td><td>—</td></tr>
+                    <tr><td class="record-number">2</td><td>Alcohol</td><td>10</td><td>—</td></tr>
+                </tbody>
+            </table>
+        </div>
+    `);
+    await page.addScriptTag({ url: "/table-pagination.js" });
+    await page.evaluate(function () {
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+    });
+    await page.locator("th", { hasText: "Item Name" }).click();
+    await expect(page.locator("tbody tr").nth(0).locator("td").nth(1))
+        .toHaveText("Alcohol");
+    await expect(page.locator(".record-number")).toHaveText(["1", "2"]);
+    await expect(page.locator("th", { hasText: "Item Name" }))
+        .toHaveAttribute("aria-sort", "ascending");
+});
+
+test("cloud collection downloads use bounded server pages", async ({ request }) => {
+    const response = await request.get("/auth/supabase-data.js");
+    const source = await response.text();
+    expect(response.ok()).toBeTruthy();
+    expect(source).toContain("const CLOUD_DOWNLOAD_PAGE_SIZE = 500;");
+    expect(source).toContain(
+        ".range(offset, offset + CLOUD_DOWNLOAD_PAGE_SIZE - 1)"
+    );
+});
+
+test("persistent scheduled alerts are connected to the notification center", async ({ request }) => {
+    const responses = await Promise.all([
+        request.get("/notification-center.js"),
+        request.get("/settings.html"),
+        request.get("/settings.js")
+    ]);
+    const [notifications, settingsHtml, settingsScript] = await Promise.all(
+        responses.map(function (response) {
+            expect(response.ok()).toBeTruthy();
+            return response.text();
+        })
+    );
+    expect(notifications).toContain('.from("system_alerts")');
+    expect(notifications).toContain("persistentSystemAlertNotifications");
+    expect(settingsHtml).toContain('id="scheduledAlertHealth"');
+    expect(settingsScript).toContain('.from("system_alert_job_runs")');
+});
+
 test("mobility shows a dash when no driver was imported", async ({ request }) => {
     const response = await request.get("/mobility.js");
     const source = await response.text();
