@@ -368,7 +368,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             filteredEquipment.length === 0
         );
 
-        filteredEquipment.forEach(function (item) {
+        filteredEquipment.forEach(function (item, index) {
             const itemId =
                 normalizeId(item.id);
 
@@ -398,6 +398,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 document.createElement("tr");
 
             row.innerHTML = `
+                <td class="record-number">${index + 1}</td>
+
                 <td>
                     ${escapeHTML(itemId)}
                 </td>

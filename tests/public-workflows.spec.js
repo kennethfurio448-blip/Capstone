@@ -88,6 +88,31 @@ test("medical supplies clearly identify and notify near-expiry items", async ({ 
     expect(analytics).toContain('["expired", "Expired", "#111111"]');
 });
 
+test("inventory tables use safe consecutive display numbers", async ({ request }) => {
+    for (const module of [
+        ["medical-supplies", "filteredSupplies", "supply"],
+        ["medical-equipment", "filteredEquipment", "item"],
+        ["mobility", "filteredVehicles", "vehicle"]
+    ]) {
+        const [htmlResponse, scriptResponse] = await Promise.all([
+            request.get(`/${module[0]}.html`),
+            request.get(`/${module[0]}.js`)
+        ]);
+        expect(htmlResponse.ok()).toBeTruthy();
+        expect(scriptResponse.ok()).toBeTruthy();
+        const html = await htmlResponse.text();
+        const script = await scriptResponse.text();
+        expect(html).toContain('class="record-number-column"');
+        expect(html).toContain("permanent IDs remain unchanged");
+        expect(script).toContain(
+            `${module[1]}.forEach(function (${module[2]}, index)`
+        );
+        expect(script).toContain(
+            '<td class="record-number">${index + 1}</td>'
+        );
+    }
+});
+
 test("mobility shows a dash when no driver was imported", async ({ request }) => {
     const response = await request.get("/mobility.js");
     const source = await response.text();

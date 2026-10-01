@@ -323,7 +323,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             emptyState.classList.remove("show");
         }
 
-        filteredVehicles.forEach(function (vehicle) {
+        filteredVehicles.forEach(function (vehicle, index) {
             const statusClass =
                 getStatusClass(vehicle.status);
 
@@ -340,6 +340,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             const row = document.createElement("tr");
 
             row.innerHTML = `
+                <td class="record-number">${index + 1}</td>
+
                 <td>${escapeHTML(vehicle.id)}</td>
 
                 <td>

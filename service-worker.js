@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v61-expired-black";
+const CACHE_NAME = "medtrack-shell-v62-display-numbers";
 const APP_SHELL = [
     "/",
     "/index.html",

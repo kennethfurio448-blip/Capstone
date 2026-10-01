@@ -535,6 +535,19 @@ body[hidden] {
     margin: 0;
 }
 
+.record-number-column,
+.record-number {
+    width: 58px;
+    min-width: 58px;
+    text-align: center;
+}
+
+.record-number {
+    color: #536177;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
 body.logout-dialog-open {
     overflow: hidden;
 }

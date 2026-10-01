@@ -206,20 +206,6 @@
 
             </article>
 
-            <article class="stat-card yellow" data-filter-target="statusFilter" data-filter-value="Near Expiry" data-action-label="Show near-expiry Medical Supplies">
-
-                <div class="stat-icon">
-                    <i class="fa-solid fa-calendar-day"></i>
-                </div>
-
-                <div>
-                    <p>Near Expiry</p>
-                    <h3 id="nearExpirySupplies">0</h3>
-                    <small>Items within the warning period</small>
-                </div>
-
-            </article>
-
             <article class="stat-card red" data-filter-target="statusFilter" data-filter-value="Out of Stock" data-action-label="Show out-of-stock Medical Supplies">
 
                 <div class="stat-icon">
@@ -230,6 +216,20 @@
                     <p>Out of Stock</p>
                     <h3 id="outOfStockSupplies">0</h3>
                     <small>Items needing replenishment</small>
+                </div>
+
+            </article>
+
+            <article class="stat-card yellow" data-filter-target="statusFilter" data-filter-value="Near Expiry" data-action-label="Show near-expiry Medical Supplies">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-calendar-day"></i>
+                </div>
+
+                <div>
+                    <p>Near Expiry</p>
+                    <h3 id="nearExpirySupplies">0</h3>
+                    <small>Items within the warning period</small>
                 </div>
 
             </article>
@@ -324,6 +324,7 @@
 
                     <thead>
                         <tr>
+                            <th class="record-number-column" title="Consecutive display number; permanent IDs remain unchanged">No.</th>
                             <th>Supply ID</th>
                             <th>Supply Name</th>
                             <th>Category</th>
@@ -634,7 +635,7 @@
 <script src="notification-center.js"></script>
 <script src="card-navigation.js"></script>
 <script src="table-pagination.js"></script>
-<script src="medical-supplies.js?v=20261001-near-expiry"></script>
+<script src="medical-supplies.js?v=20261001-display-number"></script>
 
 </body>
 </html>
