@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ["attention", "Low Stock / Borrowed / Deployed", "#f2b514"],
         ["unavailable", "For Repair / Unavailable", "#d9252a"],
         ["expiring", "Expiring Soon", "#ef6c00"],
-        ["expired", "Expired", "#6f2da8"]
+        ["expired", "Expired", "#111111"]
     ];
 
     function getStoredData(key) {

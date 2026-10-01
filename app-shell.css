@@ -401,8 +401,8 @@ body[hidden] {
 }
 
 .notification-expired .notification-item-icon {
-    background: #f1e7fa;
-    color: #6f2da8;
+    background: #e5e7eb;
+    color: #111111;
 }
 
 .notification-near-expiry .notification-item-icon {

@@ -861,8 +861,8 @@ a {
 }
 
 .alert-icon.expired {
-    color: #6f2da8;
-    background-color: #f1e7fa;
+    color: #111111;
+    background-color: #e5e7eb;
 }
 
 .alert-icon.information {
@@ -904,8 +904,8 @@ a {
 }
 
 .expired-text {
-    color: #6f2da8;
-    background-color: #f1e7fa;
+    color: #111111;
+    background-color: #e5e7eb;
 }
 
 .information-text {

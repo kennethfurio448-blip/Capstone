@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v60-split-expiry";
+const CACHE_NAME = "medtrack-shell-v61-expired-black";
 const APP_SHELL = [
     "/",
     "/index.html",

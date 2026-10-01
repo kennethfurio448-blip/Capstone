@@ -424,9 +424,9 @@ a {
     background-color: #e3f2fd;
 }
 
-.stat-card.purple .stat-icon {
-    color: #6f2da8;
-    background-color: #f1e7fa;
+.stat-card.black .stat-icon {
+    color: #111111;
+    background-color: #e5e7eb;
 }
 
 
@@ -622,8 +622,8 @@ a {
 }
 
 .status-expired {
-    color: #6f2da8;
-    background-color: #f1e7fa;
+    color: #111111;
+    background-color: #e5e7eb;
 }
 
 

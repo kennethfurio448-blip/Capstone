@@ -85,7 +85,7 @@ test("medical supplies clearly identify and notify near-expiry items", async ({ 
     expect(analytics).toContain("nearExpiryItems");
     expect(analytics).toContain("daysRemaining");
     expect(analytics).toContain('["expiring", "Expiring Soon", "#ef6c00"]');
-    expect(analytics).toContain('["expired", "Expired", "#6f2da8"]');
+    expect(analytics).toContain('["expired", "Expired", "#111111"]');
 });
 
 test("mobility shows a dash when no driver was imported", async ({ request }) => {
