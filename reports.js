@@ -311,7 +311,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 ],
                 rows: records.map(function (supply) {
                     return [
-                        supply.id,
+                        supply.displayId || supply.id,
                         supply.name,
                         supply.category,
                         supply.quantity,
@@ -349,7 +349,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 ],
                 rows: records.map(function (equipment) {
                     return [
-                        equipment.id,
+                        equipment.displayId || equipment.id,
                         equipment.name,
                         equipment.category,
                         equipment.quantity,
@@ -389,7 +389,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 ],
                 rows: records.map(function (vehicle) {
                     return [
-                        vehicle.id,
+                        vehicle.displayId || vehicle.id,
                         vehicle.name,
                         vehicle.type,
                         vehicle.plateNumber,

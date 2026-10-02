@@ -303,6 +303,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                             item.id
                         ),
 
+                    displayId:
+                        normalizeText(
+                            item.displayId || item.id
+                        ),
+
                     name:
                         normalizeText(
                             item.name
@@ -380,6 +385,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                             asset.id
                         ),
 
+                    displayId:
+                        normalizeText(
+                            asset.displayId || asset.id
+                        ),
+
                     name:
                         normalizeText(
                             asset.name
@@ -446,6 +456,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 function (item) {
                     const searchableText = `
                         ${item.id}
+                        ${item.displayId}
                         ${item.name}
                         ${item.type}
                         ${item.category}
@@ -477,7 +488,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <td>
                                 <strong>
                                     ${escapeHTML(
-                                        item.id
+                                        item.displayId || item.id
                                     )}
                                 </strong>
                             </td>
@@ -616,6 +627,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             '<option value="">Select an available item</option>' +
             items.map(function (item) {
                 return `<option value="${escapeHTML(item.id)}">` +
+                    `${escapeHTML(item.displayId || item.id)} - ` +
                     `${escapeHTML(item.name)} ` +
                     `(${escapeHTML(item.quantity)} available)</option>`;
             }).join("");

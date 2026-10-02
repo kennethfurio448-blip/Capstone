@@ -20,6 +20,8 @@ Emergency responses save the response and all inventory deductions in one idempo
 
 Inventory collections synchronize from Supabase in bounded 500-row pages while retaining an offline snapshot. Medical Supplies, Medical Equipment, and Mobility tables support keyboard-accessible column sorting, 25-row pagination, consecutive display numbers, and labeled mobile card layouts without changing permanent database IDs.
 
+User-facing inventory IDs are stored separately as gap-free display IDs. New records reuse the lowest available display-number gap under a database advisory lock, while immutable internal IDs continue to protect audit history and transaction references.
+
 ## Quality checks
 
 - `npm run check` validates JavaScript syntax, local assets, content-security policies, deployment headers, authentication controls, and critical project wiring.

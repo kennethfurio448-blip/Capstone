@@ -326,6 +326,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const itemId =
                     normalizeId(item.id);
 
+                const displayId =
+                    normalizeId(item.displayId || item.id);
+
                 const itemName =
                     normalizeText(item.name);
 
@@ -337,6 +340,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const searchableText = `
                     ${itemId}
+                    ${displayId}
                     ${itemName}
                     ${itemCategory}
                 `.toLowerCase();
@@ -372,6 +376,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             const itemId =
                 normalizeId(item.id);
 
+            const displayId =
+                normalizeId(item.displayId || item.id);
+
             const itemName =
                 normalizeText(item.name);
 
@@ -401,7 +408,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td class="record-number">${index + 1}</td>
 
                 <td>
-                    ${escapeHTML(itemId)}
+                    ${escapeHTML(displayId)}
                 </td>
 
                 <td>

@@ -113,6 +113,27 @@ test("inventory tables use safe consecutive display numbers", async ({ request }
     }
 });
 
+test("inventory shows gap-free display IDs while preserving internal IDs", async ({ request }) => {
+    const responses = await Promise.all([
+        request.get("/auth/supabase-data.js"),
+        request.get("/medical-supplies.js"),
+        request.get("/medical-equipment.js"),
+        request.get("/mobility.js"),
+        request.get("/reports.js")
+    ]);
+    const [data, supplies, equipment, mobility, reports] = await Promise.all(
+        responses.map(function (response) {
+            expect(response.ok()).toBeTruthy();
+            return response.text();
+        })
+    );
+    expect(data.match(/displayId: item\.display_id \|\| item\.id/g)).toHaveLength(3);
+    expect(supplies).toContain("supply.displayId || supply.id");
+    expect(equipment).toContain("item.displayId || item.id");
+    expect(mobility).toContain("vehicle.displayId || vehicle.id");
+    expect(reports.match(/displayId \|\|/g).length).toBeGreaterThanOrEqual(3);
+});
+
 test("inventory table columns sort accessibly and keep display numbers consecutive", async ({ page }) => {
     await page.goto("/");
     await page.setContent(`

@@ -296,6 +296,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 vehicle.name.toLowerCase().includes(searchValue) ||
                 vehicle.type.toLowerCase().includes(searchValue) ||
                 vehicle.id.toLowerCase().includes(searchValue) ||
+                String(vehicle.displayId || vehicle.id).toLowerCase().includes(searchValue) ||
                 vehicle.plateNumber.toLowerCase().includes(searchValue) ||
                 vehicle.driver.toLowerCase().includes(searchValue) ||
                 vehicle.location.toLowerCase().includes(searchValue);
@@ -324,6 +325,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         filteredVehicles.forEach(function (vehicle, index) {
+            const displayId = vehicle.displayId || vehicle.id;
             const statusClass =
                 getStatusClass(vehicle.status);
 
@@ -342,7 +344,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             row.innerHTML = `
                 <td class="record-number">${index + 1}</td>
 
-                <td>${escapeHTML(vehicle.id)}</td>
+                <td>${escapeHTML(displayId)}</td>
 
                 <td>
                     <strong>${escapeHTML(vehicle.name)}</strong>

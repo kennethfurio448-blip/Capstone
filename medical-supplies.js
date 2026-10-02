@@ -478,6 +478,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             supplies.map(function (supply) {
                 return `
                     <option value="${escapeHTML(supply.id)}">
+                        ${escapeHTML(supply.displayId || supply.id)} -
                         ${escapeHTML(supply.name)}
                         (${escapeHTML(supply.quantity)}
                         ${escapeHTML(supply.unit)} available)
@@ -615,6 +616,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const id =
                     normalizeId(supply.id);
 
+                const displayId =
+                    normalizeId(supply.displayId || supply.id);
+
                 const name =
                     normalizeText(supply.name);
 
@@ -625,7 +629,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     getSupplyStatus(supply);
 
                 const searchableText =
-                    `${id} ${name} ${category}`
+                    `${id} ${displayId} ${name} ${category}`
                         .toLowerCase();
 
                 const matchesSearch =
@@ -659,6 +663,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             const id =
                 normalizeId(supply.id);
 
+            const displayId =
+                normalizeId(supply.displayId || supply.id);
+
             const status =
                 getSupplyStatus(supply);
 
@@ -672,7 +679,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td class="record-number">${index + 1}</td>
 
                 <td>
-                    ${escapeHTML(id)}
+                    ${escapeHTML(displayId)}
                 </td>
 
                 <td>

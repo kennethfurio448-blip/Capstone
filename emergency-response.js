@@ -662,7 +662,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 ? 1
                 : Number(item.quantity) || 0;
             option.value = normalizeId(item.id);
-            option.textContent = `${item.name} (${quantity} available)`;
+            option.textContent = `${item.displayId || item.id} - ` +
+                `${item.name} (${quantity} available)`;
             resourceItem.appendChild(option);
         });
 

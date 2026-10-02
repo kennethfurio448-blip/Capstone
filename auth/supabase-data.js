@@ -210,6 +210,7 @@
             fromCloud: function (item) {
                 return {
                     id: item.id,
+                    displayId: item.display_id || item.id,
                     name: item.name,
                     category: item.category,
                     quantity: item.quantity,
@@ -245,6 +246,7 @@
             fromCloud: function (item) {
                 return {
                     id: item.id,
+                    displayId: item.display_id || item.id,
                     name: item.name,
                     category: item.category,
                     quantity: item.quantity,
@@ -283,6 +285,7 @@
             fromCloud: function (item) {
                 return {
                     id: item.id,
+                    displayId: item.display_id || item.id,
                     name: item.name,
                     type: item.type,
                     plateNumber: item.plate_number || "",

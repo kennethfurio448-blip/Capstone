@@ -212,6 +212,12 @@ const persistentAlertsMigrationPath = join(
   "migrations",
   "20261001120000_persistent_scheduled_alerts.sql",
 );
+const displayIdMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20261002090000_gap_free_inventory_display_ids.sql",
+);
 const tablePaginationPath = join(root, "table-pagination.js");
 const settingsScriptPath = join(root, "settings.js");
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
@@ -268,6 +274,7 @@ for (const [label, path] of [
   ["atomic emergency response saves", atomicEmergencyMigrationPath],
   ["emergency resource release", emergencyReleaseMigrationPath],
   ["persistent scheduled alerts", persistentAlertsMigrationPath],
+  ["gap-free inventory display IDs", displayIdMigrationPath],
   ["shared table pagination", tablePaginationPath],
   ["dependency update configuration", dependabotPath],
 ]) {
@@ -650,6 +657,28 @@ try {
   }
 } catch (error) {
   failures.push(`persistent alerts: unable to inspect controls (${error.message})`);
+}
+
+try {
+  const displayIdMigration = readFileSync(displayIdMigrationPath, "utf8");
+  const dataSync = readFileSync(dataSyncPath, "utf8");
+  for (const requiredControl of [
+    "display_id text",
+    "medtrack_assign_inventory_display_id",
+    "pg_advisory_xact_lock",
+    "medical_supplies_display_id_unique",
+    "medical_equipment_display_id_unique",
+    "mobility_assets_display_id_unique",
+  ]) {
+    if (!displayIdMigration.includes(requiredControl)) {
+      failures.push(`display IDs: missing ${requiredControl}`);
+    }
+  }
+  if (!dataSync.includes("displayId: item.display_id || item.id")) {
+    failures.push("display IDs: cloud mapping is missing");
+  }
+} catch (error) {
+  failures.push(`display IDs: unable to inspect controls (${error.message})`);
 }
 
 try {

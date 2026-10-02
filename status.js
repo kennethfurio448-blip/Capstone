@@ -308,7 +308,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         const items = borrowableItems(elements.borrowItemType.value);
         elements.borrowItemId.innerHTML = '<option value="">Select an available item</option>' +
             items.map(function (item) {
-                return `<option value="${escapeHTML(item.id)}">${escapeHTML(item.name)} ` +
+                return `<option value="${escapeHTML(item.id)}">` +
+                    `${escapeHTML(item.displayId || item.id)} - ${escapeHTML(item.name)} ` +
                     `(${escapeHTML(item.quantity)} available)</option>`;
             }).join("");
         elements.borrowItemId.value = selectedId || "";

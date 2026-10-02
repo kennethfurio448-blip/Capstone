@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v63-production-hardening";
+const CACHE_NAME = "medtrack-shell-v64-gap-free-display-ids";
 const APP_SHELL = [
     "/",
     "/index.html",
