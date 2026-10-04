@@ -145,6 +145,8 @@ const workflowPath = join(root, ".github", "workflows", "quality.yml");
 const browserTestPath = join(root, "tests", "public-workflows.spec.js");
 const playwrightConfigPath = join(root, "playwright.config.js");
 const deploymentCheckPath = join(root, "scripts", "verify-deployment.mjs");
+const robotsPath = join(root, "robots.txt");
+const sitemapPath = join(root, "sitemap.xml");
 const backupCheckPath = join(root, "scripts", "verify-backup.mjs");
 const backupCreatePath = join(root, "scripts", "create-automated-backup.mjs");
 const backupRestoreTestPath = join(root, "scripts", "test-backup-restore.mjs");
@@ -262,6 +264,8 @@ for (const [label, path] of [
   ["browser workflow tests", browserTestPath],
   ["Playwright configuration", playwrightConfigPath],
   ["deployment verification", deploymentCheckPath],
+  ["search crawler rules", robotsPath],
+  ["public sitemap", sitemapPath],
   ["encrypted backup verification", backupCheckPath],
   ["encrypted backup creation", backupCreatePath],
   ["backup restore rehearsal", backupRestoreTestPath],
@@ -279,6 +283,45 @@ for (const [label, path] of [
   ["dependency update configuration", dependabotPath],
 ]) {
   if (!existsSync(path)) failures.push(`${label}: required file is missing`);
+}
+
+try {
+  const landing = readFileSync(join(root, "index.html"), "utf8");
+  const robots = readFileSync(robotsPath, "utf8");
+  const sitemap = readFileSync(sitemapPath, "utf8");
+  const privatePages = [
+    "admin-dashboard.html", "staff-dashboard.html", "medical-supplies.html",
+    "medical-equipment.html", "mobility.html", "available-items.html",
+    "emergency-response.html", "reports.html", "status.html", "manage-users.html",
+    "audit-logs.html", "settings.html", "login/login.html",
+  ];
+
+  for (const requiredPublicSeo of [
+    'name="robots" content="index, follow',
+    'rel="canonical"',
+    'property="og:title"',
+    'https://www.medtrackmanagement.com/',
+  ]) {
+    if (!landing.includes(requiredPublicSeo)) {
+      failures.push(`public SEO: landing page is missing ${requiredPublicSeo}`);
+    }
+  }
+  if (!sitemap.includes("https://www.medtrackmanagement.com/")) {
+    failures.push("public SEO: sitemap is missing the canonical landing URL");
+  }
+  for (const page of privatePages) {
+    const file = readFileSync(join(root, page), "utf8");
+    if (!file.includes('name="robots" content="noindex, nofollow, noarchive"')) {
+      failures.push(`private SEO: ${page} must opt out of search indexing`);
+    }
+  }
+  for (const blockedPath of ["/admin-dashboard.html", "/login/", "/auth/", "/api/"]) {
+    if (!robots.includes(`Disallow: ${blockedPath}`)) {
+      failures.push(`search crawler rules: missing Disallow: ${blockedPath}`);
+    }
+  }
+} catch (error) {
+  failures.push(`public SEO controls: unable to inspect (${error.message})`);
 }
 
 try {

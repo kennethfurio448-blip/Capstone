@@ -8,6 +8,36 @@ test("landing page opens the MedTrack login", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
 });
 
+test("only the public landing page is available to search engines", async ({ request }) => {
+    const [landingResponse, robotsResponse, sitemapResponse, adminResponse, loginResponse] = await Promise.all([
+        request.get("/"),
+        request.get("/robots.txt"),
+        request.get("/sitemap.xml"),
+        request.get("/admin-dashboard.html"),
+        request.get("/login/login.html")
+    ]);
+    const [landing, robots, sitemap, admin, login] = await Promise.all([
+        landingResponse.text(),
+        robotsResponse.text(),
+        sitemapResponse.text(),
+        adminResponse.text(),
+        loginResponse.text()
+    ]);
+
+    expect(landingResponse.ok()).toBeTruthy();
+    expect(robotsResponse.ok()).toBeTruthy();
+    expect(sitemapResponse.ok()).toBeTruthy();
+    expect(landing).toContain('name="robots" content="index, follow');
+    expect(landing).toContain('rel="canonical"');
+    expect(landing).toContain('property="og:title"');
+    expect(sitemap).toContain("https://www.medtrackmanagement.com/");
+    expect(sitemap).not.toContain("admin-dashboard.html");
+    expect(robots).toContain("Disallow: /admin-dashboard.html");
+    expect(robots).toContain("Disallow: /login/");
+    expect(admin).toContain('name="robots" content="noindex, nofollow, noarchive"');
+    expect(login).toContain('name="robots" content="noindex, nofollow, noarchive"');
+});
+
 test("forgot password slides in and returns to login", async ({ page }) => {
     await page.goto("/login/login.html");
     const card = page.locator("#authCard");

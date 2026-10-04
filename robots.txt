@@ -1,4 +1,22 @@
 User-agent: *
 Allow: /
 
+# Only the public landing page is intended for search results.
+# All operational, account, and API routes contain protected system functions.
+Disallow: /admin-dashboard.html
+Disallow: /staff-dashboard.html
+Disallow: /medical-supplies.html
+Disallow: /medical-equipment.html
+Disallow: /mobility.html
+Disallow: /available-items.html
+Disallow: /emergency-response.html
+Disallow: /reports.html
+Disallow: /status.html
+Disallow: /manage-users.html
+Disallow: /audit-logs.html
+Disallow: /settings.html
+Disallow: /login/
+Disallow: /auth/
+Disallow: /api/
+
 Sitemap: https://www.medtrackmanagement.com/sitemap.xml
