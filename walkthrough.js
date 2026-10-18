@@ -71,13 +71,13 @@
 
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "walkthrough-launch";
+        button.className = "nav-item walkthrough-launch";
         button.innerHTML = '<i class="fa-solid fa-person-chalkboard" aria-hidden="true"></i><span>System Walkthrough</span>';
         button.title = "Start system walkthrough";
         button.addEventListener("click", function () {
             startTour(0);
         });
-        nav.insertAdjacentElement("afterend", button);
+        nav.append(button);
     }
 
     function clearTourElements() {
@@ -95,6 +95,7 @@
         clearTourElements();
         sessionStorage.removeItem(activeKey);
         sessionStorage.removeItem(indexKey);
+        document.querySelector(".walkthrough-launch")?.classList.remove("active");
         localStorage.setItem(stateKey(completedKey), "true");
         if (mute) localStorage.setItem(stateKey(mutedKey), "true");
     }
@@ -186,6 +187,7 @@
     function startTour(index) {
         if (!profile || !["admin", "staff"].includes(profile.role)) return;
         localStorage.removeItem(stateKey(mutedKey));
+        document.querySelector(".walkthrough-launch")?.classList.add("active");
         renderStep(index || 0);
     }
 
@@ -201,6 +203,7 @@
         createLaunchButton();
         const activeIndex = Number(sessionStorage.getItem(indexKey));
         if (sessionStorage.getItem(activeKey) === "true" && Number.isInteger(activeIndex)) {
+            document.querySelector(".walkthrough-launch")?.classList.add("active");
             window.setTimeout(function () { renderStep(activeIndex); }, 400);
             return;
         }

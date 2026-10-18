@@ -1,45 +1,14 @@
 .walkthrough-launch {
-    display: flex;
-    width: 100%;
-    min-height: 44px;
-    margin: 16px 0 8px;
-    padding: 0 15px;
-    align-items: center;
-    gap: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 10px;
-    color: #dfe7f5;
-    background: rgba(255, 255, 255, 0.06);
+    border: 0;
+    background: transparent;
     font: inherit;
-    font-size: 13px;
-    font-weight: 700;
+    text-align: left;
     cursor: pointer;
-    transition: background-color 180ms ease, border-color 180ms ease;
 }
 
-.walkthrough-launch:hover,
 .walkthrough-launch:focus-visible {
-    border-color: rgba(255, 255, 255, 0.42);
-    background: rgba(255, 255, 255, 0.14);
-    outline: none;
-}
-
-.walkthrough-launch i {
-    width: 21px;
-    color: #f4b400;
-    text-align: center;
-}
-
-.sidebar.is-collapsed .walkthrough-launch {
-    justify-content: center;
-    padding: 0;
-}
-
-.sidebar.is-collapsed .walkthrough-launch span {
-    width: 0;
-    overflow: hidden;
-    opacity: 0;
-    white-space: nowrap;
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
 }
 
 .walkthrough-backdrop,
