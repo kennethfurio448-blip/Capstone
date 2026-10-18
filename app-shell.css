@@ -228,20 +228,19 @@ body[hidden] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 9px;
-    width: calc(100% - 20px);
-    min-height: 40px;
-    margin: 0 10px 14px;
-    padding: 0 12px;
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
+    margin: 0;
+    padding: 0;
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 10px;
     color: #f8fafc;
     background: rgba(255, 255, 255, 0.08);
     font: inherit;
-    font-size: 12px;
-    font-weight: 700;
     cursor: pointer;
-    transition: background-color 180ms ease, border-color 180ms ease, width 240ms ease, margin 240ms ease;
+    transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
 
 .sidebar-toggle:hover,
@@ -252,7 +251,17 @@ body[hidden] {
 }
 
 .sidebar-toggle i {
-    font-size: 16px;
+    font-size: 15px;
+}
+
+.brand-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.brand-title-row h1 {
+    margin: 0 0 3px;
 }
 
 .sidebar.is-collapsed {
@@ -269,13 +278,12 @@ body[hidden] {
 }
 
 .sidebar.is-collapsed .sidebar-toggle {
-    width: 48px;
-    margin-right: 4px;
-    margin-left: 4px;
-    padding: 0;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
 }
 
-.sidebar.is-collapsed .sidebar-toggle span,
 .sidebar.is-collapsed .brand h1,
 .sidebar.is-collapsed .brand p,
 .sidebar.is-collapsed .nav-item span,
@@ -292,6 +300,14 @@ body[hidden] {
 .sidebar.is-collapsed .brand {
     justify-content: center;
     padding: 0 0 18px;
+}
+
+.sidebar.is-collapsed .brand-icon {
+    display: none;
+}
+
+.sidebar.is-collapsed .brand-title-row {
+    gap: 0;
 }
 
 .sidebar.is-collapsed .menu-label {
@@ -327,13 +343,6 @@ body[hidden] {
     .sidebar.is-collapsed ~ .main-content {
         width: 100%;
         margin-left: 0;
-    }
-
-    .sidebar.is-collapsed .sidebar-toggle {
-        position: absolute;
-        top: 12px;
-        left: 10px;
-        margin: 0;
     }
 
     .sidebar.is-collapsed .brand {

@@ -29,9 +29,22 @@
         const toggleButton = document.createElement("button");
         toggleButton.type = "button";
         toggleButton.className = "sidebar-toggle";
-        toggleButton.innerHTML = '<i class="fa-solid fa-bars" aria-hidden="true"></i><span>Toggle navigation</span>';
+        toggleButton.innerHTML = '<i class="fa-solid fa-bars" aria-hidden="true"></i>';
 
-        sidebar.insertBefore(toggleButton, sidebar.firstElementChild);
+        const brand = sidebar.querySelector(".brand");
+        const brandText = brand && Array.from(brand.children).find(function (child) {
+            return !child.classList.contains("brand-icon");
+        });
+        const title = brandText && brandText.querySelector("h1");
+
+        if (brandText && title) {
+            const titleRow = document.createElement("div");
+            titleRow.className = "brand-title-row";
+            brandText.insertBefore(titleRow, title);
+            titleRow.append(title, toggleButton);
+        } else {
+            sidebar.insertBefore(toggleButton, sidebar.firstElementChild);
+        }
 
         sidebar.querySelectorAll(".nav-item, .logout-button").forEach(function (item) {
             const label = item.textContent.replace(/\s+/g, " ").trim();
