@@ -254,16 +254,6 @@ body[hidden] {
     font-size: 15px;
 }
 
-.brand-title-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.brand-title-row h1 {
-    margin: 0 0 3px;
-}
-
 .sidebar.is-collapsed {
     width: 76px;
     min-width: 76px;
@@ -304,10 +294,6 @@ body[hidden] {
 
 .sidebar.is-collapsed .brand-icon {
     display: none;
-}
-
-.sidebar.is-collapsed .brand-title-row {
-    gap: 0;
 }
 
 .sidebar.is-collapsed .menu-label {

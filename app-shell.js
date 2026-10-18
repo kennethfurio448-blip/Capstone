@@ -32,16 +32,8 @@
         toggleButton.innerHTML = '<i class="fa-solid fa-bars" aria-hidden="true"></i>';
 
         const brand = sidebar.querySelector(".brand");
-        const brandText = brand && Array.from(brand.children).find(function (child) {
-            return !child.classList.contains("brand-icon");
-        });
-        const title = brandText && brandText.querySelector("h1");
-
-        if (brandText && title) {
-            const titleRow = document.createElement("div");
-            titleRow.className = "brand-title-row";
-            brandText.insertBefore(titleRow, title);
-            titleRow.append(title, toggleButton);
+        if (brand) {
+            brand.insertBefore(toggleButton, brand.firstElementChild);
         } else {
             sidebar.insertBefore(toggleButton, sidebar.firstElementChild);
         }
