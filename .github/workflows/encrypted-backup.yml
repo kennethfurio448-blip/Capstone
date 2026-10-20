@@ -37,7 +37,7 @@ jobs:
       - name: Run non-destructive restore rehearsal
         run: npm run test:backup-restore
       - name: Retain encrypted backup
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: medtrack-encrypted-backup-${{ github.run_id }}
           path: backup-output/medtrack-encrypted-backup.json
