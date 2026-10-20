@@ -19,7 +19,7 @@ jobs:
       MEDTRACK_BACKUP_FILE: backup-output/medtrack-encrypted-backup.json
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
