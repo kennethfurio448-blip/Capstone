@@ -9,9 +9,10 @@
     const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
     const ACTIVITY_WRITE_INTERVAL_MS = 15 * 1000;
     const SESSION_ACTIVITY_KEY = "medtrackLastActivityAt";
-    const OFFLINE_PROFILE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+    const OFFLINE_PROFILE_MAX_AGE_MS = Number.POSITIVE_INFINITY;
     const AUTH_REQUEST_TIMEOUT_MS = 10 * 1000;
     const OFFLINE_STORE_TIMEOUT_MS = 3 * 1000;
+    const OFFLINE_SESSION_KEY = "medtrackOfflineSession";
     const ONLINE_ONLY_ADMIN_PAGES = new Set([
         "manage-users.html",
         "audit-logs.html",
@@ -114,9 +115,11 @@
         const profile = normalizeProfile(user, result.data);
 
         if (offlineStore) {
-            offlineStore.saveProfile(profile).catch(function (error) {
+            try {
+                await offlineStore.saveProfile(profile);
+            } catch (error) {
                 console.error("Unable to cache the MedTrack profile:", error);
-            });
+            }
         }
 
         return profile;
@@ -130,6 +133,18 @@
 
     async function loadCachedProfile() {
         if (!offlineStore) return null;
+
+        const offlineSession = readOfflineSession();
+        if (offlineSession) {
+            return withTimeout(
+                offlineStore.loadAuthorizedProfile(
+                    offlineSession.userId,
+                    OFFLINE_PROFILE_MAX_AGE_MS
+                ),
+                OFFLINE_STORE_TIMEOUT_MS,
+                "Offline profile lookup timed out."
+            );
+        }
 
         const result = await withTimeout(
             client.auth.getSession(),
@@ -148,6 +163,54 @@
             OFFLINE_STORE_TIMEOUT_MS,
             "Offline profile lookup timed out."
         );
+    }
+
+    function readOfflineSession() {
+        try {
+            const value = JSON.parse(
+                sessionStorage.getItem(OFFLINE_SESSION_KEY) || "null"
+            );
+            const hasExpiry = value && value.expiresAt !== null &&
+                value.expiresAt !== undefined;
+            if (
+                !value ||
+                !value.userId ||
+                (
+                    hasExpiry &&
+                    (
+                        !Number.isFinite(Number(value.expiresAt)) ||
+                        Number(value.expiresAt) <= Date.now()
+                    )
+                )
+            ) {
+                sessionStorage.removeItem(OFFLINE_SESSION_KEY);
+                return null;
+            }
+            return value;
+        } catch (error) {
+            sessionStorage.removeItem(OFFLINE_SESSION_KEY);
+            return null;
+        }
+    }
+
+    function startOfflineSession(profile) {
+        const expiresAt = profile && profile.offlineAccessExpiresAt
+            ? new Date(profile.offlineAccessExpiresAt).getTime()
+            : null;
+        sessionStorage.setItem(OFFLINE_SESSION_KEY, JSON.stringify({
+            userId: profile.id,
+            role: profile.role,
+            expiresAt: expiresAt
+        }));
+    }
+
+    function clearOfflineSession() {
+        sessionStorage.removeItem(OFFLINE_SESSION_KEY);
+    }
+
+    function getOfflineSessionUserId() {
+        const session = readOfflineSession();
+        return session ? session.userId : "";
     }
 
     async function getAuthenticatedProfile() {
@@ -193,9 +256,7 @@
             sessionStorage.removeItem(key);
         });
 
-        if (offlineStore) {
-            await offlineStore.clearAll();
-        }
+        clearOfflineSession();
     }
 
     async function signOut() {
@@ -221,6 +282,7 @@
         try {
             await client.auth.signOut({ scope: "local" });
         } finally {
+            clearOfflineSession();
             await clearSensitiveBrowserData();
             sessionStorageManager.clearPersistence();
             sessionStorage.removeItem(SESSION_ACTIVITY_KEY);
@@ -358,6 +420,14 @@
             ),
             OFFLINE_STORE_TIMEOUT_MS,
             "Offline authorization storage timed out."
+        );
+        await withTimeout(
+            offlineStore.upgradeOfflineCredentialAssurance(
+                profile.id,
+                profile.role === "admin" ? "aal2" : "authenticated"
+            ),
+            OFFLINE_STORE_TIMEOUT_MS,
+            "Offline login approval update timed out."
         );
     }
 
@@ -1013,11 +1083,51 @@
             if (profile.status !== "active" || !["admin", "staff"].includes(profile.role)) {
                 throw new Error("This account is unavailable.");
             }
+            clearOfflineSession();
+            if (offlineStore) {
+                try {
+                    await offlineStore.enrollOfflineCredential(
+                        profile,
+                        [identifier, profile.email, profile.username],
+                        password,
+                        "authenticated"
+                    );
+                } catch (enrollmentError) {
+                    console.error(
+                        "Secure offline login enrollment failed:",
+                        enrollmentError
+                    );
+                }
+            }
             return profile;
         } catch (error) {
             await signOut();
             throw error;
         }
+    }
+
+    async function signInOffline(identifier, password) {
+        if (!offlineStore) {
+            throw new Error(
+                "Offline login is unavailable on this device. Connect and sign in online first."
+            );
+        }
+        const profile = await withTimeout(
+            offlineStore.verifyOfflineCredential(
+                identifier,
+                password,
+                OFFLINE_PROFILE_MAX_AGE_MS
+            ),
+            15 * 1000,
+            "Offline password verification timed out."
+        );
+        if (!profile) {
+            throw new Error(
+                "Offline login is unavailable. Connect and sign in online first."
+            );
+        }
+        startOfflineSession(profile);
+        return profile;
     }
 
     async function redirectAuthenticatedUser() {
@@ -1059,6 +1169,13 @@
         }
     });
 
+    window.addEventListener("online", function () {
+        if (!readOfflineSession()) return;
+        window.location.replace(
+            loginRedirectUrl("online-revalidation-required")
+        );
+    });
+
     installNavigationOptimizations();
     installLogoutDialog();
     installClientErrorMonitoring();
@@ -1068,11 +1185,13 @@
         client: client,
         requireRoles: requireRoles,
         signIn: signIn,
+        signInOffline: signInOffline,
         signOut: signOut,
         signOutAndRedirect: signOutAndRedirect,
         redirectToDashboard: redirectToDashboard,
         redirectAuthenticatedUser: redirectAuthenticatedUser,
         getAuthenticatedProfile: getAuthenticatedProfile,
+        getOfflineSessionUserId: getOfflineSessionUserId,
         passwordPolicyError: passwordPolicyError
     };
 })();

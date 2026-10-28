@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v65-public-seo";
+const CACHE_NAME = "medtrack-shell-v66-offline-login";
 const APP_SHELL = [
     "/",
     "/index.html",

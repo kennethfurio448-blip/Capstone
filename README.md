@@ -14,7 +14,9 @@ MedTrack is a role-based PDRRMO inventory system for medical supplies, medical e
 3. Run `node scripts/static-server.mjs`.
 4. Open `http://127.0.0.1:3000`.
 
-The application requires its configured Supabase project for online authentication and synchronized data. Offline mode uses the service-worker application shell plus encrypted/session-scoped browser storage and queues supported changes until connectivity returns.
+The application requires its configured Supabase project for initial account validation and synchronized data. After a successful online sign-in, MedTrack enrolls the active account for password-based offline login on that browser without a time expiration. The browser stores a salted PBKDF2 password verifier, never the plaintext password. Administrator enrollment becomes usable only after the administrator completes MFA. Repeated incorrect offline passwords trigger a temporary local lockout.
+
+Offline mode uses the service-worker application shell, user-scoped IndexedDB snapshots, and a synchronization queue. A user can reopen the cached login page at any later time on the enrolled browser, enter the enrolled username or email and password, reach the correct dashboard, view the latest local snapshot, and perform supported queued operations. When connectivity returns after a purely offline login, the user must sign in online once before queued changes upload. This revalidation checks password changes, account revocation, role changes, and current server authorization without storing a reusable password or bypassing Supabase. Until the device reconnects, it cannot learn that an administrator revoked the account or changed its server password, so offline enrollment should only be used on trusted devices.
 
 Emergency responses save the response and all inventory deductions in one idempotent database transaction. Reusable equipment and mobility assets must be released as Returned, For Repair, Damaged, or Missing before a response with deployed resources can be deleted. The shared synchronization control shows queued changes, failures, and a manual retry action.
 

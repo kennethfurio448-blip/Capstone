@@ -565,7 +565,7 @@ try {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   const offlineMigration = readFileSync(offlineMigrationPath, "utf8");
 
-  for (const storeName of ["snapshots", "operations", "profiles"]) {
+  for (const storeName of ["snapshots", "operations", "profiles", "credentials"]) {
     if (!offlineStore.includes(`\"${storeName}\"`)) {
       failures.push(`offline-store: missing IndexedDB store ${storeName}`);
     }
@@ -575,6 +575,8 @@ try {
     "restoreOfflineCollections",
     "queueOperation",
     "syncPending",
+    "initializeData",
+    "uploadCollection(operation.storageKey, true)",
     "medtrack_borrow_item_once",
   ]) {
     if (!dataSync.includes(requiredControl)) {
@@ -585,6 +587,10 @@ try {
   for (const requiredOfflineAuthControl of [
     "authorizeOfflineProfile",
     "loadAuthorizedProfile",
+    "enrollOfflineCredential",
+    "verifyOfflineCredential",
+    "PBKDF2",
+    "CREDENTIAL_LOCK_THRESHOLD",
     "offlineAuthorizedAt",
     "offlineAssurance",
   ]) {
@@ -598,6 +604,8 @@ try {
     "ONLINE_ONLY_ADMIN_PAGES",
     "authorizeOfflineContinuation",
     "isOfflineSession",
+    "signInOffline",
+    "getOfflineSessionUserId",
   ]) {
     if (!authGuard.includes(requiredOfflineGuardControl)) {
       failures.push(`offline-auth: missing guard ${requiredOfflineGuardControl}`);

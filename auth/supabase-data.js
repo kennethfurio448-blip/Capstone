@@ -44,7 +44,11 @@
     async function getSessionUserId() {
         const result = await client.auth.getSession();
         const session = result.data && result.data.session;
-        return session && session.user ? session.user.id : "";
+        if (session && session.user) return session.user.id;
+        return window.medtrackAuth &&
+            typeof window.medtrackAuth.getOfflineSessionUserId === "function"
+            ? window.medtrackAuth.getOfflineSessionUserId()
+            : "";
     }
 
     function text(value, fallback = "") {
@@ -895,7 +899,10 @@
         if (restored) {
             window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
         }
-        await offlineStore.announce(userId, "offline");
+        await offlineStore.announce(
+            userId,
+            navigator.onLine ? "pending" : "offline"
+        );
         return restored;
     }
 
@@ -1805,7 +1812,10 @@
         }
 
         if (operation.kind === "collection") {
-            await uploadCollection(operation.storageKey);
+            // A queued collection can be restored after a browser restart.
+            // Force comparison against the current server versions because
+            // the restored local snapshot is also the current in-memory base.
+            await uploadCollection(operation.storageKey, true);
             return;
         }
 
@@ -1899,13 +1909,28 @@
             applyingCloudData = false;
         }
 
-        if (offlineStore) {
-            await offlineStore.clearAll();
-        }
+        // Enrolled credentials, snapshots, and queued changes remain in
+        // IndexedDB so the user can explicitly authenticate offline later.
+        // The visible plaintext copies and active session are cleared above.
+    }
+
+    async function initializeData() {
+        if (!offlineStore || !navigator.onLine) return refresh();
+
+        const userId = await getSessionUserId();
+        if (!userId) return refresh();
+        const pending = await offlineStore.countOperations(userId);
+        if (pending === 0) return refresh();
+
+        // Preserve offline edits across logout, browser restart, and the
+        // required online revalidation. Restore them before any cloud refresh.
+        await restoreOfflineCollections();
+        await syncPending();
+        return true;
     }
 
     installSyncCenter();
-    const ready = refresh();
+    const ready = initializeData();
 
     window.medtrackData = {
         ready: ready,
@@ -1930,10 +1955,6 @@
         syncPending: syncPending,
         clearSensitiveCache: clearSensitiveCache
     };
-
-    ready.then(function () {
-        if (navigator.onLine) syncPending();
-    });
 
     client.channel("medtrack-inventory-activity")
         .on(

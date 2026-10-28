@@ -105,10 +105,25 @@ if (new URLSearchParams(window.location.search).get("reason") === "session-expir
 
 if (new URLSearchParams(window.location.search).get("reason") === "offline-session-expired") {
     showMessage(
-        "Your 24-hour offline access expired. Reconnect to verify your account; queued changes are preserved.",
+        "Offline login is unavailable for this account on this device. Reconnect to verify the account; queued changes are preserved.",
         "error"
     );
     window.history.replaceState({}, "", window.location.pathname);
+}
+
+if (new URLSearchParams(window.location.search).get("reason") === "online-revalidation-required") {
+    showMessage(
+        "Internet is available again. Sign in online to verify the account and synchronize saved changes.",
+        "error"
+    );
+    window.history.replaceState({}, "", window.location.pathname);
+}
+
+function isConnectionFailure(error) {
+    return error instanceof TypeError ||
+        /network|failed to fetch|load failed|timed out|temporarily unavailable/i.test(
+            String(error && error.message || error || "")
+        );
 }
 
 togglePasswordButton.addEventListener("click", function () {
@@ -139,20 +154,32 @@ loginForm.addEventListener("submit", async function (event) {
     submitButton.disabled = true;
     showMessage("Signing in...", "success");
     try {
-        if (!navigator.onLine) {
-            throw new Error(
-                "Internet is required for a new sign-in. If this device was " +
-                "verified within the last 24 hours, reopen your dashboard to continue offline."
-            );
-        }
         const services = await getAuthenticationServices();
-        const profile = await services.auth.signIn(
-            identifier,
-            password,
-            rememberMe
-        );
+        let profile;
+        let offlineLogin = !navigator.onLine;
+
+        if (offlineLogin) {
+            profile = await services.auth.signInOffline(identifier, password);
+        } else {
+            try {
+                profile = await services.auth.signIn(
+                    identifier,
+                    password,
+                    rememberMe
+                );
+            } catch (onlineError) {
+                if (!isConnectionFailure(onlineError)) throw onlineError;
+                offlineLogin = true;
+                profile = await services.auth.signInOffline(identifier, password);
+            }
+        }
         passwordInput.value = "";
-        showMessage("Login successful. Redirecting...", "success");
+        showMessage(
+            offlineLogin
+                ? "Offline login successful. Redirecting..."
+                : "Login successful. Redirecting...",
+            "success"
+        );
         services.auth.redirectToDashboard(profile);
     } catch (error) {
         showMessage(
@@ -307,6 +334,21 @@ recoveryVerifyForm.addEventListener("submit", async function (event) {
         });
         clearInterval(recoveryCooldownTimer);
         recoveryVerifyMessage.textContent = response.message;
+        if (
+            window.medtrackOfflineStore &&
+            typeof window.medtrackOfflineStore.removeOfflineCredentials === "function"
+        ) {
+            try {
+                await window.medtrackOfflineStore.removeOfflineCredentials(
+                    recoveryEmailInput.value.trim().toLowerCase()
+                );
+            } catch (offlineRemovalError) {
+                console.error(
+                    "Unable to remove the previous offline login approval:",
+                    offlineRemovalError
+                );
+            }
+        }
         recoveryOtpInput.disabled = true;
         newPasswordInput.disabled = true;
         confirmNewPasswordInput.disabled = true;

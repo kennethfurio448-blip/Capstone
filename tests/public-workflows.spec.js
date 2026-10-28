@@ -584,6 +584,205 @@ test("offline continuation requires a recent approved staff or admin session", a
     expect(result.adminOffline).toBe(true);
 });
 
+test("offline login verifies an enrolled password without storing plaintext credentials", async ({ page }) => {
+    await page.goto("/");
+    await page.addScriptTag({ url: "/auth/offline-store.js" });
+
+    const result = await page.evaluate(async function () {
+        const store = window.medtrackOfflineStore;
+        await store.clearAll();
+
+        const staff = {
+            id: "offline-login-staff",
+            email: "offline.staff@example.test",
+            fullname: "Offline Login Staff",
+            username: "offline.login.staff",
+            role: "staff",
+            status: "active"
+        };
+        const password = "Offline-Test-Password-2026!";
+        await store.saveProfile(staff);
+        await store.enrollOfflineCredential(
+            staff,
+            [staff.email, staff.username],
+            password,
+            "authenticated"
+        );
+
+        let wrongPasswordRejected = false;
+        try {
+            await store.verifyOfflineCredential(
+                staff.username,
+                "Incorrect-Password-2026!",
+                24 * 60 * 60 * 1000
+            );
+        } catch (error) {
+            wrongPasswordRejected = true;
+        }
+
+        const approved = await store.verifyOfflineCredential(
+            staff.email,
+            password,
+            24 * 60 * 60 * 1000
+        );
+
+        const admin = {
+            id: "offline-login-admin",
+            email: "offline.admin@example.test",
+            fullname: "Offline Login Admin",
+            username: "offline.login.admin",
+            role: "admin",
+            status: "active"
+        };
+        const adminPassword = "Offline-Admin-Password-2026!";
+        await store.saveProfile(admin);
+        await store.enrollOfflineCredential(
+            admin,
+            [admin.email, admin.username],
+            adminPassword,
+            "authenticated"
+        );
+        let adminRejectedBeforeMfa = false;
+        try {
+            await store.verifyOfflineCredential(
+                admin.username,
+                adminPassword,
+                24 * 60 * 60 * 1000
+            );
+        } catch (error) {
+            adminRejectedBeforeMfa = true;
+        }
+        await store.upgradeOfflineCredentialAssurance(admin.id, "aal2");
+        const approvedAdmin = await store.verifyOfflineCredential(
+            admin.username,
+            adminPassword,
+            24 * 60 * 60 * 1000
+        );
+        const permanentOfflineApproval = await store.verifyOfflineCredential(
+            staff.username,
+            password,
+            Number.POSITIVE_INFINITY
+        );
+
+        const database = await new Promise(function (resolve, reject) {
+            const request = indexedDB.open("medtrack-offline-v1", 2);
+            request.onsuccess = function () { resolve(request.result); };
+            request.onerror = function () { reject(request.error); };
+        });
+        const credentials = await new Promise(function (resolve, reject) {
+            const request = database
+                .transaction("credentials", "readonly")
+                .objectStore("credentials")
+                .getAll();
+            request.onsuccess = function () { resolve(request.result); };
+            request.onerror = function () { reject(request.error); };
+        });
+        database.close();
+        const serialized = JSON.stringify(credentials);
+
+        await store.clearAll();
+        return {
+            wrongPasswordRejected: wrongPasswordRejected,
+            role: approved && approved.role,
+            offlineAccess: approved && approved.offlineAccess,
+            adminRejectedBeforeMfa: adminRejectedBeforeMfa,
+            adminRole: approvedAdmin && approvedAdmin.role,
+            adminOfflineAccess: approvedAdmin && approvedAdmin.offlineAccess,
+            permanentOfflineExpiry:
+                permanentOfflineApproval &&
+                permanentOfflineApproval.offlineAccessExpiresAt,
+            storesPlaintextPassword: serialized.includes(password),
+            storesPlaintextEmail: serialized.includes(staff.email),
+            hasSaltedVerifier: credentials.every(function (credential) {
+                return Boolean(
+                    credential.salt &&
+                    credential.verifier &&
+                    credential.iterations >= 300000
+                );
+            })
+        };
+    });
+
+    expect(result.wrongPasswordRejected).toBe(true);
+    expect(result.role).toBe("staff");
+    expect(result.offlineAccess).toBe(true);
+    expect(result.adminRejectedBeforeMfa).toBe(true);
+    expect(result.adminRole).toBe("admin");
+    expect(result.adminOfflineAccess).toBe(true);
+    expect(result.permanentOfflineExpiry).toBeNull();
+    expect(result.storesPlaintextPassword).toBe(false);
+    expect(result.storesPlaintextEmail).toBe(false);
+    expect(result.hasSaltedVerifier).toBe(true);
+});
+
+test("offline login creates a local session and restores the approved role", async ({ page, context }) => {
+    await page.goto("/");
+    await page.addScriptTag({ url: "/auth/offline-store.js" });
+    await page.evaluate(function () {
+        window.medtrackSessionStorage = {
+            setPersistence: function () {},
+            clearPersistence: function () {}
+        };
+        window.medtrackSupabase = {
+            auth: {
+                getSession: async function () {
+                    return { data: { session: null }, error: null };
+                },
+                getUser: async function () {
+                    return { data: { user: null }, error: null };
+                },
+                signOut: async function () { return { error: null }; },
+                onAuthStateChange: function () {
+                    return { data: { subscription: { unsubscribe: function () {} } } };
+                },
+                mfa: {}
+            },
+            rpc: async function () { return { error: null }; }
+        };
+    });
+    await page.addScriptTag({ url: "/auth/supabase-auth.js" });
+
+    await page.evaluate(async function () {
+        const profile = {
+            id: "offline-session-staff",
+            email: "session.staff@example.test",
+            fullname: "Session Staff",
+            username: "session.staff",
+            role: "staff",
+            status: "active"
+        };
+        await window.medtrackOfflineStore.clearAll();
+        await window.medtrackOfflineStore.saveProfile(profile);
+        await window.medtrackOfflineStore.enrollOfflineCredential(
+            profile,
+            [profile.email, profile.username],
+            "Offline-Session-Password-2026!",
+            "authenticated"
+        );
+    });
+
+    await context.setOffline(true);
+    const result = await page.evaluate(async function () {
+        const profile = await window.medtrackAuth.signInOffline(
+            "session.staff",
+            "Offline-Session-Password-2026!"
+        );
+        const restored = await window.medtrackAuth.getAuthenticatedProfile();
+        return {
+            loginRole: profile && profile.role,
+            restoredRole: restored && restored.role,
+            offlineAccess: restored && restored.offlineAccess,
+            userId: window.medtrackAuth.getOfflineSessionUserId()
+        };
+    });
+    await context.setOffline(false);
+
+    expect(result.loginRole).toBe("staff");
+    expect(result.restoredRole).toBe("staff");
+    expect(result.offlineAccess).toBe(true);
+    expect(result.userId).toBe("offline-session-staff");
+});
+
 test("notification center supports out-of-stock, dismiss, history, and restore", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(function () {
