@@ -38,6 +38,22 @@
             sidebar.insertBefore(toggleButton, sidebar.firstElementChild);
         }
 
+        const navigation = sidebar.querySelector(".sidebar-nav");
+        if (navigation && !navigation.querySelector('a[href="trash-bin.html"]')) {
+            const trashLink = document.createElement("a");
+            trashLink.href = "trash-bin.html";
+            trashLink.className = "nav-item";
+            trashLink.innerHTML =
+                '<i class="fa-solid fa-trash-can-arrow-up" aria-hidden="true"></i>' +
+                '<span>Trash Bin</span>';
+            if (window.location.pathname.endsWith("/trash-bin.html")) {
+                trashLink.classList.add("active");
+                trashLink.setAttribute("aria-current", "page");
+            }
+            const adminNavigation = navigation.querySelector(".admin-navigation");
+            navigation.insertBefore(trashLink, adminNavigation || null);
+        }
+
         sidebar.querySelectorAll(".nav-item, .logout-button").forEach(function (item) {
             const label = item.textContent.replace(/\s+/g, " ").trim();
             if (label && !item.title) {

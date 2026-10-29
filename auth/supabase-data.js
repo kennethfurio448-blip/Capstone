@@ -446,6 +446,26 @@
                     serverUpdatedAt: item.updated_at || ""
                 };
             }
+        },
+
+        medtrackTrashRecords: {
+            table: "trash_records",
+            readOnly: true,
+
+            fromCloud: function (item) {
+                return {
+                    id: item.id,
+                    sourceTable: item.source_table,
+                    recordId: item.record_id,
+                    module: item.module,
+                    recordName: item.record_name,
+                    recordDetails: item.record_details || {},
+                    recordData: item.record_data || {},
+                    deletedBy: item.deleted_by_name || "MedTrack User",
+                    deletedAt: item.deleted_at,
+                    pendingSync: false
+                };
+            }
         }
     };
 
@@ -555,6 +575,7 @@
         forceUpload = false
     ) {
         const collection = collections[storageKey];
+        if (collection.readOnly) return;
         const localRecords = readLocalCollection(storageKey);
         const previousSnapshot =
             collectionSnapshots.get(storageKey) ||
@@ -659,77 +680,185 @@
         );
     }
 
-    async function deleteInventoryItem(storageKey, itemId) {
-        const allowedStorageKeys = new Set([
-            "medtrackMedicalSupplies",
-            "medtrackMedicalEquipment",
-            "medtrackMobilityAssets"
-        ]);
+    function createUuid() {
+        if (window.crypto && typeof crypto.randomUUID === "function") {
+            return crypto.randomUUID();
+        }
+        return "10000000-1000-4000-8000-100000000000".replace(
+            /[018]/g,
+            function (character) {
+                return (
+                    Number(character) ^
+                    crypto.getRandomValues(new Uint8Array(1))[0] &
+                    15 >> Number(character) / 4
+                ).toString(16);
+            }
+        );
+    }
+
+    const trashSources = {
+        medtrackMedicalSupplies: "medical_supplies",
+        medtrackMedicalEquipment: "medical_equipment",
+        medtrackMobilityAssets: "mobility_assets",
+        medtrackEmergencyRequests: "emergency_requests"
+    };
+
+    const trashStorageKeys = Object.fromEntries(
+        Object.entries(trashSources).map(function (entry) {
+            return [entry[1], entry[0]];
+        })
+    );
+
+    function trashRecordName(record, itemId) {
+        return text(
+            record && (
+                record.name || record.type || record.contactPerson
+            ),
+            itemId
+        );
+    }
+
+    function trashRecordDetails(record) {
+        return {
+            category: text(record && record.category),
+            quantity: record && record.quantity,
+            location: text(record && record.location),
+            status: text(record && record.status),
+            date: text(record && record.date)
+        };
+    }
+
+    async function softDeleteRecord(storageKey, itemId) {
         const normalizedId = text(itemId);
 
-        if (!allowedStorageKeys.has(storageKey) || !normalizedId) {
-            throw new Error("Invalid inventory delete request.");
+        if (!trashSources[storageKey] || !normalizedId) {
+            throw new Error("Invalid Trash Bin request.");
         }
 
         const collection = collections[storageKey];
-        const operation = {
-            id: createOperationId("delete"),
-            kind: "delete",
-            storageKey: storageKey,
-            itemId: normalizedId
+        const records = readLocalCollection(storageKey);
+        const record = records.find(function (candidate) {
+            return text(candidate && candidate.id) === normalizedId;
+        });
+        if (!record) throw new Error("The selected record was not found.");
+
+        const trashId = createUuid();
+        const operationKey = createOperationId("trash");
+        const localTrashRecord = {
+            id: trashId,
+            sourceTable: trashSources[storageKey],
+            recordId: normalizedId,
+            module: {
+                medical_supplies: "Medical Supplies",
+                medical_equipment: "Medical Equipment",
+                mobility_assets: "Mobility",
+                emergency_requests: "Emergency Response"
+            }[trashSources[storageKey]],
+            recordName: trashRecordName(record, normalizedId),
+            recordDetails: trashRecordDetails(record),
+            recordData: collection.toCloud(record),
+            deletedBy: "Pending synchronization",
+            deletedAt: new Date().toISOString(),
+            pendingSync: true
         };
 
-        function applyLocalDelete() {
-            const records = readLocalCollection(storageKey).filter(function (record) {
-                return text(record && record.id) !== normalizedId;
+        function applyLocalSoftDelete() {
+            const activeRecords = readLocalCollection(storageKey).filter(function (candidate) {
+                return text(candidate && candidate.id) !== normalizedId;
             });
-            writeLocalCollection(storageKey, records, false);
+            const trashRecords = readLocalCollection("medtrackTrashRecords");
+            if (!trashRecords.some(function (item) { return item.id === trashId; })) {
+                trashRecords.unshift(localTrashRecord);
+            }
+            writeLocalCollection(storageKey, activeRecords, false);
+            writeLocalCollection("medtrackTrashRecords", trashRecords, false);
             window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
         }
 
-        if (!navigator.onLine) {
-            await queueOperation(operation);
-            applyLocalDelete();
-            return { queued: true };
-        }
-
-        let result;
-        try {
-            result = await client
-                .from(collection.table)
-                .delete()
-                .eq("id", normalizedId)
-                .select("id");
-        } catch (error) {
-            if (!isNetworkError(error)) throw error;
-            await queueOperation(operation);
-            applyLocalDelete();
-            return { queued: true };
-        }
-
-        if (result.error) {
-            if (isNetworkError(result.error)) {
-                await queueOperation(operation);
-                applyLocalDelete();
-                return { queued: true };
+        return runInventoryOperation(
+            "medtrack_soft_delete",
+            {
+                p_source_table: trashSources[storageKey],
+                p_record_id: normalizedId,
+                p_trash_id: trashId,
+                p_operation_key: operationKey
+            },
+            [storageKey, "medtrackTrashRecords"],
+            {
+                queueId: `trash:${trashId}`,
+                pendingId: trashId,
+                optimistic: applyLocalSoftDelete
             }
-            throw new Error(result.error.message);
-        }
-
-        if (!result.data || result.data.length !== 1) {
-            throw new Error(
-                "The record was not deleted. It may no longer exist, " +
-                "or your account may not have inventory management permission."
-            );
-        }
-
-        await downloadCollection(storageKey);
-
-        window.dispatchEvent(
-            new CustomEvent("medtrack:data-ready")
         );
+    }
 
-        return true;
+    async function restoreTrashRecord(trashId) {
+        const normalizedId = text(trashId);
+        const trashRecords = readLocalCollection("medtrackTrashRecords");
+        const trashRecord = trashRecords.find(function (record) {
+            return text(record && record.id) === normalizedId;
+        });
+        if (!trashRecord) throw new Error("The Trash record was not found.");
+        const storageKey = trashStorageKeys[trashRecord.sourceTable];
+        if (!storageKey) {
+            throw new Error("This record requires secure account restoration.");
+        }
+        const operationKey = createOperationId("restore");
+
+        function applyLocalRestore() {
+            const remaining = readLocalCollection("medtrackTrashRecords")
+                .filter(function (record) { return text(record.id) !== normalizedId; });
+            const activeRecords = readLocalCollection(storageKey);
+            if (!activeRecords.some(function (record) {
+                return text(record.id) === text(trashRecord.recordId);
+            })) {
+                activeRecords.push(collections[storageKey].fromCloud(trashRecord.recordData));
+            }
+            writeLocalCollection("medtrackTrashRecords", remaining, false);
+            writeLocalCollection(storageKey, activeRecords, false);
+            window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+        }
+
+        return runInventoryOperation(
+            "medtrack_restore_trash_record",
+            { p_trash_id: normalizedId, p_operation_key: operationKey },
+            [storageKey, "medtrackTrashRecords"],
+            {
+                queueId: `restore:${normalizedId}`,
+                pendingId: normalizedId,
+                optimistic: applyLocalRestore
+            }
+        );
+    }
+
+    async function permanentlyDeleteTrashRecord(trashId) {
+        if (!navigator.onLine) {
+            throw new Error("Permanent deletion requires an internet connection.");
+        }
+        const normalizedId = text(trashId);
+        const result = await client.rpc(
+            "medtrack_permanently_delete_trash_record",
+            {
+                p_trash_id: normalizedId,
+                p_operation_key: createOperationId("permanent-delete")
+            }
+        );
+        if (result.error) throw new Error(result.error.message);
+        await downloadCollection("medtrackTrashRecords");
+        window.dispatchEvent(new CustomEvent("medtrack:data-ready"));
+        return result.data;
+    }
+
+    async function loadTrashRecords() {
+        if (navigator.onLine) {
+            try {
+                await downloadCollection("medtrackTrashRecords");
+            } catch (error) {
+                if (!isNetworkError(error)) throw error;
+            }
+        }
+
+        return readLocalCollection("medtrackTrashRecords");
     }
 
     function reportError(action, error) {
@@ -808,7 +937,7 @@
     }
 
     function scheduleUpload(storageKey) {
-        if (!collections[storageKey]) {
+        if (!collections[storageKey] || collections[storageKey].readOnly) {
             return;
         }
 
@@ -954,7 +1083,9 @@
     }
 
     async function pushAll() {
-        const storageKeys = Object.keys(collections);
+        const storageKeys = Object.keys(collections).filter(function (storageKey) {
+            return !collections[storageKey].readOnly;
+        });
 
         for (const storageKey of storageKeys) {
             await uploadCollection(storageKey, true);
@@ -1020,7 +1151,10 @@
                     "medtrack_save_emergency_response",
                     "medtrack_release_emergency_resources",
                     "medtrack_consume_medical_supply",
-                    "medtrack_update_borrow_status"
+                    "medtrack_update_borrow_status",
+                    "medtrack_soft_delete",
+                    "medtrack_restore_trash_record",
+                    "medtrack_permanently_delete_trash_record"
                 ].includes(functionName) &&
                 (
                     result.error.code === "PGRST202" ||
@@ -1820,13 +1954,15 @@
         }
 
         if (operation.kind === "delete") {
-            const collection = collections[operation.storageKey];
-            if (!collection) throw new Error("Invalid queued delete request.");
-            const result = await client
-                .from(collection.table)
-                .delete()
-                .eq("id", operation.itemId)
-                .select("id");
+            const sourceTable = trashSources[operation.storageKey];
+            if (!sourceTable) throw new Error("Invalid queued delete request.");
+            operation.trashId = operation.trashId || createUuid();
+            const result = await client.rpc("medtrack_soft_delete", {
+                p_source_table: sourceTable,
+                p_record_id: operation.itemId,
+                p_trash_id: operation.trashId,
+                p_operation_key: `legacy-${operation.id}`
+            });
             if (result.error) throw new Error(result.error.message);
             return;
         }
@@ -1942,7 +2078,11 @@
         useInventoryItem: useInventoryItem,
         saveEmergencyResponse: saveEmergencyResponse,
         releaseEmergencyResources: releaseEmergencyResources,
-        deleteInventoryItem: deleteInventoryItem,
+        deleteInventoryItem: softDeleteRecord,
+        softDeleteRecord: softDeleteRecord,
+        restoreTrashRecord: restoreTrashRecord,
+        permanentlyDeleteTrashRecord: permanentlyDeleteTrashRecord,
+        loadTrashRecords: loadTrashRecords,
         allocateInventoryId: allocateInventoryId,
         saveMedicalSupply: saveMedicalSupply,
         saveMedicalEquipment: saveMedicalEquipment,

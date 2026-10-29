@@ -213,11 +213,27 @@ export default {
           return internalError("profile list lookup", profilesError);
         }
 
+         const { data: trashedProfiles, error: trashError } = await supabaseAdmin
+           .from("trash_records")
+           .select("record_id")
+           .eq("source_table", "profiles")
+           .is("restored_at", null)
+           .is("permanently_deleted_at", null);
+
+         if (trashError) {
+           return internalError("trashed account lookup", trashError);
+         }
+
+         const trashedUserIds = new Set(
+           (trashedProfiles || []).map((record) => String(record.record_id)),
+         );
+
         const profileById = new Map(
           (profiles || []).map((profile) => [profile.id, profile]),
         );
 
         const users = authData.users
+          .filter((user) => !trashedUserIds.has(user.id))
           .map((user) => {
             const profile = profileById.get(user.id);
 
@@ -250,8 +266,12 @@ export default {
       }
 
       const userId = String(body.userId || "").trim();
+      const isTrashAccountAction = [
+        "restore-trash-account",
+        "permanently-delete-trash-account",
+      ].includes(action);
 
-      if (!UUID_PATTERN.test(userId)) {
+      if (!isTrashAccountAction && !UUID_PATTERN.test(userId)) {
         return errorResponse("A valid user ID is required.");
       }
 
@@ -439,31 +459,148 @@ export default {
           return lastAdminProtection;
         }
 
-        const { error: authError } =
-          await supabaseAdmin.auth.admin.deleteUser(userId);
+        const { data: authData, error: lookupError } =
+          await supabaseAdmin.auth.admin.getUserById(userId);
+        const { data: profile, error: profileLookupError } = await supabaseAdmin
+          .from("profiles")
+          .select("id, full_name, username, email, role, status, created_at, updated_at")
+          .eq("id", userId)
+          .maybeSingle();
 
-        if (authError) {
-          return internalError("account deletion", authError);
+        if (lookupError || !authData.user || profileLookupError || !profile) {
+          return internalError(
+            "account Trash lookup",
+            lookupError || profileLookupError || new Error("Account not found"),
+          );
         }
+
+        const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+          userId,
+          { ban_duration: "876000h" },
+        );
+        if (authError) return internalError("account Trash lock", authError);
 
         const { error: profileError } = await supabaseAdmin
           .from("profiles")
-          .delete()
+          .update({ status: "disabled" })
           .eq("id", userId);
-
         if (profileError) {
-          return internalError("profile cleanup after account deletion", profileError);
+          await supabaseAdmin.auth.admin.updateUserById(userId, {
+            ban_duration: normalizeStatus(profile.status) === "active" ? "none" : "876000h",
+          });
+          return internalError("account Trash profile update", profileError);
+        }
+
+        const trashId = crypto.randomUUID();
+        const operationKey = `account-trash-${crypto.randomUUID()}`;
+        const { error: trashError } = await supabaseAdmin.from("trash_records").insert({
+          id: trashId,
+          source_table: "profiles",
+          record_id: userId,
+          module: "User Management",
+          record_name: profile.full_name || profile.username || authData.user.email || userId,
+          record_details: {
+            username: profile.username,
+            email: authData.user.email || profile.email,
+            role: profile.role,
+            status: profile.status,
+          },
+          record_data: {
+            ...profile,
+            email: authData.user.email || profile.email,
+          },
+          deleted_by: callerId,
+          operation_key: operationKey,
+        });
+
+        if (trashError) {
+          await supabaseAdmin.from("profiles").update({ status: profile.status }).eq("id", userId);
+          await supabaseAdmin.auth.admin.updateUserById(userId, {
+            ban_duration: normalizeStatus(profile.status) === "active" ? "none" : "876000h",
+          });
+          return internalError("account Trash creation", trashError);
         }
 
         await recordAccountEvent(
           supabaseAdmin,
           callerId,
-          "Deleted",
+          "Moved to Trash",
           userId,
-          "Deleted an account.",
+          "Moved an account to the Trash Bin and disabled sign-in.",
         );
 
-        return successResponse({ message: "Account deleted successfully." });
+        return successResponse({
+          message: "Account moved to the Trash Bin.",
+          trashId,
+        });
+      }
+
+      if (action === "restore-trash-account" || action === "permanently-delete-trash-account") {
+        const trashId = String(body.trashId || "").trim();
+        if (!UUID_PATTERN.test(trashId)) {
+          return errorResponse("A valid Trash record ID is required.");
+        }
+
+        const { data: trash, error: trashError } = await supabaseAdmin
+          .from("trash_records")
+          .select("*")
+          .eq("id", trashId)
+          .eq("source_table", "profiles")
+          .is("restored_at", null)
+          .is("permanently_deleted_at", null)
+          .maybeSingle();
+
+        if (trashError) return internalError("account Trash lookup", trashError);
+        if (!trash) return errorResponse("The recoverable account was not found.", 404);
+
+        const targetUserId = String(trash.record_id);
+        const snapshot = (trash.record_data || {}) as Record<string, unknown>;
+
+        if (action === "restore-trash-account") {
+          const originalStatus = normalizeStatus(snapshot.status) || "disabled";
+          const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+            targetUserId,
+            { ban_duration: originalStatus === "active" ? "none" : "876000h" },
+          );
+          if (authError) return internalError("account restoration", authError);
+
+          const { error: profileError } = await supabaseAdmin.from("profiles").update({
+            full_name: snapshot.full_name,
+            username: snapshot.username,
+            email: snapshot.email,
+            role: snapshot.role,
+            status: originalStatus,
+          }).eq("id", targetUserId);
+          if (profileError) return internalError("restored profile update", profileError);
+
+          const { error: updateError } = await supabaseAdmin.from("trash_records").update({
+            restored_by: callerId,
+            restored_at: new Date().toISOString(),
+          }).eq("id", trashId);
+          if (updateError) return internalError("account Trash completion", updateError);
+
+          await recordAccountEvent(
+            supabaseAdmin, callerId, "Restored", targetUserId,
+            "Restored an account from the Trash Bin.",
+          );
+          return successResponse({ message: "Account restored successfully." });
+        }
+
+        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
+        if (deleteError) return internalError("permanent account deletion", deleteError);
+
+        const { error: updateError } = await supabaseAdmin.from("trash_records").update({
+          permanently_deleted_by: callerId,
+          permanently_deleted_at: new Date().toISOString(),
+          record_data: {},
+        }).eq("id", trashId);
+        if (updateError) return internalError("permanent Trash completion", updateError);
+
+        await recordAccountEvent(
+          supabaseAdmin, callerId, "Permanently Deleted", targetUserId,
+          "Permanently deleted an account from the Trash Bin.",
+        );
+        return successResponse({ message: "Account permanently deleted." });
       }
 
       return errorResponse("Unsupported account operation.");

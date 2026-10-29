@@ -1192,6 +1192,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     "medtrackMedicalSupplies",
                     deleteId
                 );
+                window.medtrackDialog.alert(
+                    "The medical supply was moved to the Trash Bin."
+                );
             } catch (error) {
                 console.error("Unable to delete supply:", error);
                 window.medtrackDialog.alert(error.message || "Unable to delete the selected supply.");

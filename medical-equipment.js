@@ -847,6 +847,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     "medtrackMedicalEquipment",
                     deleteId
                 );
+                window.medtrackDialog.alert(
+                    "The medical equipment was moved to the Trash Bin."
+                );
             } catch (error) {
                 console.error("Unable to delete equipment:", error);
                 window.medtrackDialog.alert(error.message || "Unable to delete the selected equipment.");

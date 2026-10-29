@@ -38,6 +38,35 @@ test("only the public landing page is available to search engines", async ({ req
     expect(login).toContain('name="robots" content="noindex, nofollow, noarchive"');
 });
 
+test("central Trash Bin is protected and provides complete recovery controls", async ({ request }) => {
+    const response = await request.get("/trash-bin.html");
+    const html = await response.text();
+
+    expect(response.ok()).toBeTruthy();
+    expect(html).toContain('name="robots" content="noindex, nofollow, noarchive"');
+    expect(html).toContain('id="trashSearch"');
+    expect(html).toContain('id="moduleFilter"');
+    expect(html).toContain('id="dateSort"');
+    expect(html).toContain('id="restoreSelected"');
+    expect(html).toContain('id="emptyTrash"');
+    expect(html).toContain('src="trash-bin.js?v=20261029-trash-bin"');
+});
+
+test("shared sidebar adds the Trash Bin without changing existing navigation", async ({ page }) => {
+    await page.goto("/");
+    await page.setContent(
+        '<aside class="sidebar"><div class="brand"><div>MedTrack</div></div>' +
+        '<nav class="sidebar-nav"><a class="nav-item" href="medical-supplies.html">' +
+        '<i></i><span>Medical Supplies</span></a><div class="admin-navigation"></div></nav></aside>'
+    );
+    await page.addScriptTag({ url: "/app-shell.js" });
+
+    await expect(page.getByRole("link", { name: "Trash Bin" })).toHaveAttribute(
+        "href", "trash-bin.html"
+    );
+    await expect(page.getByRole("link", { name: "Medical Supplies" })).toHaveCount(1);
+});
+
 test("forgot password slides in and returns to login", async ({ page }) => {
     await page.goto("/login/login.html");
     const card = page.locator("#authCard");

@@ -24,6 +24,8 @@ Inventory collections synchronize from Supabase in bounded 500-row pages while r
 
 User-facing inventory IDs are stored separately as gap-free display IDs. New records reuse the lowest available display-number gap under a database advisory lock, while immutable internal IDs continue to protect audit history and transaction references.
 
+The centralized Trash Bin replaces normal permanent deletion for Medical Supplies, Medical Equipment, Mobility, Emergency Response, and user accounts. It records the original module, record snapshot, deletion time, and responsible user. Authorized users can search, filter, bulk restore, and restore records with their original IDs; only Administrators can permanently delete or empty Trash. Operational deletion and restoration can be queued offline, while account recovery and permanent deletion require an online connection. Every move, restore, and permanent deletion is recorded in the immutable Audit Logs.
+
 ## Quality checks
 
 - `npm run check` validates JavaScript syntax, local assets, content-security policies, deployment headers, authentication controls, and critical project wiring.

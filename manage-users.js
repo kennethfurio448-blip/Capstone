@@ -784,6 +784,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             userToDelete = null;
             deleteModal.classList.remove("show");
             await loadAccounts();
+            window.medtrackDialog.alert(
+                "The account was disabled and moved to the Trash Bin."
+            );
         } catch (error) {
             window.medtrackDialog.alert(
                 error.message ||

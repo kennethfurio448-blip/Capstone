@@ -1,11 +1,12 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v66-offline-login";
+const CACHE_NAME = "medtrack-shell-v67-trash-bin";
 const APP_SHELL = [
     "/",
     "/index.html",
     "/landing.css",
     "/app-shell.css",
+    "/app-shell.js",
     "/brand-theme.css",
     "/card-navigation.js",
     "/table-pagination.js",
@@ -73,7 +74,10 @@ const APP_SHELL = [
     "/manage-users.js",
     "/settings.html",
     "/settings.css",
-    "/settings.js"
+    "/settings.js",
+    "/trash-bin.html",
+    "/trash-bin.css",
+    "/trash-bin.js"
 ];
 const SUPABASE_LIBRARY = "/api/supabase-js";
 

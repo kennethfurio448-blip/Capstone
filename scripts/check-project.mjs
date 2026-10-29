@@ -222,6 +222,14 @@ const displayIdMigrationPath = join(
 );
 const tablePaginationPath = join(root, "table-pagination.js");
 const settingsScriptPath = join(root, "settings.js");
+const trashPagePath = join(root, "trash-bin.html");
+const trashScriptPath = join(root, "trash-bin.js");
+const trashMigrationPath = join(
+  root,
+  "supabase",
+  "migrations",
+  "20261028090000_system_trash_bin.sql",
+);
 const csvExportPaths = [join(root, "audit-logs.js"), join(root, "reports.js")];
 
 try {
@@ -280,6 +288,9 @@ for (const [label, path] of [
   ["persistent scheduled alerts", persistentAlertsMigrationPath],
   ["gap-free inventory display IDs", displayIdMigrationPath],
   ["shared table pagination", tablePaginationPath],
+  ["central Trash Bin page", trashPagePath],
+  ["central Trash Bin behavior", trashScriptPath],
+  ["system-wide Trash Bin migration", trashMigrationPath],
   ["dependency update configuration", dependabotPath],
 ]) {
   if (!existsSync(path)) failures.push(`${label}: required file is missing`);
@@ -293,7 +304,7 @@ try {
     "admin-dashboard.html", "staff-dashboard.html", "medical-supplies.html",
     "medical-equipment.html", "mobility.html", "available-items.html",
     "emergency-response.html", "reports.html", "status.html", "manage-users.html",
-    "audit-logs.html", "settings.html", "login/login.html",
+    "audit-logs.html", "settings.html", "trash-bin.html", "login/login.html",
   ];
 
   for (const requiredPublicSeo of [
@@ -555,6 +566,48 @@ try {
   }
 } catch (error) {
   failures.push(`supabase-auth: unable to inspect session and MFA controls (${error.message})`);
+}
+
+try {
+  const trashMigration = readFileSync(trashMigrationPath, "utf8");
+  const trashScript = readFileSync(trashScriptPath, "utf8");
+  const dataSync = readFileSync(dataSyncPath, "utf8");
+
+  for (const requiredTrashControl of [
+    "create table if not exists public.trash_records",
+    "medtrack_soft_delete",
+    "medtrack_restore_trash_record",
+    "medtrack_permanently_delete_trash_record",
+    "medtrack_is_active_user",
+    "medtrack_is_admin",
+    "audit_events",
+  ]) {
+    if (!trashMigration.includes(requiredTrashControl)) {
+      failures.push(`Trash Bin migration: missing ${requiredTrashControl}`);
+    }
+  }
+
+  for (const requiredTrashClientControl of [
+    "medtrackTrashRecords",
+    "softDeleteRecord",
+    "restoreTrashRecord",
+    "permanentlyDeleteTrashRecord",
+  ]) {
+    if (!dataSync.includes(requiredTrashClientControl)) {
+      failures.push(`Trash Bin data layer: missing ${requiredTrashClientControl}`);
+    }
+  }
+
+  for (const requiredTrashInterface of [
+    "restoreSelected", "emptyTrash", "moduleFilter", "pendingSync",
+    "restore-trash-account", "permanently-delete-trash-account",
+  ]) {
+    if (!trashScript.includes(requiredTrashInterface)) {
+      failures.push(`Trash Bin interface: missing ${requiredTrashInterface}`);
+    }
+  }
+} catch (error) {
+  failures.push(`Trash Bin: unable to inspect system controls (${error.message})`);
 }
 
 try {

@@ -2004,7 +2004,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     confirmDelete.addEventListener(
         "click",
-        function () {
+        async function () {
             if (!canDeleteEmergency) {
                 return;
             }
@@ -2013,31 +2013,34 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            const requests = getRequests();
-
-            const updatedRequests =
-                requests.filter(
-                    function (request) {
-                        return (
-                            normalizeId(
-                                request.id
-                            ) !==
-                            normalizeId(
-                                requestToDelete
-                            )
-                        );
-                    }
+            if (!window.medtrackData ||
+                typeof window.medtrackData.softDeleteRecord !== "function") {
+                window.medtrackDialog.alert(
+                    "The secure Trash Bin service is unavailable."
                 );
+                return;
+            }
 
-            saveRequests(updatedRequests);
-
-            requestToDelete = null;
-
-            deleteModal.classList.remove(
-                "show"
-            );
-
-            renderRequests();
+            confirmDelete.disabled = true;
+            try {
+                await window.medtrackData.softDeleteRecord(
+                    "medtrackEmergencyRequests",
+                    requestToDelete
+                );
+                requestToDelete = null;
+                deleteModal.classList.remove("show");
+                renderRequests();
+                window.medtrackDialog.alert(
+                    "The emergency response record was moved to the Trash Bin."
+                );
+            } catch (error) {
+                console.error("Unable to move emergency response to Trash:", error);
+                window.medtrackDialog.alert(
+                    error.message || "The record could not be moved to Trash."
+                );
+            } finally {
+                confirmDelete.disabled = false;
+            }
         }
     );
 

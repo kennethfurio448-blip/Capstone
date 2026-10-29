@@ -698,6 +698,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                 "medtrackMobilityAssets",
                 vehicleToDelete
             );
+            window.medtrackDialog.alert(
+                "The mobility asset was moved to the Trash Bin."
+            );
         } catch (error) {
             console.error("Unable to delete mobility asset:", error);
             window.medtrackDialog.alert(error.message || "Unable to delete the selected mobility asset.");
