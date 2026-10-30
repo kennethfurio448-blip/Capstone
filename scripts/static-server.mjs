@@ -37,7 +37,7 @@ const server = createServer(function (request, response) {
 
 server.listen(port, "127.0.0.1", function () {
     console.log(`MedTrack test server listening on http://127.0.0.1:${port}`);
-    idleTimer = setTimeout(shutdown, 15000);
+    idleTimer = setTimeout(shutdown, 60000);
 });
 
 function shutdown() {

@@ -544,7 +544,7 @@ test("inventory creation uses database-issued IDs and atomic saves", async ({ re
     );
 });
 
-test("offline continuation requires a recent approved staff or admin session", async ({ page }) => {
+test("offline continuation remains enrolled without a 24-hour expiry", async ({ page }) => {
     await page.goto("/");
     await page.addScriptTag({ url: "/auth/offline-store.js" });
 
@@ -570,27 +570,15 @@ test("offline continuation requires a recent approved staff or admin session", a
         };
 
         await store.saveProfile(staff);
-        const staffBeforeApproval = await store.loadAuthorizedProfile(
-            staff.id,
-            24 * 60 * 60 * 1000
-        );
+        const staffBeforeApproval = await store.loadAuthorizedProfile(staff.id);
         await store.authorizeOfflineProfile(staff, "authenticated");
-        const approvedStaff = await store.loadAuthorizedProfile(
-            staff.id,
-            24 * 60 * 60 * 1000
-        );
+        const approvedStaff = await store.loadAuthorizedProfile(staff.id);
 
         await store.saveProfile(admin);
         await store.authorizeOfflineProfile(admin, "authenticated");
-        const adminWithoutMfa = await store.loadAuthorizedProfile(
-            admin.id,
-            24 * 60 * 60 * 1000
-        );
+        const adminWithoutMfa = await store.loadAuthorizedProfile(admin.id);
         await store.authorizeOfflineProfile(admin, "aal2");
-        const approvedAdmin = await store.loadAuthorizedProfile(
-            admin.id,
-            24 * 60 * 60 * 1000
-        );
+        const approvedAdmin = await store.loadAuthorizedProfile(admin.id);
 
         await store.clearAll();
         return {
@@ -607,10 +595,24 @@ test("offline continuation requires a recent approved staff or admin session", a
     expect(result.staffBeforeApproval).toBeNull();
     expect(result.staffRole).toBe("staff");
     expect(result.staffOffline).toBe(true);
-    expect(new Date(result.staffExpiresAt).getTime()).toBeGreaterThan(Date.now());
+    expect(result.staffExpiresAt).toBeUndefined();
     expect(result.adminWithoutMfa).toBeNull();
     expect(result.adminRole).toBe("admin");
     expect(result.adminOffline).toBe(true);
+});
+
+test("online login accepts valid accounts from any device without approval waiting", async ({ request }) => {
+    const [loginResponse, guardResponse] = await Promise.all([
+        request.get("/supabase/functions/login-auth/index.ts"),
+        request.get("/auth/supabase-auth.js")
+    ]);
+    const source = `${await loginResponse.text()}\n${await guardResponse.text()}`;
+
+    expect(source).toContain("signInWithPassword");
+    expect(source).not.toMatch(/trusted_devices|approved_sessions|login-approval/i);
+    expect(source).not.toContain("OFFLINE_PROFILE_MAX_AGE_MS");
+    expect(source).not.toContain("offlineSessionExpiresAt");
+    expect(source).not.toContain("offlineAccessExpiresAt");
 });
 
 test("offline login verifies an enrolled password without storing plaintext credentials", async ({ page }) => {
@@ -642,8 +644,7 @@ test("offline login verifies an enrolled password without storing plaintext cred
         try {
             await store.verifyOfflineCredential(
                 staff.username,
-                "Incorrect-Password-2026!",
-                24 * 60 * 60 * 1000
+                "Incorrect-Password-2026!"
             );
         } catch (error) {
             wrongPasswordRejected = true;
@@ -651,8 +652,7 @@ test("offline login verifies an enrolled password without storing plaintext cred
 
         const approved = await store.verifyOfflineCredential(
             staff.email,
-            password,
-            24 * 60 * 60 * 1000
+            password
         );
 
         const admin = {
@@ -675,8 +675,7 @@ test("offline login verifies an enrolled password without storing plaintext cred
         try {
             await store.verifyOfflineCredential(
                 admin.username,
-                adminPassword,
-                24 * 60 * 60 * 1000
+                adminPassword
             );
         } catch (error) {
             adminRejectedBeforeMfa = true;
@@ -684,13 +683,11 @@ test("offline login verifies an enrolled password without storing plaintext cred
         await store.upgradeOfflineCredentialAssurance(admin.id, "aal2");
         const approvedAdmin = await store.verifyOfflineCredential(
             admin.username,
-            adminPassword,
-            24 * 60 * 60 * 1000
+            adminPassword
         );
         const permanentOfflineApproval = await store.verifyOfflineCredential(
             staff.username,
-            password,
-            Number.POSITIVE_INFINITY
+            password
         );
 
         const database = await new Promise(function (resolve, reject) {
@@ -738,7 +735,7 @@ test("offline login verifies an enrolled password without storing plaintext cred
     expect(result.adminRejectedBeforeMfa).toBe(true);
     expect(result.adminRole).toBe("admin");
     expect(result.adminOfflineAccess).toBe(true);
-    expect(result.permanentOfflineExpiry).toBeNull();
+    expect(result.permanentOfflineExpiry).toBeUndefined();
     expect(result.storesPlaintextPassword).toBe(false);
     expect(result.storesPlaintextEmail).toBe(false);
     expect(result.hasSaltedVerifier).toBe(true);

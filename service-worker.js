@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v67-trash-bin";
+const CACHE_NAME = "medtrack-shell-v68-any-device-login";
 const APP_SHELL = [
     "/",
     "/index.html",

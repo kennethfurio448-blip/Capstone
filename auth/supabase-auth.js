@@ -9,7 +9,6 @@
     const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
     const ACTIVITY_WRITE_INTERVAL_MS = 15 * 1000;
     const SESSION_ACTIVITY_KEY = "medtrackLastActivityAt";
-    const OFFLINE_PROFILE_MAX_AGE_MS = Number.POSITIVE_INFINITY;
     const AUTH_REQUEST_TIMEOUT_MS = 10 * 1000;
     const OFFLINE_STORE_TIMEOUT_MS = 3 * 1000;
     const OFFLINE_SESSION_KEY = "medtrackOfflineSession";
@@ -24,6 +23,7 @@
         "medtrackMobilityAssets",
         "medtrackBorrowTransactions",
         "medtrackEmergencyRequests",
+        "medtrackTrashRecords",
         "medtrackAccounts",
         "medtrackAuditLogs"
     ]);
@@ -39,7 +39,8 @@
         "medical-equipment.html": ["admin", "staff"],
         "mobility.html": ["admin", "staff"],
         "status.html": ["admin", "staff"],
-        "emergency-response.html": ["admin", "staff"]
+        "emergency-response.html": ["admin", "staff"],
+        "trash-bin.html": ["admin", "staff"]
     });
 
     let guardedRoles = null;
@@ -48,7 +49,6 @@
     let sessionTimeoutTimer = null;
     let lastActivityWrite = 0;
     let pendingLoginReason = "";
-    let offlineSessionExpiresAt = 0;
 
     function projectUrl(path) {
         return new URL(path, projectRootUrl).href;
@@ -138,8 +138,7 @@
         if (offlineSession) {
             return withTimeout(
                 offlineStore.loadAuthorizedProfile(
-                    offlineSession.userId,
-                    OFFLINE_PROFILE_MAX_AGE_MS
+                    offlineSession.userId
                 ),
                 OFFLINE_STORE_TIMEOUT_MS,
                 "Offline profile lookup timed out."
@@ -157,8 +156,7 @@
 
         return withTimeout(
             offlineStore.loadAuthorizedProfile(
-                user.id,
-                OFFLINE_PROFILE_MAX_AGE_MS
+                user.id
             ),
             OFFLINE_STORE_TIMEOUT_MS,
             "Offline profile lookup timed out."
@@ -170,18 +168,9 @@
             const value = JSON.parse(
                 sessionStorage.getItem(OFFLINE_SESSION_KEY) || "null"
             );
-            const hasExpiry = value && value.expiresAt !== null &&
-                value.expiresAt !== undefined;
             if (
                 !value ||
-                !value.userId ||
-                (
-                    hasExpiry &&
-                    (
-                        !Number.isFinite(Number(value.expiresAt)) ||
-                        Number(value.expiresAt) <= Date.now()
-                    )
-                )
+                !value.userId
             ) {
                 sessionStorage.removeItem(OFFLINE_SESSION_KEY);
                 return null;
@@ -194,13 +183,9 @@
     }
 
     function startOfflineSession(profile) {
-        const expiresAt = profile && profile.offlineAccessExpiresAt
-            ? new Date(profile.offlineAccessExpiresAt).getTime()
-            : null;
         sessionStorage.setItem(OFFLINE_SESSION_KEY, JSON.stringify({
             userId: profile.id,
-            role: profile.role,
-            expiresAt: expiresAt
+            role: profile.role
         }));
     }
 
@@ -440,14 +425,6 @@
 
     async function enforceSessionTimeout() {
         if (!navigator.onLine) {
-            if (
-                offlineSessionExpiresAt > 0 &&
-                Date.now() >= offlineSessionExpiresAt
-            ) {
-                window.location.replace(
-                    loginRedirectUrl("offline-session-expired")
-                );
-            }
             return;
         }
 
@@ -1018,10 +995,6 @@
 
             await authorizeOfflineContinuation(profile);
 
-            offlineSessionExpiresAt = profile.offlineAccessExpiresAt
-                ? new Date(profile.offlineAccessExpiresAt).getTime()
-                : 0;
-
             preparePageShell(profile);
             document.body.hidden = false;
             installPageShowGuard();
@@ -1115,8 +1088,7 @@
         const profile = await withTimeout(
             offlineStore.verifyOfflineCredential(
                 identifier,
-                password,
-                OFFLINE_PROFILE_MAX_AGE_MS
+                password
             ),
             15 * 1000,
             "Offline password verification timed out."

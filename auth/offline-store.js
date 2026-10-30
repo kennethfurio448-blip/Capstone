@@ -264,7 +264,7 @@
         });
     }
 
-    async function verifyOfflineCredential(identifier, password, maximumAgeMs) {
+    async function verifyOfflineCredential(identifier, password) {
         const lookupKey = await identifierLookupKey(identifier);
         const credential = await getCredential(lookupKey);
         const genericError = "The offline username or password is incorrect.";
@@ -279,15 +279,9 @@
         }
 
         const validatedAt = new Date(credential.lastValidatedAt).getTime();
-        if (
-            !Number.isFinite(validatedAt) ||
-            (
-                Number.isFinite(maximumAgeMs) &&
-                Date.now() - validatedAt > maximumAgeMs
-            )
-        ) {
+        if (!Number.isFinite(validatedAt)) {
             throw new Error(
-                "Offline login approval expired. Reconnect and sign in online."
+                "Offline login enrollment is invalid. Reconnect and sign in online."
             );
         }
 
@@ -308,7 +302,7 @@
             throw new Error(genericError);
         }
 
-        const profile = await loadProfile(credential.userId, maximumAgeMs);
+        const profile = await loadProfile(credential.userId);
         if (
             !profile ||
             profile.status !== "active" ||
@@ -328,13 +322,7 @@
             lastOfflineLoginAt: new Date().toISOString()
         });
         await authorizeOfflineProfile(profile, credential.assurance);
-        const authorized = await loadAuthorizedProfile(profile.id, maximumAgeMs);
-        return authorized ? {
-            ...authorized,
-            offlineAccessExpiresAt: Number.isFinite(maximumAgeMs)
-                ? new Date(validatedAt + maximumAgeMs).toISOString()
-                : null
-        } : null;
+        return loadAuthorizedProfile(profile.id);
     }
 
     async function removeOfflineCredentials(identifier) {
@@ -390,7 +378,7 @@
         });
     }
 
-    async function loadProfile(userId, maximumAgeMs) {
+    async function loadProfile(userId) {
         if (!userId) return null;
         const database = await openDatabase();
         const transaction = database.transaction("profiles", "readonly");
@@ -399,11 +387,8 @@
         );
         if (!record) return null;
 
-        const age = Date.now() - new Date(record.savedAt).getTime();
-        if (
-            !Number.isFinite(age) ||
-            (Number.isFinite(maximumAgeMs) && age > maximumAgeMs)
-        ) return null;
+        const savedAt = new Date(record.savedAt).getTime();
+        if (!Number.isFinite(savedAt)) return null;
         return record.profile || null;
     }
 
@@ -426,7 +411,7 @@
         });
     }
 
-    async function loadAuthorizedProfile(userId, maximumAgeMs) {
+    async function loadAuthorizedProfile(userId) {
         if (!userId) return null;
         const database = await openDatabase();
         const transaction = database.transaction("profiles", "readonly");
@@ -443,13 +428,6 @@
         if (
             !Number.isFinite(authorizedAge) ||
             !Number.isFinite(profileAge) ||
-            (
-                Number.isFinite(maximumAgeMs) &&
-                (
-                    authorizedAge > maximumAgeMs ||
-                    profileAge > maximumAgeMs
-                )
-            ) ||
             record.offlineAuthorizedRole !== record.profile.role
         ) {
             return null;
@@ -464,12 +442,7 @@
 
         return {
             ...record.profile,
-            offlineAccess: true,
-            offlineAccessExpiresAt: Number.isFinite(maximumAgeMs)
-                ? new Date(
-                    new Date(record.offlineAuthorizedAt).getTime() + maximumAgeMs
-                ).toISOString()
-                : null
+            offlineAccess: true
         };
     }
 

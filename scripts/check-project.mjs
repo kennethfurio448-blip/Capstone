@@ -653,7 +653,6 @@ try {
   }
 
   for (const requiredOfflineGuardControl of [
-    "OFFLINE_PROFILE_MAX_AGE_MS",
     "ONLINE_ONLY_ADMIN_PAGES",
     "authorizeOfflineContinuation",
     "isOfflineSession",
@@ -662,6 +661,17 @@ try {
   ]) {
     if (!authGuard.includes(requiredOfflineGuardControl)) {
       failures.push(`offline-auth: missing guard ${requiredOfflineGuardControl}`);
+    }
+  }
+
+  for (const obsoleteOfflineExpiry of [
+    "OFFLINE_PROFILE_MAX_AGE_MS",
+    "offlineSessionExpiresAt",
+    "offlineAccessExpiresAt",
+    "offline-session-expired",
+  ]) {
+    if (authGuard.includes(obsoleteOfflineExpiry)) {
+      failures.push(`offline-auth: obsolete 24-hour expiry remains: ${obsoleteOfflineExpiry}`);
     }
   }
 
