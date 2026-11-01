@@ -11,8 +11,14 @@ permissions:
 
 jobs:
   build-windows-installer:
-    runs-on: windows-latest
+    runs-on: ${{ vars.WINDOWS_SIGNING_RUNNER || 'windows-latest' }}
+    environment: windows-signing
     timeout-minutes: 30
+    env:
+      WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+      WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+      WINDOWS_CERTIFICATE_SHA1: ${{ secrets.WINDOWS_CERTIFICATE_SHA1 }}
+      MEDTRACK_WINDOWS_PUBLISHER: ${{ secrets.MEDTRACK_WINDOWS_PUBLISHER }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,8 +29,19 @@ jobs:
         run: npm ci
       - name: Validate application source
         run: npm run check
-      - name: Build Windows installer
-        run: npm run desktop:build
+      - name: Require trusted signing credentials
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:MEDTRACK_WINDOWS_PUBLISHER)) {
+            throw "MEDTRACK_WINDOWS_PUBLISHER is not configured in the windows-signing environment."
+          }
+          if ([string]::IsNullOrWhiteSpace($env:WIN_CSC_LINK) -and [string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_SHA1)) {
+            throw "A trusted Windows code-signing identity is required. Unsigned releases are blocked."
+          }
+      - name: Build signed Windows installer
+        run: npm run desktop:build:signed
+      - name: Verify publisher and trusted timestamp
+        run: npm run desktop:verify-signature
       - name: Retain installer as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -42,7 +59,7 @@ jobs:
             throw "The MedTrack installer was not produced."
           }
           $asset = "$($installer.FullName)#MedTrack Windows Installer"
-          gh release create $env:GITHUB_REF_NAME $asset --verify-tag --title "MedTrack $env:GITHUB_REF_NAME" --notes "Install MedTrack on 64-bit Windows. Connect and sign in online once on each device before using enrolled offline login. This installer is not code-signed, so Windows may display an Unknown publisher warning."
+          gh release create $env:GITHUB_REF_NAME $asset --verify-tag --title "MedTrack $env:GITHUB_REF_NAME" --notes "Authenticode-signed MedTrack installer for 64-bit Windows. Verify the publisher shown by Windows before installation. Connect and sign in online once on each device before using enrolled offline login."
           if ($LASTEXITCODE -ne 0) {
             throw "GitHub release publishing failed with exit code $LASTEXITCODE."
           }

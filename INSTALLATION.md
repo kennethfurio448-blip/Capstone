@@ -10,7 +10,7 @@ MedTrack remains available at `https://www.medtrackmanagement.com` and can also 
 4. Launch MedTrack and connect to the internet for the first sign-in on that device.
 5. Sign in with an authorized Admin or Staff account. Administrators must complete MFA before their offline enrollment is approved.
 
-The installer is not code-signed. Windows SmartScreen may therefore identify the publisher as unknown. Verify that the file came from the authorized MedTrack project before running it.
+The current public version 1.0.1 installer is not code-signed, so Windows SmartScreen identifies its publisher as unknown. Future public releases are blocked unless they have a valid CA-issued Authenticode signature and trusted timestamp. See `CODE_SIGNING.md` for the required signing setup. A valid signature confirms publisher identity, but a new publisher can still receive SmartScreen warnings while reputation develops.
 
 ## Windows or Android PWA
 

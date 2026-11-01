@@ -12,14 +12,16 @@
     "test:backup-restore": "node scripts/test-backup-restore.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs",
     "desktop:start": "electron .",
-    "desktop:build": "electron-builder --win nsis --x64 --publish never"
+    "desktop:build": "electron-builder --win nsis --x64 --publish never",
+    "desktop:build:signed": "node scripts/build-signed-windows.mjs",
+    "desktop:verify-signature": "node scripts/verify-windows-signature.mjs"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kennethfurio448-blip/Capstone.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "PDRRMO Quezon",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/kennethfurio448-blip/Capstone/issues"
@@ -36,7 +38,7 @@
   "build": {
     "appId": "ph.gov.quezon.pdrrmo.medtrack",
     "productName": "MedTrack",
-    "copyright": "Copyright © PDRRMO Quezon",
+    "copyright": "Copyright (c) PDRRMO Quezon",
     "asar": true,
     "directories": {
       "output": "release"
@@ -55,7 +57,13 @@
         }
       ],
       "icon": "assets/pdrrmo-logo-transparent.png",
-      "artifactName": "MedTrack-Setup-${version}.${ext}"
+      "artifactName": "MedTrack-Setup-${version}.${ext}",
+      "signtoolOptions": {
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
+        "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+      }
     },
     "nsis": {
       "oneClick": false,

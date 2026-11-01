@@ -175,6 +175,9 @@ const manifestPath = join(root, "manifest.webmanifest");
 const desktopMainPath = join(root, "desktop", "main.cjs");
 const desktopOfflinePath = join(root, "desktop", "offline.html");
 const installationGuidePath = join(root, "INSTALLATION.md");
+const codeSigningGuidePath = join(root, "CODE_SIGNING.md");
+const signedWindowsBuildPath = join(root, "scripts", "build-signed-windows.mjs");
+const signatureVerificationPath = join(root, "scripts", "verify-windows-signature.mjs");
 const pwaScriptPath = join(root, "pwa.js");
 const offlineMigrationPath = join(
   root,
@@ -309,6 +312,9 @@ for (const [label, path] of [
   ["Windows desktop application", desktopMainPath],
   ["desktop offline setup page", desktopOfflinePath],
   ["application installation guide", installationGuidePath],
+  ["Windows code-signing guide", codeSigningGuidePath],
+  ["signed Windows build guard", signedWindowsBuildPath],
+  ["Windows signature verification", signatureVerificationPath],
 ]) {
   if (!existsSync(path)) failures.push(`${label}: required file is missing`);
 }
@@ -820,6 +826,55 @@ try {
   }
 } catch (error) {
   failures.push(`offline support: unable to inspect PWA controls (${error.message})`);
+}
+
+try {
+  const packageConfig = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+  const signedBuild = readFileSync(signedWindowsBuildPath, "utf8");
+  const signatureVerification = readFileSync(signatureVerificationPath, "utf8");
+  const releaseWorkflow = readFileSync(workflowPath.replace("quality.yml", "desktop-release.yml"), "utf8");
+  const signingOptions = packageConfig.build?.win?.signtoolOptions || {};
+
+  if (!packageConfig.scripts?.["desktop:build:signed"] ||
+      !packageConfig.scripts?.["desktop:verify-signature"]) {
+    failures.push("Windows signing: signed build and verification scripts are required");
+  }
+  if (JSON.stringify(signingOptions.signingHashAlgorithms) !== '["sha256"]' ||
+      !signingOptions.rfc3161TimeStampServer) {
+    failures.push("Windows signing: SHA-256 and RFC 3161 timestamping are required");
+  }
+  for (const requiredBuildGuard of [
+    "WIN_CSC_LINK",
+    "WINDOWS_CERTIFICATE_SHA1",
+    "MEDTRACK_WINDOWS_PUBLISHER",
+    "--config.forceCodeSigning=true",
+  ]) {
+    if (!signedBuild.includes(requiredBuildGuard)) {
+      failures.push(`Windows signing: build guard is missing ${requiredBuildGuard}`);
+    }
+  }
+  for (const requiredVerification of [
+    "Get-AuthenticodeSignature",
+    'signature.Status !== "Valid"',
+    "TimestampSubject",
+    "expectedPublisher",
+  ]) {
+    if (!signatureVerification.includes(requiredVerification)) {
+      failures.push(`Windows signing: verification is missing ${requiredVerification}`);
+    }
+  }
+  for (const workflowGuard of [
+    "environment: windows-signing",
+    "npm run desktop:build:signed",
+    "npm run desktop:verify-signature",
+    "Unsigned releases are blocked",
+  ]) {
+    if (!releaseWorkflow.includes(workflowGuard)) {
+      failures.push(`Windows signing workflow: missing ${workflowGuard}`);
+    }
+  }
+} catch (error) {
+  failures.push(`Windows signing: unable to inspect release safeguards (${error.message})`);
 }
 
 try {
