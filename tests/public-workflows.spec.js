@@ -52,19 +52,35 @@ test("central Trash Bin is protected and provides complete recovery controls", a
     expect(html).toContain('src="trash-bin.js?v=20261029-trash-bin"');
 });
 
-test("shared sidebar adds the Trash Bin without changing existing navigation", async ({ page }) => {
+test("shared sidebar keeps one Trash Bin after System Walkthrough", async ({ page }) => {
     await page.goto("/");
     await page.setContent(
         '<aside class="sidebar"><div class="brand"><div>MedTrack</div></div>' +
         '<nav class="sidebar-nav"><a class="nav-item" href="medical-supplies.html">' +
-        '<i></i><span>Medical Supplies</span></a><div class="admin-navigation"></div></nav></aside>'
+        '<i></i><span>Medical Supplies</span></a><a class="nav-item" href="trash-bin.html">Trash Bin</a>' +
+        '<div class="admin-navigation"><a class="nav-item" href="settings.html">System Settings</a></div>' +
+        '<a class="nav-item" href="trash-bin.html">Trash Bin</a></nav>' +
+        '<button class="logout-button">Logout</button></aside>'
     );
     await page.addScriptTag({ url: "/app-shell.js" });
+    await page.evaluate(function () {
+        const walkthrough = document.createElement("button");
+        walkthrough.className = "nav-item walkthrough-launch";
+        walkthrough.textContent = "System Walkthrough";
+        document.querySelector(".sidebar-nav").appendChild(walkthrough);
+    });
 
-    await expect(page.getByRole("link", { name: "Trash Bin" })).toHaveAttribute(
+    const trash = page.getByRole("link", { name: "Trash Bin" });
+    await expect(trash).toHaveCount(1);
+    await expect(trash).toHaveAttribute(
         "href", "trash-bin.html"
     );
+    await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html']"))
+        .toHaveCount(1);
     await expect(page.getByRole("link", { name: "Medical Supplies" })).toHaveCount(1);
+    await page.getByRole("button", { name: "Collapse sidebar navigation" }).click();
+    await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html']"))
+        .toHaveCount(1);
 });
 
 test("forgot password slides in and returns to login", async ({ page }) => {

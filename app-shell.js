@@ -39,19 +39,48 @@
         }
 
         const navigation = sidebar.querySelector(".sidebar-nav");
-        if (navigation && !navigation.querySelector('a[href="trash-bin.html"]')) {
-            const trashLink = document.createElement("a");
+        if (navigation) {
+            const trashLinks = Array.from(
+                navigation.querySelectorAll('a[href="trash-bin.html"]')
+            );
+            const trashLink = trashLinks.shift() || document.createElement("a");
+            trashLinks.forEach(function (duplicate) { duplicate.remove(); });
             trashLink.href = "trash-bin.html";
-            trashLink.className = "nav-item";
+            trashLink.classList.add("nav-item");
             trashLink.innerHTML =
                 '<i class="fa-solid fa-trash-can-arrow-up" aria-hidden="true"></i>' +
                 '<span>Trash Bin</span>';
+            trashLink.title = "Trash Bin";
             if (window.location.pathname.endsWith("/trash-bin.html")) {
                 trashLink.classList.add("active");
                 trashLink.setAttribute("aria-current", "page");
+            } else {
+                trashLink.classList.remove("active");
+                trashLink.removeAttribute("aria-current");
             }
-            const adminNavigation = navigation.querySelector(".admin-navigation");
-            navigation.insertBefore(trashLink, adminNavigation || null);
+
+            function placeTrashAfterWalkthrough() {
+                const walkthrough = navigation.querySelector(".walkthrough-launch");
+                if (walkthrough) {
+                    if (walkthrough.nextElementSibling !== trashLink) {
+                        walkthrough.insertAdjacentElement("afterend", trashLink);
+                    }
+                    return true;
+                }
+                if (trashLink.parentElement !== navigation ||
+                    trashLink !== navigation.lastElementChild) {
+                    navigation.appendChild(trashLink);
+                }
+                return false;
+            }
+
+            placeTrashAfterWalkthrough();
+            const navigationObserver = new MutationObserver(function () {
+                if (placeTrashAfterWalkthrough()) navigationObserver.disconnect();
+            });
+            if (!navigation.querySelector(".walkthrough-launch")) {
+                navigationObserver.observe(navigation, { childList: true });
+            }
         }
 
         sidebar.querySelectorAll(".nav-item, .logout-button").forEach(function (item) {
