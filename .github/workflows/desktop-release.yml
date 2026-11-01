@@ -29,16 +29,20 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MedTrack-Windows-${{ github.ref_name }}
-          path: release/MedTrack-Setup-1.0.0.exe
+          path: release/MedTrack-Setup-*.exe
           if-no-files-found: error
       - name: Publish tagged GitHub release
         if: github.ref_type == 'tag'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >-
-          gh release create $env:GITHUB_REF_NAME
-          "release/MedTrack-Setup-1.0.0.exe#MedTrack Windows Installer"
-          --verify-tag
-          --title "MedTrack $env:GITHUB_REF_NAME"
-          --notes "Install MedTrack on 64-bit Windows. Connect and sign in online once on each device before using enrolled offline login. This installer is not code-signed, so Windows may display an Unknown publisher warning."
+        run: |
+          $installer = Get-ChildItem -Path "release" -Filter "MedTrack-Setup-*.exe" | Select-Object -First 1
+          if (-not $installer) {
+            throw "The MedTrack installer was not produced."
+          }
+          $asset = "$($installer.FullName)#MedTrack Windows Installer"
+          gh release create $env:GITHUB_REF_NAME $asset --verify-tag --title "MedTrack $env:GITHUB_REF_NAME" --notes "Install MedTrack on 64-bit Windows. Connect and sign in online once on each device before using enrolled offline login. This installer is not code-signed, so Windows may display an Unknown publisher warning."
+          if ($LASTEXITCODE -ne 0) {
+            throw "GitHub release publishing failed with exit code $LASTEXITCODE."
+          }

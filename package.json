@@ -1,6 +1,6 @@
 {
   "name": "new-medtrack",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "desktop/main.cjs",
   "scripts": {
     "check": "node scripts/check-project.mjs",
@@ -12,7 +12,7 @@
     "test:backup-restore": "node scripts/test-backup-restore.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs",
     "desktop:start": "electron .",
-    "desktop:build": "electron-builder --win nsis --x64"
+    "desktop:build": "electron-builder --win nsis --x64 --publish never"
   },
   "repository": {
     "type": "git",

@@ -4,7 +4,7 @@ MedTrack remains available at `https://www.medtrackmanagement.com` and can also 
 
 ## Windows installer
 
-1. Download `MedTrack-Setup-1.0.0.exe` from the project's GitHub Releases page or the file supplied with this delivery.
+1. Download `MedTrack-Setup-1.0.1.exe` from the project's GitHub Releases page or the file supplied with this delivery.
 2. Open the installer and choose the installation folder.
 3. Keep the Desktop and Start Menu shortcut options enabled.
 4. Launch MedTrack and connect to the internet for the first sign-in on that device.
