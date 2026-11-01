@@ -1,0 +1,44 @@
+name: MedTrack Windows release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate application source
+        run: npm run check
+      - name: Build Windows installer
+        run: npm run desktop:build
+      - name: Retain installer as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MedTrack-Windows-${{ github.ref_name }}
+          path: release/MedTrack-Setup-1.0.0.exe
+          if-no-files-found: error
+      - name: Publish tagged GitHub release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create $env:GITHUB_REF_NAME
+          "release/MedTrack-Setup-1.0.0.exe#MedTrack Windows Installer"
+          --verify-tag
+          --title "MedTrack $env:GITHUB_REF_NAME"
+          --notes "Install MedTrack on 64-bit Windows. Connect and sign in online once on each device before using enrolled offline login. This installer is not code-signed, so Windows may display an Unknown publisher warning."
