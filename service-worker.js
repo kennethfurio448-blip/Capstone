@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v69-fixed-trash-navigation";
+const CACHE_NAME = "medtrack-shell-v70-installable-app";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -14,6 +14,8 @@ const APP_SHELL = [
     "/assets/pdrrmo-logo.png",
     "/assets/pdrrmo-logo-transparent.png",
     "/assets/quezon-province-seal.png",
+    "/assets/medtrack-icon-192.png",
+    "/assets/medtrack-icon-512.png",
     "/manifest.webmanifest",
     "/medtrack-icon.svg",
     "/page-favicon.js",

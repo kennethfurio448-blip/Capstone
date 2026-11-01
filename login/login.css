@@ -435,3 +435,28 @@ input:focus-visible {
         transition-duration: 1ms;
     }
 }
+.pwa-install-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border: 1px solid rgba(7, 26, 79, 0.2);
+    border-radius: 9px;
+    color: #071a4f;
+    background: #ffffff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.pwa-install-button:hover {
+    border-color: #c91f2c;
+    color: #c91f2c;
+}
+
+.pwa-install-button[hidden] {
+    display: none;
+}

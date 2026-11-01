@@ -3,7 +3,7 @@ import { dirname, extname, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const root = resolve(import.meta.dirname, "..");
-const ignoredDirectories = new Set([".git", "node_modules", ".temp"]);
+const ignoredDirectories = new Set([".git", "node_modules", ".temp", "release"]);
 
 function walk(directory) {
   return readdirSync(directory).flatMap((name) => {
@@ -40,7 +40,7 @@ const requiredDeploymentHeaders = [
   "Permissions-Policy",
 ];
 
-for (const file of files.filter((path) => extname(path) === ".js")) {
+for (const file of files.filter((path) => [".js", ".cjs"].includes(extname(path)))) {
   const result = spawnSync(process.execPath, ["--check", file], {
     encoding: "utf8",
   });
@@ -172,6 +172,10 @@ const accessibilityTestPath = join(root, "tests", "accessibility-mobile.spec.js"
 const authenticatedTestPath = join(root, "tests", "authenticated-access.spec.js");
 const dependabotPath = join(root, ".github", "dependabot.yml");
 const manifestPath = join(root, "manifest.webmanifest");
+const desktopMainPath = join(root, "desktop", "main.cjs");
+const desktopOfflinePath = join(root, "desktop", "offline.html");
+const installationGuidePath = join(root, "INSTALLATION.md");
+const pwaScriptPath = join(root, "pwa.js");
 const offlineMigrationPath = join(
   root,
   "supabase",
@@ -292,6 +296,9 @@ for (const [label, path] of [
   ["central Trash Bin behavior", trashScriptPath],
   ["system-wide Trash Bin migration", trashMigrationPath],
   ["dependency update configuration", dependabotPath],
+  ["Windows desktop application", desktopMainPath],
+  ["desktop offline setup page", desktopOfflinePath],
+  ["application installation guide", installationGuidePath],
 ]) {
   if (!existsSync(path)) failures.push(`${label}: required file is missing`);
 }
@@ -712,6 +719,36 @@ try {
     if (iconPath && !existsSync(join(root, iconPath))) {
       failures.push(`manifest: missing icon asset ${icon.src}`);
     }
+  }
+
+  const desktopMain = readFileSync(desktopMainPath, "utf8");
+  const pwaScript = readFileSync(pwaScriptPath, "utf8");
+  const loginPage = readFileSync(join(root, "login", "login.html"), "utf8");
+
+  for (const desktopControl of [
+    "persist:medtrack",
+    "nodeIntegration: false",
+    "contextIsolation: true",
+    "sandbox: true",
+    "webSecurity: true",
+    "setPermissionRequestHandler",
+  ]) {
+    if (!desktopMain.includes(desktopControl)) {
+      failures.push(`desktop application: missing security control ${desktopControl}`);
+    }
+  }
+
+  for (const installControl of [
+    "beforeinstallprompt",
+    "appinstalled",
+    "deferredInstallPrompt",
+  ]) {
+    if (!pwaScript.includes(installControl)) {
+      failures.push(`PWA installation: missing ${installControl}`);
+    }
+  }
+  if (!loginPage.includes('id="installMedTrack"')) {
+    failures.push("PWA installation: login page is missing the install button");
   }
 
   if (

@@ -1,7 +1,7 @@
 {
   "name": "new-medtrack",
   "version": "1.0.0",
-  "main": "admin-dashboard.js",
+  "main": "desktop/main.cjs",
   "scripts": {
     "check": "node scripts/check-project.mjs",
     "test": "npm run check && npm run test:backup-format && npm run test:e2e",
@@ -10,7 +10,9 @@
     "backup:create": "node scripts/create-automated-backup.mjs",
     "verify:backup": "node scripts/verify-backup.mjs",
     "test:backup-restore": "node scripts/test-backup-restore.mjs",
-    "verify:deployment": "node scripts/verify-deployment.mjs"
+    "verify:deployment": "node scripts/verify-deployment.mjs",
+    "desktop:start": "electron .",
+    "desktop:build": "electron-builder --win nsis --x64"
   },
   "repository": {
     "type": "git",
@@ -27,6 +29,41 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
     "@playwright/test": "^1.55.1",
+    "electron": "45.2.1",
+    "electron-builder": "26.18.0",
     "supabase": "^2.117.0"
+  },
+  "build": {
+    "appId": "ph.gov.quezon.pdrrmo.medtrack",
+    "productName": "MedTrack",
+    "copyright": "Copyright © PDRRMO Quezon",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**/*",
+      "assets/pdrrmo-logo-transparent.png"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/pdrrmo-logo-transparent.png",
+      "artifactName": "MedTrack-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MedTrack",
+      "deleteAppDataOnUninstall": false
+    }
   }
 }

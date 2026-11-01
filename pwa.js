@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    let deferredInstallPrompt = null;
+
     function ensureMetadata() {
         if (!document.querySelector("link[rel='manifest']")) {
             const manifest = document.createElement("link");
@@ -17,9 +19,39 @@
         }
     }
 
+    function installButton() {
+        return document.getElementById("installMedTrack");
+    }
+
     window.addEventListener("beforeinstallprompt", function (event) {
         event.preventDefault();
+        deferredInstallPrompt = event;
+        const button = installButton();
+        if (button) button.hidden = false;
     });
+
+    window.addEventListener("appinstalled", function () {
+        deferredInstallPrompt = null;
+        const button = installButton();
+        if (button) button.hidden = true;
+    });
+
+    window.addEventListener("DOMContentLoaded", function () {
+        const button = installButton();
+        if (!button) return;
+        button.addEventListener("click", async function () {
+            if (!deferredInstallPrompt) return;
+            button.disabled = true;
+            try {
+                await deferredInstallPrompt.prompt();
+                await deferredInstallPrompt.userChoice;
+                deferredInstallPrompt = null;
+                button.hidden = true;
+            } finally {
+                button.disabled = false;
+            }
+        });
+    }, { once: true });
 
     window.addEventListener("online", function () {
         if (
