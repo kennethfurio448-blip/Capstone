@@ -23,29 +23,66 @@
         return document.getElementById("installMedTrack");
     }
 
+    function isInstalled() {
+        return window.matchMedia("(display-mode: standalone)").matches ||
+            window.navigator.standalone === true;
+    }
+
+    function notifyInstallAvailability() {
+        window.dispatchEvent(new CustomEvent("medtrack:pwa-install-availability", {
+            detail: {
+                available: Boolean(deferredInstallPrompt),
+                installed: isInstalled()
+            }
+        }));
+    }
+
+    async function promptInstall() {
+        if (!deferredInstallPrompt) {
+            return { available: false, installed: isInstalled(), outcome: "unavailable" };
+        }
+
+        const prompt = deferredInstallPrompt;
+        deferredInstallPrompt = null;
+        await prompt.prompt();
+        const choice = await prompt.userChoice;
+        notifyInstallAvailability();
+        return {
+            available: true,
+            installed: choice.outcome === "accepted" || isInstalled(),
+            outcome: choice.outcome
+        };
+    }
+
+    window.medtrackPwaInstall = Object.freeze({
+        isAvailable: function () { return Boolean(deferredInstallPrompt); },
+        isInstalled: isInstalled,
+        promptInstall: promptInstall
+    });
+
     window.addEventListener("beforeinstallprompt", function (event) {
         event.preventDefault();
         deferredInstallPrompt = event;
         const button = installButton();
         if (button) button.hidden = false;
+        notifyInstallAvailability();
     });
 
     window.addEventListener("appinstalled", function () {
         deferredInstallPrompt = null;
         const button = installButton();
         if (button) button.hidden = true;
+        notifyInstallAvailability();
     });
 
     window.addEventListener("DOMContentLoaded", function () {
         const button = installButton();
         if (!button) return;
         button.addEventListener("click", async function () {
-            if (!deferredInstallPrompt) return;
+            if (!window.medtrackPwaInstall.isAvailable()) return;
             button.disabled = true;
             try {
-                await deferredInstallPrompt.prompt();
-                await deferredInstallPrompt.userChoice;
-                deferredInstallPrompt = null;
+                await window.medtrackPwaInstall.promptInstall();
                 button.hidden = true;
             } finally {
                 button.disabled = false;

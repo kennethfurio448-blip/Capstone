@@ -1,5 +1,18 @@
 const { test, expect } = require("@playwright/test");
 
+function apiResponseRecorder() {
+    return {
+        headers: {},
+        statusCode: 200,
+        body: null,
+        setHeader(name, value) { this.headers[name] = value; },
+        status(code) { this.statusCode = code; return this; },
+        json(value) { this.body = value; return this; },
+        send(value) { this.body = value; return this; },
+        end() { return this; }
+    };
+}
+
 test("landing page opens the MedTrack login", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "MedTrack" })).toBeVisible();
@@ -52,7 +65,63 @@ test("central Trash Bin is protected and provides complete recovery controls", a
     expect(html).toContain('src="trash-bin.js?v=20261029-trash-bin"');
 });
 
-test("shared sidebar keeps one Trash Bin after System Walkthrough", async ({ page }) => {
+test("download center exposes only verified available application options", async ({ request }) => {
+    const response = await request.get("/download-app.html");
+    const html = await response.text();
+
+    expect(response.ok()).toBeTruthy();
+    expect(html).toContain('name="robots" content="noindex, nofollow, noarchive"');
+    expect(html).toContain('id="downloadWindows"');
+    expect(html).toContain('href="/api/download-windows"');
+    expect(html).toContain('id="installPwa"');
+    expect(html).toContain('id="checkUpdates"');
+    expect(html).toContain("APK is not currently available");
+    expect(html).not.toContain("Download APK");
+    expect(html).not.toContain("Install from Google Play");
+});
+
+test("release endpoints return current metadata and a validated installer redirect", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = async function () {
+        return {
+            ok: true,
+            json: async function () {
+                return {
+                    tag_name: "v1.0.1",
+                    published_at: "2026-11-01T11:09:47Z",
+                    assets: [{
+                        name: "MedTrack-Setup-1.0.1.exe",
+                        size: 123136086,
+                        browser_download_url: "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.1/MedTrack-Setup-1.0.1.exe"
+                    }]
+                };
+            }
+        };
+    };
+
+    try {
+        const metadataHandler = require("../api/app-release.js");
+        const downloadHandler = require("../api/download-windows.js");
+        const metadataResponse = apiResponseRecorder();
+        const downloadResponse = apiResponseRecorder();
+
+        await metadataHandler({ method: "GET" }, metadataResponse);
+        await downloadHandler({ method: "GET" }, downloadResponse);
+
+        expect(metadataResponse.statusCode).toBe(200);
+        expect(metadataResponse.body.version).toBe("1.0.1");
+        expect(metadataResponse.body.windows.available).toBe(true);
+        expect(metadataResponse.body.android.apkAvailable).toBe(false);
+        expect(downloadResponse.statusCode).toBe(302);
+        expect(downloadResponse.headers.Location).toBe(
+            "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.1/MedTrack-Setup-1.0.1.exe"
+        );
+    } finally {
+        global.fetch = originalFetch;
+    }
+});
+
+test("shared sidebar keeps Trash Bin and Download App fixed after System Walkthrough", async ({ page }) => {
     await page.goto("/");
     await page.setContent(
         '<aside class="sidebar"><div class="brand"><div>MedTrack</div></div>' +
@@ -77,10 +146,45 @@ test("shared sidebar keeps one Trash Bin after System Walkthrough", async ({ pag
     );
     await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html']"))
         .toHaveCount(1);
+    await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html'] + a[href='download-app.html']"))
+        .toHaveCount(1);
+    await expect(page.getByRole("link", { name: "Download App" })).toHaveCount(1);
     await expect(page.getByRole("link", { name: "Medical Supplies" })).toHaveCount(1);
     await page.getByRole("button", { name: "Collapse sidebar navigation" }).click();
     await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html']"))
         .toHaveCount(1);
+    await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html'] + a[href='download-app.html']"))
+        .toHaveCount(1);
+});
+
+test("shared PWA installer exposes the browser prompt to the download center", async ({ page }) => {
+    await page.goto("/");
+    await page.setContent("<main>MedTrack installation test</main>");
+    await page.addScriptTag({ url: "/pwa.js" });
+
+    const result = await page.evaluate(async function () {
+        const promptEvent = new Event("beforeinstallprompt");
+        Object.defineProperty(promptEvent, "prompt", {
+            value: async function () { return undefined; }
+        });
+        Object.defineProperty(promptEvent, "userChoice", {
+            value: Promise.resolve({ outcome: "accepted", platform: "web" })
+        });
+        window.dispatchEvent(promptEvent);
+        const availableBeforePrompt = window.medtrackPwaInstall.isAvailable();
+        const choice = await window.medtrackPwaInstall.promptInstall();
+        return {
+            availableBeforePrompt: availableBeforePrompt,
+            availableAfterPrompt: window.medtrackPwaInstall.isAvailable(),
+            outcome: choice.outcome
+        };
+    });
+
+    expect(result).toEqual({
+        availableBeforePrompt: true,
+        availableAfterPrompt: false,
+        outcome: "accepted"
+    });
 });
 
 test("forgot password slides in and returns to login", async ({ page }) => {

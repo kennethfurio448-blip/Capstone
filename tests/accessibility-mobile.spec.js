@@ -44,6 +44,57 @@ async function openEmergencyResponseWithTestSession(page) {
     await page.goto("/emergency-response.html");
 }
 
+async function openDownloadCenterWithTestSession(page) {
+    const emptyScript = {
+        status: 200,
+        contentType: "application/javascript",
+        body: ""
+    };
+    for (const path of [
+        "**/api/supabase-js",
+        "**/auth/supabase-client.js",
+        "**/auth/offline-store.js",
+        "**/walkthrough.js"
+    ]) {
+        await page.route(path, function (route) {
+            return route.fulfill(emptyScript);
+        });
+    }
+    await page.route("**/auth/supabase-auth.js", function (route) {
+        return route.fulfill({
+            ...emptyScript,
+            body: `window.medtrackAuth = {
+                requireRoles: async function () {
+                    document.body.hidden = false;
+                    return { role: "staff", status: "active", fullname: "Tester" };
+                }
+            };`
+        });
+    });
+    await page.route("**/pwa.js", function (route) {
+        return route.fulfill({
+            ...emptyScript,
+            body: `window.medtrackPwaInstall = {
+                isInstalled: function () { return false; },
+                isAvailable: function () { return true; },
+                promptInstall: async function () { return { outcome: "accepted" }; }
+            };`
+        });
+    });
+    await page.route("**/api/app-release", function (route) {
+        return route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+                version: "1.0.1",
+                windows: { sizeLabel: "117.43 MB" },
+                android: { apkAvailable: false }
+            })
+        });
+    });
+    await page.goto("/download-app.html");
+}
+
 for (const target of [
     { path: "/", name: "landing page" },
     { path: "/login/login.html", name: "login page" }
@@ -90,6 +141,33 @@ test("Emergency Response remains usable on a phone viewport", async ({ page }) =
     await expect(page.getByRole("heading", { name: "New Emergency Request" }))
         .toBeVisible();
     await expect(page.locator("#addResourceItem")).toBeVisible();
+    const overflow = await page.evaluate(function () {
+        return document.documentElement.scrollWidth -
+            document.documentElement.clientWidth;
+    });
+    expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test("Download App has no serious accessibility violations", async ({ page }) => {
+    await openDownloadCenterWithTestSession(page);
+    const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+    const serious = results.violations.filter(function (violation) {
+        return violation.impact === "serious" || violation.impact === "critical";
+    });
+    expect(serious).toEqual([]);
+});
+
+test("Download App remains usable on a phone viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openDownloadCenterWithTestSession(page);
+    await expect(page.getByRole("heading", { name: "Download MedTrack App" }))
+        .toBeVisible();
+    await expect(page.getByRole("link", { name: "Download for Windows" }))
+        .toBeVisible();
+    await expect(page.getByRole("button", { name: "Install MedTrack" }))
+        .toBeEnabled();
     const overflow = await page.evaluate(function () {
         return document.documentElement.scrollWidth -
             document.documentElement.clientWidth;

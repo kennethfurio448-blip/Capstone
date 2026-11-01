@@ -59,24 +59,50 @@
                 trashLink.removeAttribute("aria-current");
             }
 
-            function placeTrashAfterWalkthrough() {
+            const downloadLinks = Array.from(
+                navigation.querySelectorAll('a[href="download-app.html"]')
+            );
+            const downloadLink = downloadLinks.shift() || document.createElement("a");
+            downloadLinks.forEach(function (duplicate) { duplicate.remove(); });
+            downloadLink.href = "download-app.html";
+            downloadLink.classList.add("nav-item", "download-app-link");
+            downloadLink.innerHTML =
+                '<i class="fa-solid fa-download" aria-hidden="true"></i>' +
+                '<span>Download App</span>';
+            downloadLink.title = "Download MedTrack App";
+            if (window.location.pathname.endsWith("/download-app.html")) {
+                downloadLink.classList.add("active");
+                downloadLink.setAttribute("aria-current", "page");
+            } else {
+                downloadLink.classList.remove("active");
+                downloadLink.removeAttribute("aria-current");
+            }
+
+            function placeUtilityLinks() {
                 const walkthrough = navigation.querySelector(".walkthrough-launch");
                 if (walkthrough) {
                     if (walkthrough.nextElementSibling !== trashLink) {
                         walkthrough.insertAdjacentElement("afterend", trashLink);
                     }
+                    if (trashLink.nextElementSibling !== downloadLink) {
+                        trashLink.insertAdjacentElement("afterend", downloadLink);
+                    }
                     return true;
                 }
-                if (trashLink.parentElement !== navigation ||
-                    trashLink !== navigation.lastElementChild) {
-                    navigation.appendChild(trashLink);
+                if (
+                    trashLink.parentElement !== navigation ||
+                    downloadLink.parentElement !== navigation ||
+                    trashLink.nextElementSibling !== downloadLink ||
+                    downloadLink !== navigation.lastElementChild
+                ) {
+                    navigation.append(trashLink, downloadLink);
                 }
                 return false;
             }
 
-            placeTrashAfterWalkthrough();
+            placeUtilityLinks();
             const navigationObserver = new MutationObserver(function () {
-                if (placeTrashAfterWalkthrough()) navigationObserver.disconnect();
+                if (placeUtilityLinks()) navigationObserver.disconnect();
             });
             if (!navigation.querySelector(".walkthrough-launch")) {
                 navigationObserver.observe(navigation, { childList: true });
