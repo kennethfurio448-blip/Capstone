@@ -198,6 +198,120 @@ test("shared PWA installer exposes the browser prompt to the download center", a
     });
 });
 
+test("Mobility Other vehicle type saves and edits the custom value", async ({ page }) => {
+    const emptyScript = {
+        status: 200,
+        contentType: "application/javascript",
+        body: ""
+    };
+    for (const path of [
+        "**/api/supabase-js",
+        "**/auth/supabase-client.js",
+        "**/auth/offline-store.js",
+        "**/walkthrough.js",
+        "**/pwa.js",
+        "**/notification-center.js",
+        "**/card-navigation.js",
+        "**/table-pagination.js"
+    ]) {
+        await page.route(path, function (route) {
+            return route.fulfill(emptyScript);
+        });
+    }
+    await page.route("**/auth/supabase-auth.js", function (route) {
+        return route.fulfill({
+            ...emptyScript,
+            body: `window.medtrackDialog = {
+                alert: async function () {},
+                confirm: async function () { return true; }
+            };
+            window.medtrackAuth = {
+                requireRoles: async function () {
+                    document.body.hidden = false;
+                    return { role: "admin", fullname: "Test Administrator" };
+                },
+                signOutAndRedirect: async function () {}
+            };`
+        });
+    });
+    await page.route("**/auth/supabase-data.js**", function (route) {
+        return route.fulfill({
+            ...emptyScript,
+            body: `window.medtrackData = {
+                refresh: async function () {},
+                saveMobilityAsset: async function (details) {
+                    const records = JSON.parse(localStorage.getItem("medtrackMobilityAssets") || "[]");
+                    const id = details.id || "MOB-TEST-001";
+                    const record = {
+                        ...details,
+                        id: id,
+                        displayId: "MOB-001",
+                        serverUpdatedAt: ""
+                    };
+                    const index = records.findIndex(function (item) { return item.id === id; });
+                    if (index >= 0) records[index] = record;
+                    else records.push(record);
+                    localStorage.setItem("medtrackMobilityAssets", JSON.stringify(records));
+                    window.lastSavedMobility = { ...details };
+                    return { queued: false };
+                },
+                deleteInventoryItem: async function () {}
+            };`
+        });
+    });
+    await page.addInitScript(function () {
+        localStorage.setItem("medtrackMobilityAssets", "[]");
+    });
+
+    await page.goto("/mobility.html");
+    await page.getByRole("button", { name: /Add Vehicle/i }).click();
+    await page.locator("#vehicleType").selectOption("Other");
+    await expect(page.locator("#customVehicleTypeGroup")).toBeVisible();
+    await expect(page.locator("#customVehicleType")).toHaveAttribute("required", "");
+
+    await page.locator("#vehicleName").fill("Response Unit 1");
+    await page.locator("#plateNumber").fill("FTR-101");
+    await page.locator("#vehicleCondition").selectOption("Good");
+    await page.locator("#vehicleStatus").selectOption("Available");
+    await page.locator("#assignedDriver").fill("Driver One");
+    await page.locator("#vehicleLocation").fill("Operations Center");
+    await page.locator("#maintenanceDate").fill("2027-01-15");
+    await page.getByRole("button", { name: /Save Vehicle/i }).click();
+    await expect(page.locator("#customVehicleType")).toBeFocused();
+    await expect(page.locator("#vehicleModal")).toHaveClass(/show/);
+    const lastSavedBeforeCustomType = await page.evaluate(function () {
+        return window.lastSavedMobility;
+    });
+    expect(lastSavedBeforeCustomType).toBeUndefined();
+
+    await page.locator("#customVehicleType").fill("  Fire Truck  ");
+    await page.getByRole("button", { name: /Save Vehicle/i }).click();
+
+    await expect.poll(function () {
+        return page.evaluate(function () { return window.lastSavedMobility.type; });
+    }).toBe("Fire Truck");
+    await expect(page.locator("#vehicleTableBody")).toContainText("Fire Truck");
+    await expect(page.locator("#vehicleTableBody")).not.toContainText("Other");
+
+    await page.locator('[data-action="edit"]').click();
+    await expect(page.locator("#vehicleType")).toHaveValue("Other");
+    await expect(page.locator("#customVehicleType")).toHaveValue("Fire Truck");
+    await page.locator("#vehicleType").selectOption("Ambulance");
+    await expect(page.locator("#customVehicleTypeGroup")).toBeHidden();
+    await expect(page.locator("#customVehicleType")).not.toHaveAttribute("required", "");
+    await page.locator("#vehicleType").selectOption("Other");
+    await page.locator("#customVehicleType").fill("Pickup Truck");
+    await page.getByRole("button", { name: /Save Vehicle/i }).click();
+
+    await expect.poll(function () {
+        return page.evaluate(function () { return window.lastSavedMobility.type; });
+    }).toBe("Pickup Truck");
+    await page.locator("#vehicleSearch").fill("pickup");
+    await expect(page.locator("#vehicleTableBody")).toContainText("Pickup Truck");
+    await page.locator("#typeFilter").selectOption("Other");
+    await expect(page.locator("#vehicleTableBody")).toContainText("Pickup Truck");
+});
+
 test("forgot password slides in and returns to login", async ({ page }) => {
     await page.goto("/login/login.html");
     const card = page.locator("#authCard");

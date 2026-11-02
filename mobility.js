@@ -83,6 +83,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const vehicleType =
         document.getElementById("vehicleType");
 
+    const customVehicleTypeGroup =
+        document.getElementById("customVehicleTypeGroup");
+
+    const customVehicleType =
+        document.getElementById("customVehicleType");
+
     const plateNumber =
         document.getElementById("plateNumber");
 
@@ -114,6 +120,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("confirmDelete");
 
     let vehicleToDelete = null;
+
+    const predefinedVehicleTypes = new Set([
+        "Ambulance",
+        "Rescue Vehicle",
+        "Service Vehicle",
+        "Command Vehicle",
+        "Motorcycle"
+    ]);
 
 
     const currentUser =
@@ -213,6 +227,28 @@ document.addEventListener("DOMContentLoaded", async function () {
             : "For Repair";
     }
 
+    function isPredefinedVehicleType(type) {
+        return predefinedVehicleTypes.has(String(type || "").trim());
+    }
+
+    function updateCustomVehicleType(options) {
+        const settings = options || {};
+        const isCustom = vehicleType.value === "Other";
+
+        customVehicleTypeGroup.hidden = !isCustom;
+        customVehicleType.required = isCustom;
+        customVehicleType.setAttribute("aria-required", String(isCustom));
+
+        if (!isCustom && settings.clear !== false) {
+            customVehicleType.value = "";
+            customVehicleType.setCustomValidity("");
+        }
+
+        if (isCustom && settings.focus) {
+            customVehicleType.focus();
+        }
+    }
+
 
     function formatDate(dateValue) {
         if (!dateValue) {
@@ -303,7 +339,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const matchesType =
                 selectedType === "all" ||
-                vehicle.type === selectedType;
+                (selectedType === "Other"
+                    ? !isPredefinedVehicleType(vehicle.type)
+                    : vehicle.type === selectedType);
 
             const matchesStatus =
                 selectedStatus === "all" ||
@@ -458,6 +496,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         vehicleForm.reset();
+        updateCustomVehicleType();
 
         editingVehicleId.value = "";
         modalTitle.textContent = "Add Mobility Asset";
@@ -490,8 +529,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         vehicleName.value =
             selectedVehicle.name;
 
-        vehicleType.value =
-            selectedVehicle.type;
+        if (isPredefinedVehicleType(selectedVehicle.type)) {
+            vehicleType.value = selectedVehicle.type;
+            customVehicleType.value = "";
+            updateCustomVehicleType();
+        } else {
+            vehicleType.value = "Other";
+            customVehicleType.value = String(selectedVehicle.type || "").trim();
+            updateCustomVehicleType({ clear: false });
+        }
 
         plateNumber.value =
             selectedVehicle.plateNumber;
@@ -521,6 +567,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function closeVehicleModal() {
         vehicleModal.classList.remove("show");
         vehicleForm.reset();
+        updateCustomVehicleType();
 
         editingVehicleId.value = "";
         formMessage.textContent = "";
@@ -539,8 +586,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         const nameValue =
             vehicleName.value.trim();
 
-        const typeValue =
+        const selectedTypeValue =
             vehicleType.value;
+
+        const customTypeValue =
+            customVehicleType.value.trim();
+
+        const typeValue = selectedTypeValue === "Other"
+            ? customTypeValue
+            : selectedTypeValue;
 
         const plateValue =
             plateNumber.value.trim().toUpperCase();
@@ -560,6 +614,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         const maintenanceValue =
             maintenanceDate.value;
 
+        if (selectedTypeValue === "Other" && !customTypeValue) {
+            customVehicleType.setCustomValidity("Enter a custom vehicle type.");
+            customVehicleType.reportValidity();
+            formMessage.textContent =
+                "Please specify the vehicle type.";
+            return;
+        }
+
         if (
             !nameValue ||
             !typeValue ||
@@ -573,6 +635,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             formMessage.textContent =
                 "Please complete all fields.";
 
+            return;
+        }
+
+        customVehicleType.setCustomValidity("");
+
+        if (typeValue.length > 80) {
+            formMessage.textContent =
+                "Vehicle type must be 80 characters or fewer.";
             return;
         }
 
@@ -730,6 +800,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         "change",
         renderVehicles
     );
+
+    vehicleType.addEventListener("change", function () {
+        updateCustomVehicleType({ focus: vehicleType.value === "Other" });
+    });
+
+    customVehicleType.addEventListener("input", function () {
+        customVehicleType.setCustomValidity("");
+        formMessage.textContent = "";
+    });
 
     statusFilter.addEventListener(
         "change",

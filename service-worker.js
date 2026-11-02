@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v72-header-download-menu";
+const CACHE_NAME = "medtrack-shell-v73-custom-vehicle-type";
 const APP_SHELL = [
     "/",
     "/index.html",

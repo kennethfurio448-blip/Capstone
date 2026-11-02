@@ -831,6 +831,18 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
+.custom-vehicle-type {
+    margin-top: 13px;
+}
+
+.custom-vehicle-type[hidden] {
+    display: none;
+}
+
+.custom-vehicle-type label {
+    display: block;
+}
+
 .form-message {
     min-height: 19px;
     margin-top: 14px;
