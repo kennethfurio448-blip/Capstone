@@ -654,6 +654,9 @@ try {
   if (!appShell.includes('querySelectorAll(\'a[href="download-app.html"]\')')) {
     failures.push("application download navigation: legacy sidebar links are not removed");
   }
+  if (!appShell.includes('querySelectorAll(\'a[href="trash-bin.html"]\')')) {
+    failures.push("Trash Bin navigation: legacy sidebar links are not removed");
+  }
   if (!appReleaseApi.includes("releases/latest") ||
       !appReleaseApi.includes('apkAvailable: false')) {
     failures.push("application release endpoint: verified platform metadata is incomplete");

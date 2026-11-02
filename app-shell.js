@@ -44,53 +44,13 @@
 
         const navigation = sidebar.querySelector(".sidebar-nav");
         if (navigation) {
-            const trashLinks = Array.from(
-                navigation.querySelectorAll('a[href="trash-bin.html"]')
+            navigation.querySelectorAll('a[href="trash-bin.html"]').forEach(
+                function (trashLink) { trashLink.remove(); }
             );
-            const trashLink = trashLinks.shift() || document.createElement("a");
-            trashLinks.forEach(function (duplicate) { duplicate.remove(); });
-            trashLink.href = "trash-bin.html";
-            trashLink.classList.add("nav-item");
-            trashLink.innerHTML =
-                '<i class="fa-solid fa-trash-can-arrow-up" aria-hidden="true"></i>' +
-                '<span>Trash Bin</span>';
-            trashLink.title = "Trash Bin";
-            if (window.location.pathname.endsWith("/trash-bin.html")) {
-                trashLink.classList.add("active");
-                trashLink.setAttribute("aria-current", "page");
-            } else {
-                trashLink.classList.remove("active");
-                trashLink.removeAttribute("aria-current");
-            }
 
             navigation.querySelectorAll('a[href="download-app.html"]').forEach(
                 function (downloadLink) { downloadLink.remove(); }
             );
-
-            function placeUtilityLinks() {
-                const walkthrough = navigation.querySelector(".walkthrough-launch");
-                if (walkthrough) {
-                    if (walkthrough.nextElementSibling !== trashLink) {
-                        walkthrough.insertAdjacentElement("afterend", trashLink);
-                    }
-                    return true;
-                }
-                if (
-                    trashLink.parentElement !== navigation ||
-                    trashLink !== navigation.lastElementChild
-                ) {
-                    navigation.append(trashLink);
-                }
-                return false;
-            }
-
-            placeUtilityLinks();
-            const navigationObserver = new MutationObserver(function () {
-                if (placeUtilityLinks()) navigationObserver.disconnect();
-            });
-            if (!navigation.querySelector(".walkthrough-launch")) {
-                navigationObserver.observe(navigation, { childList: true });
-            }
         }
 
         sidebar.querySelectorAll(".nav-item, .logout-button").forEach(function (item) {

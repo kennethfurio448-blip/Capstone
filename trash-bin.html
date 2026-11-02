@@ -33,7 +33,6 @@
             <a href="status.html" class="nav-item"><i class="fa-solid fa-arrow-right-arrow-left"></i><span>Status</span></a>
             <a href="available-items.html" class="nav-item"><i class="fa-solid fa-box-open"></i><span>Available Items</span></a>
             <a href="emergency-response.html" class="nav-item"><i class="fa-solid fa-triangle-exclamation"></i><span>Emergency Response</span></a>
-            <a href="trash-bin.html" class="nav-item active"><i class="fa-solid fa-trash-can-arrow-up"></i><span>Trash Bin</span></a>
             <div id="adminNavigation" class="admin-navigation" hidden>
                 <p class="menu-label">ADMINISTRATION</p>
                 <a href="manage-users.html" class="nav-item"><i class="fa-solid fa-users-gear"></i><span>Manage Users</span></a>
@@ -48,7 +47,9 @@
     <main class="main-content">
         <header class="topbar">
             <div><h2>Trash Bin</h2><p>Restore records that were removed by mistake.</p></div>
-            <div class="trash-user"><span id="currentUserName">MedTrack User</span><span id="currentUserRole">User</span></div>
+            <div class="topbar-actions">
+                <div class="trash-user user-profile"><span id="currentUserName">MedTrack User</span><span id="currentUserRole">User</span></div>
+            </div>
         </header>
 
         <section class="trash-summary" aria-label="Trash summary">

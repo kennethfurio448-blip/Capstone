@@ -106,7 +106,7 @@ test("release endpoints return current metadata and a validated installer redire
     }
 });
 
-test("shared shell keeps Trash Bin fixed and moves downloads beside notifications", async ({ page }) => {
+test("shared shell keeps Trash Bin, downloads, and notifications in the header", async ({ page }) => {
     await page.route("**/api/app-release", function (route) {
         return route.fulfill({
             status: 200,
@@ -147,13 +147,7 @@ test("shared shell keeps Trash Bin fixed and moves downloads beside notification
         document.querySelector(".sidebar-nav").appendChild(walkthrough);
     });
 
-    const trash = page.locator('.sidebar-nav a[href="trash-bin.html"]');
-    await expect(trash).toHaveCount(1);
-    await expect(trash).toHaveAttribute(
-        "href", "trash-bin.html"
-    );
-    await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html']"))
-        .toHaveCount(1);
+    await expect(page.locator('.sidebar-nav a[href="trash-bin.html"]')).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Download App" })).toHaveCount(0);
     await expect(page.locator(
         ".app-trash-button + .app-download-button + .notification-button"
@@ -171,8 +165,7 @@ test("shared shell keeps Trash Bin fixed and moves downloads beside notification
     await page.locator("main").click({ position: { x: 1, y: 1 } });
     await expect(page.getByRole("dialog", { name: "Download and install MedTrack" })).toBeHidden();
     await page.getByRole("button", { name: "Collapse sidebar navigation" }).click();
-    await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html']"))
-        .toHaveCount(1);
+    await expect(page.locator('.sidebar-nav a[href="trash-bin.html"]')).toHaveCount(0);
 });
 
 test("shared PWA installer exposes the browser prompt to the download center", async ({ page }) => {
