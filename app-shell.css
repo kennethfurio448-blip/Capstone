@@ -291,11 +291,6 @@ a.app-download-option:focus-visible {
     color: #c91f2c;
 }
 
-.app-download-android .app-download-option-icon {
-    background: #e5f5ea;
-    color: #16833d;
-}
-
 .app-download-option strong,
 .app-download-option small {
     display: block;

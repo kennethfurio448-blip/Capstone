@@ -162,7 +162,7 @@ test("shared shell keeps Trash Bin fixed and moves downloads beside notification
     await expect(page.getByRole("link", { name: /Download for Windows/ })).toHaveAttribute(
         "href", "/api/download-windows"
     );
-    await expect(page.getByText("APK is not yet available", { exact: false })).toBeVisible();
+    await expect(page.getByText("Android", { exact: true })).toHaveCount(0);
     await page.locator("main").click({ position: { x: 1, y: 1 } });
     await expect(page.getByRole("dialog", { name: "Download and install MedTrack" })).toBeHidden();
     await page.getByRole("button", { name: "Collapse sidebar navigation" }).click();

@@ -141,11 +141,6 @@
             '    <span><strong>Install from Browser</strong><small data-pwa-status>Use Edge or Chrome to install the MedTrack PWA.</small></span>',
             '    <i class="fa-solid fa-arrow-down-to-bracket app-download-action-icon" aria-hidden="true"></i>',
             '  </button>',
-            '  <div class="app-download-option app-download-android" data-android-option>',
-            '    <span class="app-download-option-icon"><i class="fa-brands fa-android" aria-hidden="true"></i></span>',
-            '    <span><strong>Android</strong><small data-android-status>APK is not yet available. Install the PWA from Chrome.</small></span>',
-            '    <i class="fa-solid fa-circle-info app-download-action-icon" aria-hidden="true"></i>',
-            '  </div>',
             '</div>',
             '<button type="button" class="app-download-update"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Check for Updates</button>'
         ].join("");
@@ -190,21 +185,6 @@
             downloadRelease.windows && downloadRelease.windows.sizeLabel
                 ? downloadRelease.windows.sizeLabel
                 : "117.43 MB";
-
-        const android = downloadRelease.android || {};
-        const androidOption = dropdown.querySelector("[data-android-option]");
-        if (android.apkAvailable && android.downloadUrl) {
-            const androidLink = document.createElement("a");
-            androidLink.className = androidOption.className;
-            androidLink.dataset.androidOption = "";
-            androidLink.href = android.downloadUrl;
-            androidLink.innerHTML = androidOption.innerHTML;
-            androidLink.querySelector("strong").textContent = "Download for Android";
-            androidLink.querySelector("[data-android-status]").textContent = "Download the verified MedTrack APK.";
-            androidLink.querySelector(".app-download-action-icon").className =
-                "fa-solid fa-download app-download-action-icon";
-            androidOption.replaceWith(androidLink);
-        }
     }
 
     async function installPwaFromMenu() {

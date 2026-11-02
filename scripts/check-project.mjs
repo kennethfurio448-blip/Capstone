@@ -633,7 +633,6 @@ try {
     'href="/api/download-windows"',
     "app-download-pwa",
     "app-download-update",
-    "APK is not yet available",
   ]) {
     if (!appShell.includes(requiredDownloadControl)) {
       failures.push(`application download menu: missing ${requiredDownloadControl}`);
