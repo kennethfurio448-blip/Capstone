@@ -27,11 +27,11 @@
   "homepage": "https://github.com/kennethfurio448-blip/Capstone#readme",
   "description": "Secure medical inventory and emergency resource management system for PDRRMO.",
   "devDependencies": {
-    "@axe-core/playwright": "^4.10.2",
-    "@playwright/test": "^1.55.1",
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1",
     "electron": "45.2.1",
     "electron-builder": "26.18.0",
-    "supabase": "^2.117.0"
+    "supabase": "^2.122.0"
   },
   "build": {
     "appId": "ph.gov.quezon.pdrrmo.medtrack",
