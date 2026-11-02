@@ -228,9 +228,6 @@ const tablePaginationPath = join(root, "table-pagination.js");
 const settingsScriptPath = join(root, "settings.js");
 const trashPagePath = join(root, "trash-bin.html");
 const trashScriptPath = join(root, "trash-bin.js");
-const downloadPagePath = join(root, "download-app.html");
-const downloadStylePath = join(root, "download-app.css");
-const downloadScriptPath = join(root, "download-app.js");
 const appReleaseApiPath = join(root, "api", "app-release.js");
 const windowsDownloadApiPath = join(root, "api", "download-windows.js");
 const trashMigrationPath = join(
@@ -300,9 +297,6 @@ for (const [label, path] of [
   ["central Trash Bin page", trashPagePath],
   ["central Trash Bin behavior", trashScriptPath],
   ["system-wide Trash Bin migration", trashMigrationPath],
-  ["application download page", downloadPagePath],
-  ["application download styles", downloadStylePath],
-  ["application download behavior", downloadScriptPath],
   ["application release endpoint", appReleaseApiPath],
   ["Windows installer endpoint", windowsDownloadApiPath],
   ["dependency update configuration", dependabotPath],
@@ -321,7 +315,7 @@ try {
     "admin-dashboard.html", "staff-dashboard.html", "medical-supplies.html",
     "medical-equipment.html", "mobility.html", "available-items.html",
     "emergency-response.html", "reports.html", "status.html", "manage-users.html",
-    "audit-logs.html", "settings.html", "trash-bin.html", "download-app.html",
+    "audit-logs.html", "settings.html", "trash-bin.html",
     "login/login.html",
   ];
 
@@ -629,41 +623,36 @@ try {
 }
 
 try {
-  const downloadPage = readFileSync(downloadPagePath, "utf8");
-  const downloadScript = readFileSync(downloadScriptPath, "utf8");
   const appShell = readFileSync(join(root, "app-shell.js"), "utf8");
-  const authGuard = readFileSync(authGuardPath, "utf8");
   const appReleaseApi = readFileSync(appReleaseApiPath, "utf8");
   const windowsDownloadApi = readFileSync(windowsDownloadApiPath, "utf8");
 
   for (const requiredDownloadControl of [
-    'id="downloadWindows"',
+    "app-download-button",
+    "app-download-dropdown",
     'href="/api/download-windows"',
-    'id="installPwa"',
-    'id="checkUpdates"',
-    "APK is not currently available",
+    "app-download-pwa",
+    "app-download-update",
+    "APK is not yet available",
   ]) {
-    if (!downloadPage.includes(requiredDownloadControl)) {
-      failures.push(`application download page: missing ${requiredDownloadControl}`);
+    if (!appShell.includes(requiredDownloadControl)) {
+      failures.push(`application download menu: missing ${requiredDownloadControl}`);
     }
   }
 
   for (const requiredDownloadBehavior of [
-    "detectPlatform",
     "medtrackPwaInstall",
     'fetch("/api/app-release"',
-    "requireRoles([\"admin\", \"staff\"])",
+    "installPwaFromMenu",
+    "closeDownloadDropdown",
   ]) {
-    if (!downloadScript.includes(requiredDownloadBehavior)) {
+    if (!appShell.includes(requiredDownloadBehavior)) {
       failures.push(`application download behavior: missing ${requiredDownloadBehavior}`);
     }
   }
 
-  if (!appShell.includes('downloadLink.href = "download-app.html"')) {
-    failures.push("application download navigation: shared sidebar link is missing");
-  }
-  if (!authGuard.includes('"download-app.html": ["admin", "staff"]')) {
-    failures.push("application download page: Admin and Staff authorization is missing");
+  if (!appShell.includes('querySelectorAll(\'a[href="download-app.html"]\')')) {
+    failures.push("application download navigation: legacy sidebar links are not removed");
   }
   if (!appReleaseApi.includes("releases/latest") ||
       !appReleaseApi.includes('apkAvailable: false')) {
@@ -674,7 +663,7 @@ try {
     failures.push("Windows installer endpoint: verified release fallback is incomplete");
   }
 } catch (error) {
-  failures.push(`application download center: unable to inspect controls (${error.message})`);
+  failures.push(`application download menu: unable to inspect controls (${error.message})`);
 }
 
 try {

@@ -65,21 +65,6 @@ test("central Trash Bin is protected and provides complete recovery controls", a
     expect(html).toContain('src="trash-bin.js?v=20261029-trash-bin"');
 });
 
-test("download center exposes only verified available application options", async ({ request }) => {
-    const response = await request.get("/download-app.html");
-    const html = await response.text();
-
-    expect(response.ok()).toBeTruthy();
-    expect(html).toContain('name="robots" content="noindex, nofollow, noarchive"');
-    expect(html).toContain('id="downloadWindows"');
-    expect(html).toContain('href="/api/download-windows"');
-    expect(html).toContain('id="installPwa"');
-    expect(html).toContain('id="checkUpdates"');
-    expect(html).toContain("APK is not currently available");
-    expect(html).not.toContain("Download APK");
-    expect(html).not.toContain("Install from Google Play");
-});
-
 test("release endpoints return current metadata and a validated installer redirect", async () => {
     const originalFetch = global.fetch;
     global.fetch = async function () {
@@ -121,16 +106,39 @@ test("release endpoints return current metadata and a validated installer redire
     }
 });
 
-test("shared sidebar keeps Trash Bin and Download App fixed after System Walkthrough", async ({ page }) => {
+test("shared shell keeps Trash Bin fixed and moves downloads beside notifications", async ({ page }) => {
+    await page.route("**/api/app-release", function (route) {
+        return route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+                version: "1.0.2",
+                windows: { sizeLabel: "117.43 MB" },
+                android: { apkAvailable: false }
+            })
+        });
+    });
     await page.goto("/");
     await page.setContent(
         '<aside class="sidebar"><div class="brand"><div>MedTrack</div></div>' +
         '<nav class="sidebar-nav"><a class="nav-item" href="medical-supplies.html">' +
         '<i></i><span>Medical Supplies</span></a><a class="nav-item" href="trash-bin.html">Trash Bin</a>' +
         '<div class="admin-navigation"><a class="nav-item" href="settings.html">System Settings</a></div>' +
-        '<a class="nav-item" href="trash-bin.html">Trash Bin</a></nav>' +
-        '<button class="logout-button">Logout</button></aside>'
+        '<a class="nav-item" href="trash-bin.html">Trash Bin</a>' +
+        '<a class="nav-item" href="download-app.html">Download App</a></nav>' +
+        '<button class="logout-button">Logout</button></aside>' +
+        '<main><header class="topbar"><div><h2>Dashboard</h2></div>' +
+        '<div class="topbar-actions"><button class="notification-button" type="button">' +
+        '<i class="fa-solid fa-bell"></i><span hidden>0</span></button>' +
+        '<div class="user-profile">User</div></div></header></main>'
     );
+    await page.evaluate(function () {
+        window.medtrackPwaInstall = {
+            isInstalled: function () { return false; },
+            isAvailable: function () { return false; },
+            promptInstall: async function () { return { outcome: "unavailable" }; }
+        };
+    });
     await page.addScriptTag({ url: "/app-shell.js" });
     await page.evaluate(function () {
         const walkthrough = document.createElement("button");
@@ -146,14 +154,19 @@ test("shared sidebar keeps Trash Bin and Download App fixed after System Walkthr
     );
     await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html']"))
         .toHaveCount(1);
-    await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html'] + a[href='download-app.html']"))
-        .toHaveCount(1);
-    await expect(page.getByRole("link", { name: "Download App" })).toHaveCount(1);
+    await expect(page.getByRole("link", { name: "Download App" })).toHaveCount(0);
+    await expect(page.locator(".app-download-button + .notification-button")).toHaveCount(1);
     await expect(page.getByRole("link", { name: "Medical Supplies" })).toHaveCount(1);
+    await page.getByRole("button", { name: "Download or install MedTrack" }).click();
+    await expect(page.getByRole("dialog", { name: "Download and install MedTrack" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Download for Windows/ })).toHaveAttribute(
+        "href", "/api/download-windows"
+    );
+    await expect(page.getByText("APK is not yet available", { exact: false })).toBeVisible();
+    await page.locator("main").click({ position: { x: 1, y: 1 } });
+    await expect(page.getByRole("dialog", { name: "Download and install MedTrack" })).toBeHidden();
     await page.getByRole("button", { name: "Collapse sidebar navigation" }).click();
     await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html']"))
-        .toHaveCount(1);
-    await expect(page.locator(".walkthrough-launch + a[href='trash-bin.html'] + a[href='download-app.html']"))
         .toHaveCount(1);
 });
 

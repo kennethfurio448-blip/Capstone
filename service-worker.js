@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v71-download-center";
+const CACHE_NAME = "medtrack-shell-v72-header-download-menu";
 const APP_SHELL = [
     "/",
     "/index.html",
@@ -79,10 +79,7 @@ const APP_SHELL = [
     "/settings.js",
     "/trash-bin.html",
     "/trash-bin.css",
-    "/trash-bin.js",
-    "/download-app.html",
-    "/download-app.css",
-    "/download-app.js"
+    "/trash-bin.js"
 ];
 const SUPABASE_LIBRARY = "/api/supabase-js";
 

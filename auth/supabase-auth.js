@@ -40,8 +40,7 @@
         "mobility.html": ["admin", "staff"],
         "status.html": ["admin", "staff"],
         "emergency-response.html": ["admin", "staff"],
-        "trash-bin.html": ["admin", "staff"],
-        "download-app.html": ["admin", "staff"]
+        "trash-bin.html": ["admin", "staff"]
     });
 
     let guardedRoles = null;
