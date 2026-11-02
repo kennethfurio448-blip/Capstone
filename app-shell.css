@@ -137,6 +137,7 @@ body[hidden] {
     font: inherit;
     font-size: 17px;
     cursor: pointer;
+    text-decoration: none;
     transition: border-color 160ms ease, background-color 160ms ease,
         color 160ms ease, transform 160ms ease;
 }
@@ -158,6 +159,12 @@ body[hidden] {
     border-color: #c91f2c;
     background: #fff1f2;
     color: #c91f2c;
+}
+
+.app-trash-button.is-active {
+    border-color: #c91f2c;
+    background: #c91f2c;
+    color: #ffffff;
 }
 
 .app-download-dropdown[hidden] {

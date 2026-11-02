@@ -630,6 +630,7 @@ try {
   for (const requiredDownloadControl of [
     "app-download-button",
     "app-download-dropdown",
+    "app-trash-button",
     'href="/api/download-windows"',
     "app-download-pwa",
     "app-download-update",

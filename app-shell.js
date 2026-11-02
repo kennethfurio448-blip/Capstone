@@ -306,6 +306,18 @@
         button.innerHTML = '<i class="fa-solid fa-download" aria-hidden="true"></i>';
         actions.insertBefore(button, notificationButton);
 
+        const trashButton = document.createElement("a");
+        trashButton.href = "trash-bin.html";
+        trashButton.className = "app-trash-button app-header-icon-button";
+        trashButton.setAttribute("aria-label", "Open Trash Bin");
+        trashButton.title = "Trash Bin";
+        trashButton.innerHTML = '<i class="fa-solid fa-trash-can-arrow-up" aria-hidden="true"></i>';
+        if (window.location.pathname.endsWith("/trash-bin.html")) {
+            trashButton.classList.add("is-active");
+            trashButton.setAttribute("aria-current", "page");
+        }
+        actions.insertBefore(trashButton, button);
+
         button.addEventListener("click", function () { toggleDownloadDropdown(button); });
     }
 
