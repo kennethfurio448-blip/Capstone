@@ -1,14 +1,13 @@
-.walkthrough-launch {
-    border: 0;
-    background: transparent;
+.walkthrough-launch.app-header-icon-button {
     font: inherit;
-    text-align: left;
+    text-align: center;
     cursor: pointer;
 }
 
-.walkthrough-launch:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.8);
-    outline-offset: 2px;
+.walkthrough-launch.app-header-icon-button.active {
+    border-color: #c91f2d;
+    background: #fff1f2;
+    color: #c91f2d;
 }
 
 .walkthrough-backdrop,

@@ -65,19 +65,26 @@
     }
 
     function createLaunchButton() {
-        const sidebar = document.querySelector(".sidebar");
-        const nav = sidebar && sidebar.querySelector(".sidebar-nav");
-        if (!sidebar || !nav || sidebar.querySelector(".walkthrough-launch")) return;
+        document.querySelectorAll(".sidebar .walkthrough-launch").forEach(
+            function (legacyButton) { legacyButton.remove(); }
+        );
+
+        const actions = document.querySelector(".topbar-actions");
+        if (!actions || actions.querySelector(".walkthrough-launch")) return;
 
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "nav-item walkthrough-launch";
-        button.innerHTML = '<i class="fa-solid fa-person-chalkboard" aria-hidden="true"></i><span>System Walkthrough</span>';
-        button.title = "Start system walkthrough";
+        button.className = "walkthrough-launch app-header-icon-button";
+        button.innerHTML = '<i class="fa-solid fa-person-chalkboard" aria-hidden="true"></i>';
+        button.setAttribute("aria-label", "System Walkthrough");
+        button.title = "System Walkthrough";
         button.addEventListener("click", function () {
             startTour(0);
         });
-        nav.append(button);
+
+        const downloadButton = actions.querySelector(".app-download-button");
+        const notificationButton = actions.querySelector(".notification-button");
+        actions.insertBefore(button, downloadButton || notificationButton || null);
     }
 
     function clearTourElements() {

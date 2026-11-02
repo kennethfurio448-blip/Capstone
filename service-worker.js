@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v75-shared-notification-badge";
+const CACHE_NAME = "medtrack-shell-v76-header-walkthrough";
 const APP_SHELL = [
     "/",
     "/index.html",

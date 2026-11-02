@@ -106,7 +106,7 @@ test("release endpoints return current metadata and a validated installer redire
     }
 });
 
-test("shared shell keeps Trash Bin, downloads, and notifications in the header", async ({ page }) => {
+test("shared shell keeps walkthrough, Trash Bin, downloads, and notifications in the header", async ({ page }) => {
     await page.route("**/api/app-release", function (route) {
         return route.fulfill({
             status: 200,
@@ -121,13 +121,13 @@ test("shared shell keeps Trash Bin, downloads, and notifications in the header",
     await page.goto("/");
     await page.setContent(
         '<aside class="sidebar"><div class="brand"><div>MedTrack</div></div>' +
-        '<nav class="sidebar-nav"><a class="nav-item" href="medical-supplies.html">' +
+        '<nav class="sidebar-nav"><a class="nav-item active" href="medical-supplies.html">' +
         '<i></i><span>Medical Supplies</span></a><a class="nav-item" href="trash-bin.html">Trash Bin</a>' +
         '<div class="admin-navigation"><a class="nav-item" href="settings.html">System Settings</a></div>' +
         '<a class="nav-item" href="trash-bin.html">Trash Bin</a>' +
         '<a class="nav-item" href="download-app.html">Download App</a></nav>' +
         '<button class="logout-button">Logout</button></aside>' +
-        '<main><header class="topbar"><div><h2>Dashboard</h2></div>' +
+        '<main class="main-content"><header class="topbar"><div><h2>Dashboard</h2></div>' +
         '<div class="topbar-actions"><button class="notification-button" type="button">' +
         '<i class="fa-solid fa-bell"></i><span hidden>0</span></button>' +
         '<div class="user-profile">User</div></div></header></main>'
@@ -138,31 +138,64 @@ test("shared shell keeps Trash Bin, downloads, and notifications in the header",
             isAvailable: function () { return false; },
             promptInstall: async function () { return { outcome: "unavailable" }; }
         };
+        window.medtrackAuth = {
+            getAuthenticatedProfile: async function () {
+                return { id: "test-admin", role: "admin" };
+            }
+        };
+        localStorage.setItem(
+            "medtrack-walkthrough-completed:v1:test-admin",
+            "true"
+        );
     });
+    await page.addStyleTag({ url: "/app-shell.css" });
+    await page.addStyleTag({ url: "/walkthrough.css" });
     await page.addScriptTag({ url: "/app-shell.js" });
-    await page.evaluate(function () {
-        const walkthrough = document.createElement("button");
-        walkthrough.className = "nav-item walkthrough-launch";
-        walkthrough.textContent = "System Walkthrough";
-        document.querySelector(".sidebar-nav").appendChild(walkthrough);
-    });
+    await page.addScriptTag({ url: "/walkthrough.js" });
 
     await expect(page.locator('.sidebar-nav a[href="trash-bin.html"]')).toHaveCount(0);
+    await expect(page.locator(".sidebar .walkthrough-launch")).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Download App" })).toHaveCount(0);
     await expect(page.locator(
-        ".app-trash-button + .app-download-button + .notification-button"
+        ".app-trash-button + .walkthrough-launch + " +
+        ".app-download-button + .notification-button"
     )).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "System Walkthrough" }))
+        .toHaveAttribute("title", "System Walkthrough");
     await expect(page.getByRole("link", { name: "Open Trash Bin" })).toHaveAttribute(
         "href", "trash-bin.html"
     );
     await expect(page.getByRole("link", { name: "Medical Supplies" })).toHaveCount(1);
+
+    const activeItem = page.getByRole("link", { name: "Medical Supplies" });
+    const hoverItem = page.getByRole("link", { name: "System Settings" });
+    await expect(activeItem).toHaveCSS("position", "relative");
+    expect(await activeItem.evaluate(function (element) {
+        return getComputedStyle(element, "::before").opacity;
+    })).toBe("1");
+    await page.waitForTimeout(300);
+    const hoverBoxBefore = await hoverItem.boundingBox();
+    await hoverItem.hover();
+    await expect.poll(function () {
+        return hoverItem.evaluate(function (element) {
+            return getComputedStyle(element, "::before").opacity;
+        });
+    }).toBe("1");
+    const hoverBoxAfter = await hoverItem.boundingBox();
+    expect(Math.abs(hoverBoxAfter.x - hoverBoxBefore.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(hoverBoxAfter.width - hoverBoxBefore.width)).toBeLessThanOrEqual(1);
+
+    await page.getByRole("button", { name: "System Walkthrough" }).click();
+    await expect(page.getByRole("dialog", { name: "MedTrack system walkthrough" }))
+        .toBeVisible();
+    await page.getByRole("button", { name: "Skip Tour" }).click();
     await page.getByRole("button", { name: "Download or install MedTrack" }).click();
     await expect(page.getByRole("dialog", { name: "Download and install MedTrack" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Download for Windows/ })).toHaveAttribute(
         "href", "/api/download-windows"
     );
     await expect(page.getByText("Android", { exact: true })).toHaveCount(0);
-    await page.locator("main").click({ position: { x: 1, y: 1 } });
+    await page.getByRole("heading", { name: "Dashboard" }).click();
     await expect(page.getByRole("dialog", { name: "Download and install MedTrack" })).toBeHidden();
     await page.getByRole("button", { name: "Collapse sidebar navigation" }).click();
     await expect(page.locator('.sidebar-nav a[href="trash-bin.html"]')).toHaveCount(0);

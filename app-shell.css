@@ -62,6 +62,45 @@ body[hidden] {
     box-sizing: border-box;
 }
 
+.sidebar .sidebar-nav .nav-item {
+    position: relative;
+    overflow: hidden;
+    border-left: 0;
+    transform: none !important;
+}
+
+.sidebar .sidebar-nav .nav-item::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    border-radius: 0 4px 4px 0;
+    background: #d51f32;
+    content: "";
+    opacity: 0;
+    transform: scaleY(0.55);
+    transform-origin: center;
+    transition: opacity 160ms ease, transform 180ms ease;
+    pointer-events: none;
+}
+
+.sidebar .sidebar-nav .nav-item:hover::before,
+.sidebar .sidebar-nav .nav-item:focus-visible::before,
+.sidebar .sidebar-nav .nav-item.active::before {
+    opacity: 1;
+    transform: scaleY(1);
+}
+
+.sidebar .sidebar-nav .nav-item:hover,
+.sidebar .sidebar-nav .nav-item:focus-visible,
+.sidebar .sidebar-nav .nav-item.active {
+    transform: none !important;
+}
+
+.sidebar .sidebar-nav .nav-item.active {
+    background-color: var(--sidebar-hover, #142b58);
+    box-shadow: none;
+}
+
 .nav-item:hover {
     transform: none;
 }
