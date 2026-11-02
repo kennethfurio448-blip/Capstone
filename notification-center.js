@@ -1355,7 +1355,9 @@
         document.querySelectorAll(".notification-button").forEach(function (button) {
             const badge = button.querySelector("span");
             if (badge) {
-                badge.textContent = String(unread.length);
+                badge.textContent = unread.length > 99
+                    ? "99+"
+                    : String(unread.length);
                 badge.hidden = unread.length === 0;
             }
             button.type = "button";

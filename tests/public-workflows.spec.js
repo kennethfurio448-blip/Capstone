@@ -610,6 +610,26 @@ test("persistent scheduled alerts are connected to the notification center", asy
     expect(settingsScript).toContain('.from("system_alert_job_runs")');
 });
 
+test("shared notification badge styles and caps large unread counts", async ({ request }) => {
+    const [scriptResponse, styleResponse, trashResponse] = await Promise.all([
+        request.get("/notification-center.js"),
+        request.get("/app-shell.css"),
+        request.get("/trash-bin.html")
+    ]);
+    const [script, styles, trashPage] = await Promise.all([
+        scriptResponse.text(),
+        styleResponse.text(),
+        trashResponse.text()
+    ]);
+
+    expect(script).toContain('unread.length > 99');
+    expect(script).toContain('? "99+"');
+    expect(styles).toContain(".app-header-icon-button > span");
+    expect(styles).toContain("background: #c91f2c");
+    expect(trashPage).toContain('href="app-shell.css"');
+    expect(trashPage).toContain('src="notification-center.js"');
+});
+
 test("mobility shows a dash when no driver was imported", async ({ request }) => {
     const response = await request.get("/mobility.js");
     const source = await response.text();
