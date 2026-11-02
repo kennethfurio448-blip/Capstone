@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    const PAGE_VERSION = "1.0.1";
+    const PAGE_VERSION = "1.0.2";
 
     function element(id) {
         return document.getElementById(id);
@@ -118,7 +118,7 @@
         } catch (error) {
             console.error("Release check failed:", error);
             if (showResult) {
-                showMessage("The update service is temporarily unavailable. The verified MedTrack 1.0.1 download remains available.", true);
+                showMessage("The update service is temporarily unavailable. The verified MedTrack 1.0.2 download remains available.", true);
             }
         } finally {
             button.disabled = false;

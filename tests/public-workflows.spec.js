@@ -87,12 +87,12 @@ test("release endpoints return current metadata and a validated installer redire
             ok: true,
             json: async function () {
                 return {
-                    tag_name: "v1.0.1",
+                    tag_name: "v1.0.2",
                     published_at: "2026-11-01T11:09:47Z",
                     assets: [{
-                        name: "MedTrack-Setup-1.0.1.exe",
-                        size: 123136086,
-                        browser_download_url: "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.1/MedTrack-Setup-1.0.1.exe"
+                        name: "MedTrack-Setup-1.0.2.exe",
+                        size: 123136248,
+                        browser_download_url: "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.2/MedTrack-Setup-1.0.2.exe"
                     }]
                 };
             }
@@ -109,12 +109,12 @@ test("release endpoints return current metadata and a validated installer redire
         await downloadHandler({ method: "GET" }, downloadResponse);
 
         expect(metadataResponse.statusCode).toBe(200);
-        expect(metadataResponse.body.version).toBe("1.0.1");
+        expect(metadataResponse.body.version).toBe("1.0.2");
         expect(metadataResponse.body.windows.available).toBe(true);
         expect(metadataResponse.body.android.apkAvailable).toBe(false);
         expect(downloadResponse.statusCode).toBe(302);
         expect(downloadResponse.headers.Location).toBe(
-            "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.1/MedTrack-Setup-1.0.1.exe"
+            "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.2/MedTrack-Setup-1.0.2.exe"
         );
     } finally {
         global.fetch = originalFetch;

@@ -3,7 +3,7 @@
 const RELEASE_API_URL =
     "https://api.github.com/repos/kennethfurio448-blip/Capstone/releases/latest";
 const VERIFIED_FALLBACK_URL =
-    "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.1/MedTrack-Setup-1.0.1.exe";
+    "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.2/MedTrack-Setup-1.0.2.exe";
 
 function allowedDownloadUrl(value) {
     try {

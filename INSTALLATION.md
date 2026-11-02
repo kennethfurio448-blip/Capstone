@@ -4,13 +4,13 @@ MedTrack remains available at `https://www.medtrackmanagement.com` and can also 
 
 ## Windows installer
 
-1. Download `MedTrack-Setup-1.0.1.exe` from the project's GitHub Releases page or the file supplied with this delivery.
+1. Download `MedTrack-Setup-1.0.2.exe` from the project's GitHub Releases page or the file supplied with this delivery.
 2. Open the installer and choose the installation folder.
 3. Keep the Desktop and Start Menu shortcut options enabled.
 4. Launch MedTrack and connect to the internet for the first sign-in on that device.
 5. Sign in with an authorized Admin or Staff account. Administrators must complete MFA before their offline enrollment is approved.
 
-The current public version 1.0.1 installer is not code-signed, so Windows SmartScreen identifies its publisher as unknown. Future public releases are blocked unless they have a valid CA-issued Authenticode signature and trusted timestamp. See `CODE_SIGNING.md` for the required signing setup. A valid signature confirms publisher identity, but a new publisher can still receive SmartScreen warnings while reputation develops.
+The installer uses the original Electron and NSIS installation method and is not code-signed. Windows SmartScreen may therefore identify the publisher as unknown even though installation is working normally. Verify that the file came from the official MedTrack website or GitHub release before running it. This warning cannot be legitimately removed without a CA-issued signing certificate.
 
 ## Windows or Android PWA
 

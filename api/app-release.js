@@ -3,9 +3,9 @@
 const RELEASE_API_URL =
     "https://api.github.com/repos/kennethfurio448-blip/Capstone/releases/latest";
 const FALLBACK_RELEASE = Object.freeze({
-    version: "1.0.1",
-    sizeBytes: 123136086,
-    publishedAt: "2026-11-01T11:09:47Z"
+    version: "1.0.2",
+    sizeBytes: 123136248,
+    publishedAt: "2026-11-02T13:33:04Z"
 });
 
 function sizeLabel(bytes) {

@@ -86,7 +86,7 @@ async function openDownloadCenterWithTestSession(page) {
             status: 200,
             contentType: "application/json",
             body: JSON.stringify({
-                version: "1.0.1",
+                version: "1.0.2",
                 windows: { sizeLabel: "117.43 MB" },
                 android: { apkAvailable: false }
             })
