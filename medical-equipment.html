@@ -371,7 +371,7 @@
                     </label>
 
                     <select id="equipmentCategory" required>
-                        <option value="" disabled selected>
+                        <option value="" disabled selected hidden>
                             Select category
                         </option>
                         <option value="Diagnostic">Diagnostic</option>
@@ -386,6 +386,17 @@
                         </option>
                         <option value="Other">Other</option>
                     </select>
+
+                    <div class="custom-equipment-category" id="customEquipmentCategoryGroup" hidden>
+                        <label for="customEquipmentCategory">Specify Equipment Category</label>
+                        <input
+                            type="text"
+                            id="customEquipmentCategory"
+                            placeholder="Enter custom equipment category"
+                            maxlength="80"
+                            autocomplete="off"
+                        >
+                    </div>
 
                 </div>
 
@@ -412,7 +423,7 @@
                     </label>
 
                     <select id="equipmentCondition" required>
-                        <option value="" disabled selected>
+                        <option value="" disabled selected hidden>
                             Select condition
                         </option>
                         <option value="Excellent">Excellent</option>
@@ -430,7 +441,7 @@
                     </label>
 
                     <select id="equipmentStatus" required>
-                        <option value="" disabled selected>
+                        <option value="" disabled selected hidden>
                             Select status
                         </option>
                         <option value="Available">Available</option>
@@ -450,7 +461,7 @@
                     </label>
 
                     <select id="maintenanceType" required>
-                        <option value="" disabled selected>
+                        <option value="" disabled selected hidden>
                             Select maintenance type
                         </option>
                         <option value="Inspection">Inspection</option>
@@ -554,7 +565,7 @@
 <script src="notification-center.js"></script>
 <script src="card-navigation.js"></script>
 <script src="table-pagination.js"></script>
-<script src="medical-equipment.js?v=20261002-gap-free-display-id"></script>
+<script src="medical-equipment.js?v=20261102-custom-category"></script>
 
 </body>
 </html>

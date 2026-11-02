@@ -312,6 +312,125 @@ test("Mobility Other vehicle type saves and edits the custom value", async ({ pa
     await expect(page.locator("#vehicleTableBody")).toContainText("Pickup Truck");
 });
 
+test("Equipment dropdown placeholders stay hidden and Other saves a custom category", async ({ page }) => {
+    const emptyScript = {
+        status: 200,
+        contentType: "application/javascript",
+        body: ""
+    };
+    for (const path of [
+        "**/api/supabase-js",
+        "**/auth/supabase-client.js",
+        "**/auth/offline-store.js",
+        "**/walkthrough.js",
+        "**/pwa.js",
+        "**/notification-center.js",
+        "**/card-navigation.js",
+        "**/table-pagination.js"
+    ]) {
+        await page.route(path, function (route) {
+            return route.fulfill(emptyScript);
+        });
+    }
+    await page.route("**/auth/supabase-auth.js", function (route) {
+        return route.fulfill({
+            ...emptyScript,
+            body: `window.medtrackDialog = {
+                alert: async function () {},
+                confirm: async function () { return true; }
+            };
+            window.medtrackAuth = {
+                requireRoles: async function () {
+                    document.body.hidden = false;
+                    return { role: "admin", fullname: "Test Administrator" };
+                },
+                signOutAndRedirect: async function () {}
+            };`
+        });
+    });
+    await page.route("**/auth/supabase-data.js**", function (route) {
+        return route.fulfill({
+            ...emptyScript,
+            body: `window.medtrackData = {
+                refresh: async function () {},
+                saveMedicalEquipment: async function (details) {
+                    const records = JSON.parse(localStorage.getItem("medtrackMedicalEquipment") || "[]");
+                    const id = details.id || "EQP-TEST-001";
+                    const record = {
+                        ...details,
+                        id: id,
+                        displayId: "EQP-001",
+                        serverUpdatedAt: ""
+                    };
+                    const index = records.findIndex(function (item) { return item.id === id; });
+                    if (index >= 0) records[index] = record;
+                    else records.push(record);
+                    localStorage.setItem("medtrackMedicalEquipment", JSON.stringify(records));
+                    window.lastSavedEquipment = { ...details };
+                    return { queued: false };
+                },
+                deleteInventoryItem: async function () {}
+            };`
+        });
+    });
+    await page.addInitScript(function () {
+        localStorage.setItem("medtrackMedicalEquipment", "[]");
+    });
+
+    await page.goto("/medical-equipment.html");
+    for (const selector of [
+        "#equipmentCategory option[value='']",
+        "#equipmentCondition option[value='']",
+        "#equipmentStatus option[value='']"
+    ]) {
+        await expect(page.locator(selector)).toHaveAttribute("hidden", "");
+        await expect(page.locator(selector)).toHaveAttribute("disabled", "");
+    }
+
+    await page.getByRole("button", { name: /Add Equipment/i }).click();
+    await page.locator("#equipmentCategory").selectOption("Other");
+    await expect(page.locator("#customEquipmentCategoryGroup")).toBeVisible();
+    await expect(page.locator("#customEquipmentCategory")).toHaveAttribute("required", "");
+
+    await page.locator("#equipmentName").fill("Fire Response Kit");
+    await page.locator("#equipmentQuantity").fill("2");
+    await page.locator("#equipmentCondition").selectOption("Good");
+    await page.locator("#equipmentStatus").selectOption("Available");
+    await page.locator("#maintenanceType").selectOption("Inspection");
+    await page.getByRole("button", { name: /Save Equipment/i }).click();
+    await expect(page.locator("#customEquipmentCategory")).toBeFocused();
+    expect(await page.evaluate(function () { return window.lastSavedEquipment; }))
+        .toBeUndefined();
+
+    await page.locator("#customEquipmentCategory").fill("  Firefighting Equipment  ");
+    await page.getByRole("button", { name: /Save Equipment/i }).click();
+    await expect.poll(function () {
+        return page.evaluate(function () { return window.lastSavedEquipment.category; });
+    }).toBe("Firefighting Equipment");
+    await expect(page.locator("#equipmentTableBody")).toContainText("Firefighting Equipment");
+    await expect(page.locator("#equipmentTableBody")).not.toContainText("Other");
+
+    await page.locator('[data-action="edit"]').click();
+    await expect(page.locator("#equipmentCategory")).toHaveValue("Other");
+    await expect(page.locator("#customEquipmentCategory"))
+        .toHaveValue("Firefighting Equipment");
+    await page.locator("#equipmentCategory").selectOption("Diagnostic");
+    await expect(page.locator("#customEquipmentCategoryGroup")).toBeHidden();
+    await expect(page.locator("#customEquipmentCategory"))
+        .not.toHaveAttribute("required", "");
+    await page.locator("#equipmentCategory").selectOption("Other");
+    await page.locator("#customEquipmentCategory").fill("Urban Search Equipment");
+    await page.getByRole("button", { name: /Save Equipment/i }).click();
+
+    await expect.poll(function () {
+        return page.evaluate(function () { return window.lastSavedEquipment.category; });
+    }).toBe("Urban Search Equipment");
+    await page.locator("#equipmentSearch").fill("urban search");
+    await expect(page.locator("#equipmentTableBody")).toContainText("Urban Search Equipment");
+    await page.locator("#categoryFilter").selectOption("Other");
+    await expect(page.locator("#equipmentTableBody")).toContainText("Urban Search Equipment");
+});
+
 test("forgot password slides in and returns to login", async ({ page }) => {
     await page.goto("/login/login.html");
     const card = page.locator("#authCard");

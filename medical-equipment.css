@@ -821,6 +821,18 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
+.custom-equipment-category {
+    margin-top: 13px;
+}
+
+.custom-equipment-category[hidden] {
+    display: none;
+}
+
+.custom-equipment-category label {
+    display: block;
+}
+
 .input-group small {
     margin-top: 6px;
     color: var(--muted);
