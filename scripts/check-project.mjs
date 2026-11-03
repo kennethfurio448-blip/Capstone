@@ -631,8 +631,9 @@ try {
     "app-download-button",
     "app-download-dropdown",
     "app-trash-button",
+    'href="/api/download-windows"',
     "app-download-pwa",
-    "app-download-safety",
+    "app-download-update",
   ]) {
     if (!appShell.includes(requiredDownloadControl)) {
       failures.push(`application download menu: missing ${requiredDownloadControl}`);
@@ -641,6 +642,7 @@ try {
 
   for (const requiredDownloadBehavior of [
     "medtrackPwaInstall",
+    'fetch("/api/app-release"',
     "installPwaFromMenu",
     "closeDownloadDropdown",
   ]) {
@@ -655,13 +657,13 @@ try {
   if (!appShell.includes('querySelectorAll(\'a[href="trash-bin.html"]\')')) {
     failures.push("Trash Bin navigation: legacy sidebar links are not removed");
   }
-  if (!appReleaseApi.includes('installation: "pwa"') ||
-      !appReleaseApi.includes("available: false")) {
-    failures.push("application release endpoint: safe PWA metadata is incomplete");
+  if (!appReleaseApi.includes("releases/latest") ||
+      !appReleaseApi.includes('apkAvailable: false')) {
+    failures.push("application release endpoint: verified platform metadata is incomplete");
   }
-  if (!windowsDownloadApi.includes("status(410)") ||
-      !windowsDownloadApi.includes("unsigned Windows installer")) {
-    failures.push("Windows installer endpoint: unsigned distribution is not disabled");
+  if (!windowsDownloadApi.includes("allowedDownloadUrl") ||
+      !windowsDownloadApi.includes("VERIFIED_FALLBACK_URL")) {
+    failures.push("Windows installer endpoint: verified release fallback is incomplete");
   }
 } catch (error) {
   failures.push(`application download menu: unable to inspect controls (${error.message})`);

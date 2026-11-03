@@ -144,11 +144,11 @@ test("header download menu has no serious accessibility violations", async ({ pa
 test("header download menu remains usable on a phone viewport", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openDownloadMenuForTest(page);
-    await expect(page.getByRole("dialog", { name: "Install MedTrack safely" }))
+    await expect(page.getByRole("dialog", { name: "Download and install MedTrack" }))
         .toBeVisible();
     await expect(page.getByRole("link", { name: "Download for Windows" }))
-        .toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Install Safe App" }))
+        .toBeVisible();
+    await expect(page.getByRole("button", { name: "Install from Browser" }))
         .toBeVisible();
     const overflow = await page.evaluate(function () {
         return document.documentElement.scrollWidth -

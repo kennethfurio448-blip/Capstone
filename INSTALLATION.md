@@ -1,10 +1,16 @@
 # Installing MedTrack
 
-MedTrack remains available at `https://www.medtrackmanagement.com` and can be installed safely as a browser-managed PWA.
+MedTrack remains available at `https://www.medtrackmanagement.com` and can also be installed as a Windows desktop application or a browser-managed PWA.
 
-## Public Windows installation
+## Windows installer
 
-The unsigned `.exe` is no longer offered through the MedTrack website. This prevents users from being encouraged to run an application that Windows cannot verify. A Windows installer may be restored later after it is digitally signed with a trusted Authenticode certificate.
+1. Download `MedTrack-Setup-1.0.2.exe` from the project's GitHub Releases page or the file supplied with this delivery.
+2. Open the installer and choose the installation folder.
+3. Keep the Desktop and Start Menu shortcut options enabled.
+4. Launch MedTrack and connect to the internet for the first sign-in on that device.
+5. Sign in with an authorized Admin or Staff account. Administrators must complete MFA before their offline enrollment is approved.
+
+The installer uses the original Electron and NSIS installation method and is not code-signed. Windows SmartScreen may therefore identify the publisher as unknown even though installation is working normally. Verify that the file came from the official MedTrack website or GitHub release before running it. This warning cannot be legitimately removed without a CA-issued signing certificate.
 
 ## Windows or Android PWA
 
