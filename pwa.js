@@ -37,22 +37,6 @@
         }));
     }
 
-    async function waitForAvailability(timeoutMs) {
-        const timeout = Number.isFinite(timeoutMs) ? Math.max(0, timeoutMs) : 5000;
-        const deadline = Date.now() + timeout;
-
-        while (!deferredInstallPrompt && !isInstalled() && Date.now() < deadline) {
-            await new Promise(function (resolve) {
-                window.setTimeout(resolve, 100);
-            });
-        }
-
-        return {
-            available: Boolean(deferredInstallPrompt),
-            installed: isInstalled()
-        };
-    }
-
     async function promptInstall() {
         if (!deferredInstallPrompt) {
             return { available: false, installed: isInstalled(), outcome: "unavailable" };
@@ -73,7 +57,6 @@
     window.medtrackPwaInstall = Object.freeze({
         isAvailable: function () { return Boolean(deferredInstallPrompt); },
         isInstalled: isInstalled,
-        waitForAvailability: waitForAvailability,
         promptInstall: promptInstall
     });
 
@@ -127,9 +110,11 @@
     }, 20 * 1000);
 
     if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/service-worker.js")
-            .catch(function (error) {
-                console.error("MedTrack offline installation failed:", error);
-            });
+        window.addEventListener("load", function () {
+            navigator.serviceWorker.register("/service-worker.js")
+                .catch(function (error) {
+                    console.error("MedTrack offline installation failed:", error);
+                });
+        });
     }
 })();

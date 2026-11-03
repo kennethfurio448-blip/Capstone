@@ -126,32 +126,13 @@
 
     async function installPwaFromMenu() {
         const installer = window.medtrackPwaInstall;
-        if (!installer) {
+        if (!installer || !installer.isAvailable()) {
             showDownloadMessage(
-                "Open this page in Microsoft Edge or Google Chrome, then use the browser menu and select Apps > Install MedTrack.",
+                "The automatic prompt is unavailable. Open your Edge or Chrome menu and select Install app or Add to Home screen.",
                 true
             );
             return;
         }
-
-        if (installer.isInstalled()) {
-            showDownloadMessage("MedTrack is already installed in this browser profile.", false);
-            return;
-        }
-
-        if (!installer.isAvailable() && typeof installer.waitForAvailability === "function") {
-            showDownloadMessage("Preparing the secure browser installation prompt...", false);
-            await installer.waitForAvailability(5000);
-        }
-
-        if (!installer.isAvailable()) {
-            showDownloadMessage(
-                "The browser did not provide an automatic prompt. In Edge, open the three-dot menu and select Apps > Install MedTrack. In Chrome, select Save and share > Install page as app.",
-                false
-            );
-            return;
-        }
-
         try {
             const result = await installer.promptInstall();
             showDownloadMessage(
@@ -162,7 +143,7 @@
             );
         } catch (error) {
             console.error("PWA installation failed:", error);
-            showDownloadMessage("The browser could not start installation. Use its menu and select Install app instead.", true);
+            showDownloadMessage("The browser could not start installation. Use its Install app option instead.", true);
         }
         updateDownloadControls();
     }

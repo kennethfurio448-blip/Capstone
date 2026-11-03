@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "medtrack-shell-v77-safe-pwa-install";
+const CACHE_NAME = "medtrack-shell-v76-header-walkthrough";
 const APP_SHELL = [
     "/",
     "/index.html",

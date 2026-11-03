@@ -641,7 +641,6 @@ try {
 
   for (const requiredDownloadBehavior of [
     "medtrackPwaInstall",
-    "waitForAvailability",
     "installPwaFromMenu",
     "closeDownloadDropdown",
   ]) {
