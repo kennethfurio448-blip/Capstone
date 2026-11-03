@@ -278,13 +278,15 @@ a {
 }
 
 .export-button {
-    color: var(--white);
-    background-color: var(--primary);
-    border: 1px solid var(--primary);
+    color: #555555;
+    background-color: var(--white);
+    border: 1px solid var(--border);
 }
 
 .export-button:hover {
-    background-color: var(--primary-dark);
+    color: var(--primary);
+    border-color: var(--primary);
+    background-color: var(--white);
 }
 
 
