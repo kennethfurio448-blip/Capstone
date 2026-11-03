@@ -205,6 +205,29 @@ test("shared PWA installer exposes the browser prompt to the download center", a
     });
 });
 
+test("safe app installation waits for a delayed browser prompt", async ({ page }) => {
+    await page.goto("/");
+    await page.setContent("<main>MedTrack delayed installation test</main>");
+    await page.addScriptTag({ url: "/pwa.js" });
+
+    const result = await page.evaluate(async function () {
+        window.setTimeout(function () {
+            const promptEvent = new Event("beforeinstallprompt");
+            Object.defineProperty(promptEvent, "prompt", {
+                value: async function () { return undefined; }
+            });
+            Object.defineProperty(promptEvent, "userChoice", {
+                value: Promise.resolve({ outcome: "accepted", platform: "web" })
+            });
+            window.dispatchEvent(promptEvent);
+        }, 150);
+
+        return window.medtrackPwaInstall.waitForAvailability(1000);
+    });
+
+    expect(result).toEqual({ available: true, installed: false });
+});
+
 test("Mobility Other vehicle type saves and edits the custom value", async ({ page }) => {
     const emptyScript = {
         status: 200,
