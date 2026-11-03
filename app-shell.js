@@ -3,9 +3,7 @@
 
     const collapsedStateKey = "medtrack-sidebar-collapsed";
     const downloadDropdownId = "medtrackDownloadDropdown";
-    const downloadPageVersion = "1.0.2";
     let activeDownloadButton = null;
-    let downloadRelease = null;
 
     function setCollapsed(sidebar, toggleButton, isCollapsed) {
         sidebar.classList.toggle("is-collapsed", isCollapsed);
@@ -83,39 +81,26 @@
         dropdown.className = "app-download-dropdown";
         dropdown.hidden = true;
         dropdown.setAttribute("role", "dialog");
-        dropdown.setAttribute("aria-label", "Download and install MedTrack");
+        dropdown.setAttribute("aria-label", "Install MedTrack safely");
         dropdown.innerHTML = [
             '<div class="app-download-header">',
-            '  <div><strong>Get MedTrack</strong><span>Installation and updates</span></div>',
+            '  <div><strong>Install MedTrack</strong><span>Secure browser installation</span></div>',
             '  <button type="button" class="app-download-close" aria-label="Close download options">&times;</button>',
             '</div>',
             '<div class="app-download-message" role="status" aria-live="polite" hidden></div>',
             '<div class="app-download-options">',
-            '  <a class="app-download-option app-download-windows" href="/api/download-windows">',
-            '    <span class="app-download-option-icon"><i class="fa-brands fa-windows" aria-hidden="true"></i></span>',
-            '    <span><strong>Download for Windows</strong><small><span data-download-version>Version ' + downloadPageVersion + '</span> &middot; <span data-download-size>117.43 MB</span></small></span>',
-            '    <i class="fa-solid fa-download app-download-action-icon" aria-hidden="true"></i>',
-            '  </a>',
             '  <button type="button" class="app-download-option app-download-pwa">',
             '    <span class="app-download-option-icon"><i class="fa-solid fa-window-restore" aria-hidden="true"></i></span>',
-            '    <span><strong>Install from Browser</strong><small data-pwa-status>Use Edge or Chrome to install the MedTrack PWA.</small></span>',
+            '    <span><strong>Install Safe App</strong><small data-pwa-status>Use Edge or Chrome to install the verified MedTrack website.</small></span>',
             '    <i class="fa-solid fa-arrow-down-to-bracket app-download-action-icon" aria-hidden="true"></i>',
             '  </button>',
             '</div>',
-            '<button type="button" class="app-download-update"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Check for Updates</button>'
+            '<p class="app-download-safety"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Installs from the official MedTrack domain and updates automatically. No unsigned Windows installer is downloaded.</p>'
         ].join("");
         document.body.appendChild(dropdown);
 
         dropdown.querySelector(".app-download-close").addEventListener("click", closeDownloadDropdown);
-        dropdown.querySelector(".app-download-windows").addEventListener("click", function (event) {
-            if (navigator.onLine) return;
-            event.preventDefault();
-            showDownloadMessage("Connect to the internet before downloading the Windows installer.", true);
-        });
         dropdown.querySelector(".app-download-pwa").addEventListener("click", installPwaFromMenu);
-        dropdown.querySelector(".app-download-update").addEventListener("click", function () {
-            loadDownloadRelease(true);
-        });
         return dropdown;
     }
 
@@ -137,14 +122,6 @@
         } else {
             status.textContent = "Use the Edge or Chrome menu and select Install app or Add to Home screen.";
         }
-
-        if (!downloadRelease) return;
-        dropdown.querySelector("[data-download-version]").textContent =
-            "Version " + (downloadRelease.version || downloadPageVersion);
-        dropdown.querySelector("[data-download-size]").textContent =
-            downloadRelease.windows && downloadRelease.windows.sizeLabel
-                ? downloadRelease.windows.sizeLabel
-                : "117.43 MB";
     }
 
     async function installPwaFromMenu() {
@@ -169,33 +146,6 @@
             showDownloadMessage("The browser could not start installation. Use its Install app option instead.", true);
         }
         updateDownloadControls();
-    }
-
-    async function loadDownloadRelease(showResult) {
-        const button = downloadDropdown().querySelector(".app-download-update");
-        button.disabled = true;
-        try {
-            const response = await fetch("/api/app-release", {
-                headers: { Accept: "application/json" },
-                cache: "no-store"
-            });
-            if (!response.ok) throw new Error("Release service returned " + response.status + ".");
-            downloadRelease = await response.json();
-            updateDownloadControls();
-            if (showResult) {
-                showDownloadMessage(
-                    "MedTrack " + (downloadRelease.version || downloadPageVersion) + " is the latest available Windows version.",
-                    false
-                );
-            }
-        } catch (error) {
-            console.error("Release check failed:", error);
-            if (showResult) {
-                showDownloadMessage("The update service is temporarily unavailable. Please try again later.", true);
-            }
-        } finally {
-            button.disabled = false;
-        }
     }
 
     function positionDownloadDropdown() {
@@ -235,7 +185,6 @@
         dropdown.hidden = false;
         updateDownloadControls();
         positionDownloadDropdown();
-        loadDownloadRelease(false);
     }
 
     function initializeDownloadMenu() {
@@ -301,10 +250,9 @@
     window.addEventListener("resize", positionDownloadDropdown);
     window.addEventListener("scroll", positionDownloadDropdown, true);
     window.addEventListener("medtrack:pwa-install-availability", updateDownloadControls);
-    window.addEventListener("online", function () { loadDownloadRelease(false); });
     window.addEventListener("offline", function () {
         if (!document.getElementById(downloadDropdownId)) return;
-        showDownloadMessage("MedTrack is offline. Downloads and update checks require internet access.", true);
+        showDownloadMessage("Connect to the internet before installing MedTrack on this device.", true);
     });
 
     if (document.readyState === "loading") {

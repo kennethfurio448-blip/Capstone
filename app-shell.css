@@ -378,6 +378,23 @@ a.app-download-option:focus-visible {
     line-height: 1.35;
 }
 
+.app-download-safety {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    margin: 0.85rem 12px 12px;
+    padding: 0.8rem 0.9rem;
+    border-radius: 10px;
+    background: #eef8f2;
+    color: #185c38;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.app-download-safety i {
+    margin-top: 0.15rem;
+}
+
 .app-download-action-icon {
     color: #7b8799;
     font-size: 13px;

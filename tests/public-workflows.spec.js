@@ -65,45 +65,20 @@ test("central Trash Bin is protected and provides complete recovery controls", a
     expect(html).toContain('src="trash-bin.js?v=20261029-trash-bin"');
 });
 
-test("release endpoints return current metadata and a validated installer redirect", async () => {
-    const originalFetch = global.fetch;
-    global.fetch = async function () {
-        return {
-            ok: true,
-            json: async function () {
-                return {
-                    tag_name: "v1.0.2",
-                    published_at: "2026-11-01T11:09:47Z",
-                    assets: [{
-                        name: "MedTrack-Setup-1.0.2.exe",
-                        size: 123136248,
-                        browser_download_url: "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.2/MedTrack-Setup-1.0.2.exe"
-                    }]
-                };
-            }
-        };
-    };
+test("release endpoints advertise the PWA and block the unsigned installer", async () => {
+    const metadataHandler = require("../api/app-release.js");
+    const downloadHandler = require("../api/download-windows.js");
+    const metadataResponse = apiResponseRecorder();
+    const downloadResponse = apiResponseRecorder();
 
-    try {
-        const metadataHandler = require("../api/app-release.js");
-        const downloadHandler = require("../api/download-windows.js");
-        const metadataResponse = apiResponseRecorder();
-        const downloadResponse = apiResponseRecorder();
+    await metadataHandler({ method: "GET" }, metadataResponse);
+    await downloadHandler({ method: "GET" }, downloadResponse);
 
-        await metadataHandler({ method: "GET" }, metadataResponse);
-        await downloadHandler({ method: "GET" }, downloadResponse);
-
-        expect(metadataResponse.statusCode).toBe(200);
-        expect(metadataResponse.body.version).toBe("1.0.2");
-        expect(metadataResponse.body.windows.available).toBe(true);
-        expect(metadataResponse.body.android.apkAvailable).toBe(false);
-        expect(downloadResponse.statusCode).toBe(302);
-        expect(downloadResponse.headers.Location).toBe(
-            "https://github.com/kennethfurio448-blip/Capstone/releases/download/v1.0.2/MedTrack-Setup-1.0.2.exe"
-        );
-    } finally {
-        global.fetch = originalFetch;
-    }
+    expect(metadataResponse.statusCode).toBe(200);
+    expect(metadataResponse.body.windows.available).toBe(false);
+    expect(metadataResponse.body.installation).toBe("pwa");
+    expect(downloadResponse.statusCode).toBe(410);
+    expect(downloadResponse.body.safeInstallation).toContain("Install app");
 });
 
 test("shared shell keeps walkthrough, Trash Bin, downloads, and notifications in the header", async ({ page }) => {
@@ -190,13 +165,12 @@ test("shared shell keeps walkthrough, Trash Bin, downloads, and notifications in
         .toBeVisible();
     await page.getByRole("button", { name: "Skip Tour" }).click();
     await page.getByRole("button", { name: "Download or install MedTrack" }).click();
-    await expect(page.getByRole("dialog", { name: "Download and install MedTrack" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Download for Windows/ })).toHaveAttribute(
-        "href", "/api/download-windows"
-    );
+    await expect(page.getByRole("dialog", { name: "Install MedTrack safely" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Download for Windows/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Install Safe App/ })).toBeVisible();
     await expect(page.getByText("Android", { exact: true })).toHaveCount(0);
     await page.getByRole("heading", { name: "Dashboard" }).click();
-    await expect(page.getByRole("dialog", { name: "Download and install MedTrack" })).toBeHidden();
+    await expect(page.getByRole("dialog", { name: "Install MedTrack safely" })).toBeHidden();
     await page.getByRole("button", { name: "Collapse sidebar navigation" }).click();
     await expect(page.locator('.sidebar-nav a[href="trash-bin.html"]')).toHaveCount(0);
 });
