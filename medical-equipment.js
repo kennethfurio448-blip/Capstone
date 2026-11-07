@@ -83,6 +83,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const equipmentCategory =
         document.getElementById("equipmentCategory");
 
+    const customEquipmentCategory =
+        document.getElementById("customEquipmentCategory");
+
+    const showEquipmentCategoryList =
+        document.getElementById("showEquipmentCategoryList");
+
     const equipmentQuantity =
         document.getElementById("equipmentQuantity");
 
@@ -306,15 +312,23 @@ document.addEventListener("DOMContentLoaded", async function () {
         return Boolean(predefinedEquipmentCategory(category));
     }
 
-    function updateEquipmentCategoryInput() {
-        if (normalizeText(equipmentCategory.value).toLowerCase() === "other") {
-            equipmentCategory.value = "";
-            equipmentCategory.placeholder = "Enter custom equipment category";
-        } else if (!equipmentCategory.value) {
-            equipmentCategory.placeholder = "Select or enter category";
+    function setCustomCategoryMode(isCustom, options) {
+        const settings = options || {};
+
+        equipmentCategory.hidden = isCustom;
+        customEquipmentCategory.hidden = !isCustom;
+        showEquipmentCategoryList.hidden = !isCustom;
+        customEquipmentCategory.required = isCustom;
+
+        if (!isCustom && settings.clear !== false) {
+            customEquipmentCategory.value = "";
+            customEquipmentCategory.setCustomValidity("");
         }
 
-        equipmentCategory.setCustomValidity("");
+        if (isCustom && settings.focus) {
+            customEquipmentCategory.focus();
+        }
+
         formMessage.textContent = "";
     }
 
@@ -538,7 +552,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         equipmentForm.reset();
-        equipmentCategory.placeholder = "Select or enter category";
+        setCustomCategoryMode(false);
         maintenanceTypeManuallyChanged = false;
         updateMaintenanceRecommendation(true);
 
@@ -586,8 +600,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         equipmentName.value =
             normalizeText(selectedEquipment.name);
 
-        equipmentCategory.value =
-            normalizeText(selectedEquipment.category);
+        const storedCategory = normalizeText(selectedEquipment.category);
+        const standardCategory = predefinedEquipmentCategory(storedCategory);
+        if (standardCategory) {
+            equipmentCategory.value = standardCategory;
+            setCustomCategoryMode(false);
+        } else {
+            equipmentCategory.value = "Other";
+            customEquipmentCategory.value = storedCategory;
+            setCustomCategoryMode(true, { clear: false });
+        }
 
         equipmentQuantity.value =
             Number(selectedEquipment.quantity) || 1;
@@ -621,7 +643,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function closeEquipmentModal() {
         equipmentModal.classList.remove("show");
         equipmentForm.reset();
-        equipmentCategory.placeholder = "Select or enter category";
+        setCustomCategoryMode(false);
 
         editingEquipmentId.value = "";
         formMessage.textContent = "";
@@ -642,12 +664,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             const nameValue =
                 equipmentName.value.trim();
 
-            const enteredCategoryValue =
-                equipmentCategory.value.trim();
+            const selectedCategoryValue =
+                equipmentCategory.value;
 
-            const categoryValue =
-                predefinedEquipmentCategory(enteredCategoryValue) ||
-                enteredCategoryValue;
+            const customCategoryValue =
+                customEquipmentCategory.value.trim();
+
+            const categoryValue = selectedCategoryValue === "Other"
+                ? customCategoryValue
+                : selectedCategoryValue;
 
             const quantityValue =
                 Number(equipmentQuantity.value);
@@ -661,13 +686,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             const maintenanceValue =
                 maintenanceDate.value;
 
-            if (!categoryValue) {
-                equipmentCategory.setCustomValidity(
-                    "Select or enter an equipment category."
+            if (selectedCategoryValue === "Other" && !customCategoryValue) {
+                customEquipmentCategory.setCustomValidity(
+                    "Enter a custom equipment category."
                 );
-                equipmentCategory.reportValidity();
+                customEquipmentCategory.reportValidity();
                 formMessage.textContent =
-                    "Please select or enter the equipment category.";
+                    "Please enter the equipment category.";
                 return;
             }
 
@@ -683,7 +708,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            equipmentCategory.setCustomValidity("");
+            customEquipmentCategory.setCustomValidity("");
 
             if (categoryValue.length > 80) {
                 formMessage.textContent =
@@ -905,7 +930,29 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderEquipment
     );
 
-    equipmentCategory.addEventListener("input", updateEquipmentCategoryInput);
+    equipmentCategory.addEventListener("change", function () {
+        setCustomCategoryMode(equipmentCategory.value === "Other", {
+            focus: equipmentCategory.value === "Other"
+        });
+    });
+
+    customEquipmentCategory.addEventListener("input", function () {
+        customEquipmentCategory.setCustomValidity("");
+        formMessage.textContent = "";
+    });
+
+    customEquipmentCategory.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape") return;
+        equipmentCategory.value = "";
+        setCustomCategoryMode(false);
+        equipmentCategory.focus();
+    });
+
+    showEquipmentCategoryList.addEventListener("click", function () {
+        equipmentCategory.value = "";
+        setCustomCategoryMode(false);
+        equipmentCategory.focus();
+    });
 
     statusFilter.addEventListener(
         "change",

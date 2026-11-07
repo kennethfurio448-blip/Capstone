@@ -821,6 +821,39 @@ a {
     box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
 }
 
+.category-entry {
+    position: relative;
+}
+
+.category-entry input {
+    padding-right: 46px;
+}
+
+.category-entry-list {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 46px;
+    padding: 0;
+    color: #263247;
+    background: transparent;
+    border: 0;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+}
+
+.category-entry-list:hover,
+.category-entry-list:focus-visible {
+    color: var(--primary);
+    background: rgba(183, 28, 28, 0.06);
+    outline: none;
+}
+
+.category-entry-list[hidden] {
+    display: none;
+}
+
 .input-group small {
     margin-top: 6px;
     color: var(--muted);
