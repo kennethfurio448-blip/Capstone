@@ -381,7 +381,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     "Vehicle Name",
                     "Type",
                     "Plate Number",
-                    "Condition",
                     "Driver",
                     "Co-Pilot",
                     "Location",
@@ -394,7 +393,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                         vehicle.name,
                         vehicle.type,
                         vehicle.plateNumber,
-                        vehicle.condition,
                         vehicle.driver,
                         vehicle.coPilot || "",
                         vehicle.location,
@@ -402,7 +400,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         vehicle.status
                     ];
                 }),
-                statusColumn: 9
+                statusColumn: 8
             };
         }
 

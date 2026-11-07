@@ -304,7 +304,6 @@ test("Mobility Other vehicle type saves and edits the custom value", async ({ pa
 
     await page.locator("#vehicleName").fill("Response Unit 1");
     await page.locator("#plateNumber").fill("FTR-101");
-    await page.locator("#vehicleCondition").selectOption("Good");
     await page.locator("#vehicleStatus").selectOption("Available");
     await page.locator("#assignedDriver").fill("Driver One");
     await page.locator("#assignedCoPilot").fill("Co-Pilot One");

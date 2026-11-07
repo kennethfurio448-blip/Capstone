@@ -92,9 +92,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const plateNumber =
         document.getElementById("plateNumber");
 
-    const vehicleCondition =
-        document.getElementById("vehicleCondition");
-
     const vehicleStatus =
         document.getElementById("vehicleStatus");
 
@@ -298,23 +295,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return "status-for-repair";
     }
 
-    function getConditionClass(condition) {
-        if (condition === "Excellent") {
-            return "condition-excellent";
-        }
-
-        if (condition === "Good") {
-            return "condition-good";
-        }
-
-        if (condition === "Fair") {
-            return "condition-fair";
-        }
-
-        return "condition-damaged";
-    }
-
-
     function renderVehicles() {
         const vehicles = getVehicles();
 
@@ -371,9 +351,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const statusClass =
                 getStatusClass(vehicle.status);
 
-            const conditionClass =
-                getConditionClass(vehicle.condition);
-
             const overdue =
                 isMaintenanceOverdue(vehicle.maintenanceDate);
 
@@ -395,12 +372,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${escapeHTML(vehicle.type)}</td>
 
                 <td>${escapeHTML(vehicle.plateNumber)}</td>
-
-                <td>
-                    <span class="condition-badge ${conditionClass}">
-                        ${escapeHTML(vehicle.condition)}
-                    </span>
-                </td>
 
                 <td>${escapeHTML(vehicle.driver || "—")}</td>
 
@@ -548,9 +519,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         plateNumber.value =
             selectedVehicle.plateNumber;
 
-        vehicleCondition.value =
-            selectedVehicle.condition;
-
         vehicleStatus.value =
             selectedVehicle.status;
 
@@ -608,9 +576,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const plateValue =
             plateNumber.value.trim().toUpperCase();
 
-        const conditionValue =
-            vehicleCondition.value;
-
         const statusValue =
             vehicleStatus.value;
 
@@ -638,7 +603,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             !nameValue ||
             !typeValue ||
             !plateValue ||
-            !conditionValue ||
             !statusValue ||
             !driverValue ||
             !locationValue ||
@@ -715,7 +679,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     name: nameValue,
                     type: typeValue,
                     plateNumber: plateValue,
-                    condition: conditionValue,
+                    condition: existingVehicle
+                        ? existingVehicle.condition || "Good"
+                        : "Good",
                     driver: driverValue,
                     coPilot: coPilotValue,
                     location: locationValue,
