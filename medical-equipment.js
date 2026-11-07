@@ -83,12 +83,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const equipmentCategory =
         document.getElementById("equipmentCategory");
 
-    const customEquipmentCategoryGroup =
-        document.getElementById("customEquipmentCategoryGroup");
-
-    const customEquipmentCategory =
-        document.getElementById("customEquipmentCategory");
-
     const equipmentQuantity =
         document.getElementById("equipmentQuantity");
 
@@ -312,22 +306,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         return Boolean(predefinedEquipmentCategory(category));
     }
 
-    function updateCustomEquipmentCategory(options) {
-        const settings = options || {};
-        const isCustom = equipmentCategory.value === "Other";
-
-        customEquipmentCategoryGroup.hidden = !isCustom;
-        customEquipmentCategory.required = isCustom;
-        customEquipmentCategory.setAttribute("aria-required", String(isCustom));
-
-        if (!isCustom && settings.clear !== false) {
-            customEquipmentCategory.value = "";
-            customEquipmentCategory.setCustomValidity("");
+    function updateEquipmentCategoryInput() {
+        if (normalizeText(equipmentCategory.value).toLowerCase() === "other") {
+            equipmentCategory.value = "";
+            equipmentCategory.placeholder = "Enter custom equipment category";
+        } else if (!equipmentCategory.value) {
+            equipmentCategory.placeholder = "Select or enter category";
         }
 
-        if (isCustom && settings.focus) {
-            customEquipmentCategory.focus();
-        }
+        equipmentCategory.setCustomValidity("");
+        formMessage.textContent = "";
     }
 
 
@@ -550,7 +538,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         equipmentForm.reset();
-        updateCustomEquipmentCategory();
+        equipmentCategory.placeholder = "Select or enter category";
         maintenanceTypeManuallyChanged = false;
         updateMaintenanceRecommendation(true);
 
@@ -598,17 +586,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         equipmentName.value =
             normalizeText(selectedEquipment.name);
 
-        const storedCategory = normalizeText(selectedEquipment.category);
-        const standardCategory = predefinedEquipmentCategory(storedCategory);
-        if (standardCategory) {
-            equipmentCategory.value = standardCategory;
-            customEquipmentCategory.value = "";
-            updateCustomEquipmentCategory();
-        } else {
-            equipmentCategory.value = "Other";
-            customEquipmentCategory.value = storedCategory;
-            updateCustomEquipmentCategory({ clear: false });
-        }
+        equipmentCategory.value =
+            normalizeText(selectedEquipment.category);
 
         equipmentQuantity.value =
             Number(selectedEquipment.quantity) || 1;
@@ -642,7 +621,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function closeEquipmentModal() {
         equipmentModal.classList.remove("show");
         equipmentForm.reset();
-        updateCustomEquipmentCategory();
+        equipmentCategory.placeholder = "Select or enter category";
 
         editingEquipmentId.value = "";
         formMessage.textContent = "";
@@ -663,18 +642,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             const nameValue =
                 equipmentName.value.trim();
 
-            const selectedCategoryValue =
-                equipmentCategory.value;
+            const enteredCategoryValue =
+                equipmentCategory.value.trim();
 
-            const customCategoryValue =
-                customEquipmentCategory.value.trim();
-
-            const matchingPredefinedCategory =
-                predefinedEquipmentCategory(customCategoryValue);
-
-            const categoryValue = selectedCategoryValue === "Other"
-                ? (matchingPredefinedCategory || customCategoryValue)
-                : selectedCategoryValue;
+            const categoryValue =
+                predefinedEquipmentCategory(enteredCategoryValue) ||
+                enteredCategoryValue;
 
             const quantityValue =
                 Number(equipmentQuantity.value);
@@ -688,13 +661,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             const maintenanceValue =
                 maintenanceDate.value;
 
-            if (selectedCategoryValue === "Other" && !customCategoryValue) {
-                customEquipmentCategory.setCustomValidity(
-                    "Enter a custom equipment category."
+            if (!categoryValue) {
+                equipmentCategory.setCustomValidity(
+                    "Select or enter an equipment category."
                 );
-                customEquipmentCategory.reportValidity();
+                equipmentCategory.reportValidity();
                 formMessage.textContent =
-                    "Please specify the equipment category.";
+                    "Please select or enter the equipment category.";
                 return;
             }
 
@@ -710,7 +683,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            customEquipmentCategory.setCustomValidity("");
+            equipmentCategory.setCustomValidity("");
 
             if (categoryValue.length > 80) {
                 formMessage.textContent =
@@ -932,16 +905,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderEquipment
     );
 
-    equipmentCategory.addEventListener("change", function () {
-        updateCustomEquipmentCategory({
-            focus: equipmentCategory.value === "Other"
-        });
-    });
-
-    customEquipmentCategory.addEventListener("input", function () {
-        customEquipmentCategory.setCustomValidity("");
-        formMessage.textContent = "";
-    });
+    equipmentCategory.addEventListener("input", updateEquipmentCategoryInput);
 
     statusFilter.addEventListener(
         "change",

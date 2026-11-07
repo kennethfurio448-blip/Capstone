@@ -416,31 +416,30 @@ test("Equipment dropdown placeholders stay hidden and Other saves a custom categ
     });
 
     await page.goto("/medical-equipment.html");
-    for (const selector of [
-        "#equipmentCategory option[value='']",
-        "#equipmentStatus option[value='']"
-    ]) {
-        await expect(page.locator(selector)).toHaveAttribute("hidden", "");
-        await expect(page.locator(selector)).toHaveAttribute("disabled", "");
-    }
+    await expect(page.locator("#equipmentStatus option[value='']"))
+        .toHaveAttribute("hidden", "");
+    await expect(page.locator("#equipmentStatus option[value='']"))
+        .toHaveAttribute("disabled", "");
+    await expect(page.locator("#equipmentCategory"))
+        .toHaveAttribute("list", "equipmentCategoryOptions");
 
     await page.getByRole("button", { name: /Add Equipment/i }).click();
-    await page.locator("#equipmentCategory").selectOption("Other");
-    await expect(page.locator("#customEquipmentCategoryGroup")).toBeVisible();
-    await expect(page.locator("#customEquipmentCategory")).toHaveAttribute("required", "");
-    await expect(page.getByText("Specify Equipment Category", { exact: true }))
-        .toHaveCount(0);
+    await page.locator("#equipmentCategory").fill("Other");
+    await expect(page.locator("#equipmentCategory")).toHaveValue("");
+    await expect(page.locator("#equipmentCategory"))
+        .toHaveAttribute("placeholder", "Enter custom equipment category");
+    await expect(page.locator("#customEquipmentCategory")).toHaveCount(0);
 
     await page.locator("#equipmentName").fill("Fire Response Kit");
     await page.locator("#equipmentQuantity").fill("2");
     await page.locator("#equipmentStatus").selectOption("Available");
     await page.locator("#maintenanceType").selectOption("Inspection");
     await page.getByRole("button", { name: /Save Equipment/i }).click();
-    await expect(page.locator("#customEquipmentCategory")).toBeFocused();
+    await expect(page.locator("#equipmentCategory")).toBeFocused();
     expect(await page.evaluate(function () { return window.lastSavedEquipment; }))
         .toBeUndefined();
 
-    await page.locator("#customEquipmentCategory").fill("  Firefighting Equipment  ");
+    await page.locator("#equipmentCategory").fill("  Firefighting Equipment  ");
     await page.getByRole("button", { name: /Save Equipment/i }).click();
     await expect.poll(function () {
         return page.evaluate(function () { return window.lastSavedEquipment.category; });
@@ -449,15 +448,13 @@ test("Equipment dropdown placeholders stay hidden and Other saves a custom categ
     await expect(page.locator("#equipmentTableBody")).not.toContainText("Other");
 
     await page.locator('[data-action="edit"]').click();
-    await expect(page.locator("#equipmentCategory")).toHaveValue("Other");
-    await expect(page.locator("#customEquipmentCategory"))
+    await expect(page.locator("#equipmentCategory"))
         .toHaveValue("Firefighting Equipment");
-    await page.locator("#equipmentCategory").selectOption("Diagnostic");
-    await expect(page.locator("#customEquipmentCategoryGroup")).toBeHidden();
-    await expect(page.locator("#customEquipmentCategory"))
-        .not.toHaveAttribute("required", "");
-    await page.locator("#equipmentCategory").selectOption("Other");
-    await page.locator("#customEquipmentCategory").fill("Urban Search Equipment");
+    await page.locator("#equipmentCategory").fill("Diagnostic");
+    await expect(page.locator("#equipmentCategory")).toHaveValue("Diagnostic");
+    await page.locator("#equipmentCategory").fill("Other");
+    await expect(page.locator("#equipmentCategory")).toHaveValue("");
+    await page.locator("#equipmentCategory").fill("Urban Search Equipment");
     await page.getByRole("button", { name: /Save Equipment/i }).click();
 
     await expect.poll(function () {

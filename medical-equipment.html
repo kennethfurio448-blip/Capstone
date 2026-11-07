@@ -389,33 +389,27 @@
                         Category
                     </label>
 
-                    <select id="equipmentCategory" required>
-                        <option value="" disabled selected hidden>
-                            Select category
-                        </option>
-                        <option value="Diagnostic">Diagnostic</option>
-                        <option value="Emergency">Emergency</option>
-                        <option value="Life Support">Life Support</option>
-                        <option value="Monitoring">Monitoring</option>
-                        <option value="Transport">Transport</option>
-                        <option value="Extrication">Extrication</option>
-                        <option value="Water Rescue">Water Rescue</option>
-                        <option value="Search and Rescue">
-                            Search and Rescue
-                        </option>
-                        <option value="Other">Other</option>
-                    </select>
+                    <input
+                        type="text"
+                        id="equipmentCategory"
+                        list="equipmentCategoryOptions"
+                        placeholder="Select or enter category"
+                        maxlength="80"
+                        autocomplete="off"
+                        required
+                    >
 
-                    <div class="custom-equipment-category" id="customEquipmentCategoryGroup" hidden>
-                        <input
-                            type="text"
-                            id="customEquipmentCategory"
-                            aria-label="Custom equipment category"
-                            placeholder="Enter custom equipment category"
-                            maxlength="80"
-                            autocomplete="off"
-                        >
-                    </div>
+                    <datalist id="equipmentCategoryOptions">
+                        <option value="Diagnostic"></option>
+                        <option value="Emergency"></option>
+                        <option value="Life Support"></option>
+                        <option value="Monitoring"></option>
+                        <option value="Transport"></option>
+                        <option value="Extrication"></option>
+                        <option value="Water Rescue"></option>
+                        <option value="Search and Rescue"></option>
+                        <option value="Other"></option>
+                    </datalist>
 
                 </div>
 
