@@ -289,6 +289,7 @@
                             <th>Plate Number</th>
                             <th>Condition</th>
                             <th>Driver</th>
+                            <th>Co-Pilot</th>
                             <th>Destination</th>
                             <th>Next Maintenance</th>
                             <th>Status</th>
@@ -459,6 +460,21 @@
 
                 <div class="input-group">
 
+                    <label for="assignedCoPilot">
+                        Assigned Co-Pilot
+                    </label>
+
+                    <input
+                        type="text"
+                        id="assignedCoPilot"
+                        placeholder="Enter co-pilot name (optional)"
+                        maxlength="120"
+                    >
+
+                </div>
+
+                <div class="input-group full-width">
+
                     <label for="vehicleLocation">
                         Destination
                     </label>
@@ -562,7 +578,7 @@
 <script src="notification-center.js"></script>
 <script src="card-navigation.js"></script>
 <script src="table-pagination.js"></script>
-<script src="mobility.js?v=20261102-custom-vehicle-type"></script>
+<script src="mobility.js?v=20261107-co-pilot"></script>
 
 </body>
 </html>

@@ -101,6 +101,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const assignedDriver =
         document.getElementById("assignedDriver");
 
+    const assignedCoPilot =
+        document.getElementById("assignedCoPilot");
+
     const vehicleLocation =
         document.getElementById("vehicleLocation");
 
@@ -334,7 +337,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 vehicle.id.toLowerCase().includes(searchValue) ||
                 String(vehicle.displayId || vehicle.id).toLowerCase().includes(searchValue) ||
                 vehicle.plateNumber.toLowerCase().includes(searchValue) ||
-                vehicle.driver.toLowerCase().includes(searchValue) ||
+                String(vehicle.driver || "").toLowerCase().includes(searchValue) ||
+                String(vehicle.coPilot || "").toLowerCase().includes(searchValue) ||
                 vehicle.location.toLowerCase().includes(searchValue);
 
             const matchesType =
@@ -399,6 +403,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </td>
 
                 <td>${escapeHTML(vehicle.driver || "—")}</td>
+
+                <td>${escapeHTML(vehicle.coPilot || "\u2014")}</td>
 
                 <td>${escapeHTML(vehicle.location)}</td>
 
@@ -551,6 +557,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         assignedDriver.value =
             selectedVehicle.driver;
 
+        assignedCoPilot.value =
+            selectedVehicle.coPilot || "";
+
         vehicleLocation.value =
             selectedVehicle.location;
 
@@ -608,6 +617,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const driverValue =
             assignedDriver.value.trim();
 
+        const coPilotValue =
+            assignedCoPilot.value.trim();
+
         const locationValue =
             vehicleLocation.value.trim();
 
@@ -643,6 +655,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (typeValue.length > 80) {
             formMessage.textContent =
                 "Vehicle type must be 80 characters or fewer.";
+            return;
+        }
+
+        if (coPilotValue.length > 120) {
+            formMessage.textContent =
+                "Co-pilot name must be 120 characters or fewer.";
             return;
         }
 
@@ -699,6 +717,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     plateNumber: plateValue,
                     condition: conditionValue,
                     driver: driverValue,
+                    coPilot: coPilotValue,
                     location: locationValue,
                     maintenanceDate: maintenanceValue,
                     status: statusValue,

@@ -307,6 +307,7 @@ test("Mobility Other vehicle type saves and edits the custom value", async ({ pa
     await page.locator("#vehicleCondition").selectOption("Good");
     await page.locator("#vehicleStatus").selectOption("Available");
     await page.locator("#assignedDriver").fill("Driver One");
+    await page.locator("#assignedCoPilot").fill("Co-Pilot One");
     await page.locator("#vehicleLocation").fill("Operations Center");
     await page.locator("#maintenanceDate").fill("2027-01-15");
     await page.getByRole("button", { name: /Save Vehicle/i }).click();
@@ -323,12 +324,17 @@ test("Mobility Other vehicle type saves and edits the custom value", async ({ pa
     await expect.poll(function () {
         return page.evaluate(function () { return window.lastSavedMobility.type; });
     }).toBe("Fire Truck");
+    await expect.poll(function () {
+        return page.evaluate(function () { return window.lastSavedMobility.coPilot; });
+    }).toBe("Co-Pilot One");
     await expect(page.locator("#vehicleTableBody")).toContainText("Fire Truck");
+    await expect(page.locator("#vehicleTableBody")).toContainText("Co-Pilot One");
     await expect(page.locator("#vehicleTableBody")).not.toContainText("Other");
 
     await page.locator('[data-action="edit"]').click();
     await expect(page.locator("#vehicleType")).toHaveValue("Other");
     await expect(page.locator("#customVehicleType")).toHaveValue("Fire Truck");
+    await expect(page.locator("#assignedCoPilot")).toHaveValue("Co-Pilot One");
     await page.locator("#vehicleType").selectOption("Ambulance");
     await expect(page.locator("#customVehicleTypeGroup")).toBeHidden();
     await expect(page.locator("#customVehicleType")).not.toHaveAttribute("required", "");

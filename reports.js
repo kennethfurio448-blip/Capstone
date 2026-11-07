@@ -383,6 +383,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     "Plate Number",
                     "Condition",
                     "Driver",
+                    "Co-Pilot",
                     "Location",
                     "Maintenance Date",
                     "Status"
@@ -395,12 +396,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                         vehicle.plateNumber,
                         vehicle.condition,
                         vehicle.driver,
+                        vehicle.coPilot || "",
                         vehicle.location,
                         formatDate(vehicle.maintenanceDate),
                         vehicle.status
                     ];
                 }),
-                statusColumn: 8
+                statusColumn: 9
             };
         }
 
