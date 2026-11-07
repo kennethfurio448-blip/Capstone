@@ -109,6 +109,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const supplyCategory =
         document.getElementById("supplyCategory");
 
+    const customSupplyCategory =
+        document.getElementById("customSupplyCategory");
+
+    const showSupplyCategoryList =
+        document.getElementById("showSupplyCategoryList");
+
     const supplyQuantity =
         document.getElementById("supplyQuantity");
 
@@ -177,6 +183,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         editingSupplyId,
         supplyName,
         supplyCategory,
+        customSupplyCategory,
+        showSupplyCategoryList,
         supplyQuantity,
         supplyUnit,
         expirationDate,
@@ -248,6 +256,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const storageKey = "medtrackMedicalSupplies";
 
+    const predefinedSupplyCategories = [
+        "Medicine",
+        "First Aid",
+        "Protective Equipment",
+        "Emergency Supply"
+    ];
+
 
     function normalizeId(value) {
         return String(value ?? "").trim();
@@ -255,6 +270,37 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function normalizeText(value) {
         return String(value ?? "").trim();
+    }
+
+    function predefinedSupplyCategory(category) {
+        const normalizedCategory = normalizeText(category).toLowerCase();
+        return predefinedSupplyCategories.find(function (option) {
+            return option.toLowerCase() === normalizedCategory;
+        }) || "";
+    }
+
+    function isPredefinedSupplyCategory(category) {
+        return Boolean(predefinedSupplyCategory(category));
+    }
+
+    function setCustomCategoryMode(isCustom, options) {
+        const settings = options || {};
+
+        supplyCategory.hidden = isCustom;
+        customSupplyCategory.hidden = !isCustom;
+        showSupplyCategoryList.hidden = !isCustom;
+        customSupplyCategory.required = isCustom;
+
+        if (!isCustom && settings.clear !== false) {
+            customSupplyCategory.value = "";
+            customSupplyCategory.setCustomValidity("");
+        }
+
+        if (isCustom && settings.focus) {
+            customSupplyCategory.focus();
+        }
+
+        formMessage.textContent = "";
     }
 
     function escapeHTML(value) {
@@ -639,7 +685,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const matchesCategory =
                     selectedCategory === "all" ||
-                    category === selectedCategory;
+                    (selectedCategory === "Other"
+                        ? !isPredefinedSupplyCategory(category)
+                        : category === selectedCategory);
 
                 const matchesStatus =
                     selectedStatus === "all" ||
@@ -756,6 +804,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         supplyForm.reset();
+        setCustomCategoryMode(false);
 
         editingSupplyId.value = "";
         supplyQuantity.min = "1";
@@ -799,8 +848,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         supplyName.value =
             normalizeText(supply.name);
 
-        supplyCategory.value =
-            normalizeText(supply.category);
+        const storedCategory = normalizeText(supply.category);
+        const standardCategory = predefinedSupplyCategory(storedCategory);
+        if (standardCategory) {
+            supplyCategory.value = standardCategory;
+            setCustomCategoryMode(false);
+        } else {
+            supplyCategory.value = "Other";
+            customSupplyCategory.value = storedCategory;
+            setCustomCategoryMode(true, { clear: false });
+        }
 
         supplyQuantity.value =
             Number(supply.quantity) || 0;
@@ -831,6 +888,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function closeSupplyModal() {
         supplyModal.classList.remove("show");
         supplyForm.reset();
+        setCustomCategoryMode(false);
 
         formMessage.textContent = "";
         editingSupplyId.value = "";
@@ -851,8 +909,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             const nameValue =
                 normalizeText(supplyName.value);
 
-            const categoryValue =
+            const selectedCategoryValue =
                 normalizeText(supplyCategory.value);
+
+            const customCategoryValue =
+                normalizeText(customSupplyCategory.value);
+
+            const categoryValue = selectedCategoryValue === "Other"
+                ? customCategoryValue
+                : selectedCategoryValue;
 
             const quantityValue =
                 Number(supplyQuantity.value);
@@ -866,6 +931,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             const lowStockValue =
                 Number(lowStockLevel.value);
 
+            if (selectedCategoryValue === "Other" && !customCategoryValue) {
+                customSupplyCategory.setCustomValidity(
+                    "Enter a custom supply category."
+                );
+                customSupplyCategory.reportValidity();
+                formMessage.textContent =
+                    "Please enter the supply category.";
+                return;
+            }
+
             if (
                 !nameValue ||
                 !categoryValue ||
@@ -875,6 +950,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 formMessage.textContent =
                     "Please complete all fields.";
 
+                return;
+            }
+
+            customSupplyCategory.setCustomValidity("");
+
+            if (categoryValue.length > 80) {
+                formMessage.textContent =
+                    "Supply category must be 80 characters or fewer.";
                 return;
             }
 
@@ -1229,6 +1312,30 @@ document.addEventListener("DOMContentLoaded", async function () {
         "change",
         renderSupplies
     );
+
+    supplyCategory.addEventListener("change", function () {
+        setCustomCategoryMode(supplyCategory.value === "Other", {
+            focus: supplyCategory.value === "Other"
+        });
+    });
+
+    customSupplyCategory.addEventListener("input", function () {
+        customSupplyCategory.setCustomValidity("");
+        formMessage.textContent = "";
+    });
+
+    customSupplyCategory.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape") return;
+        supplyCategory.value = "";
+        setCustomCategoryMode(false);
+        supplyCategory.focus();
+    });
+
+    showSupplyCategoryList.addEventListener("click", function () {
+        supplyCategory.value = "";
+        setCustomCategoryMode(false);
+        supplyCategory.focus();
+    });
 
     statusFilter.addEventListener(
         "change",

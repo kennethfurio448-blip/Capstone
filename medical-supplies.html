@@ -13,7 +13,7 @@
     <title>Medical Supplies | MedTrack</title>
     <script src="page-favicon.js"></script>
 
-    <link rel="stylesheet" href="medical-supplies.css?v=20261001-expired-black">
+    <link rel="stylesheet" href="medical-supplies.css?v=20261107-custom-category">
     <link rel="stylesheet" href="app-shell.css">
     <link rel="stylesheet" href="walkthrough.css">
     <link rel="stylesheet" href="brand-theme.css">
@@ -307,6 +307,7 @@
                     <option value="Emergency Supply">
                         Emergency Supply
                     </option>
+                    <option value="Other">Other</option>
                 </select>
 
                 <select id="statusFilter">
@@ -417,19 +418,43 @@
 
                     <label for="supplyCategory">Category</label>
 
-                    <select id="supplyCategory" required>
-                        <option value="" disabled selected hidden>
-                            Select category
-                        </option>
-                        <option value="Medicine">Medicine</option>
-                        <option value="First Aid">First Aid</option>
-                        <option value="Protective Equipment">
-                            Protective Equipment
-                        </option>
-                        <option value="Emergency Supply">
-                            Emergency Supply
-                        </option>
-                    </select>
+                    <div class="category-entry">
+                        <select id="supplyCategory" required>
+                            <option value="" disabled selected hidden>
+                                Select category
+                            </option>
+                            <option value="Medicine">Medicine</option>
+                            <option value="First Aid">First Aid</option>
+                            <option value="Protective Equipment">
+                                Protective Equipment
+                            </option>
+                            <option value="Emergency Supply">
+                                Emergency Supply
+                            </option>
+                            <option value="Other">Other</option>
+                        </select>
+
+                        <input
+                            type="text"
+                            id="customSupplyCategory"
+                            aria-label="Custom supply category"
+                            placeholder="Enter custom supply category"
+                            maxlength="80"
+                            autocomplete="off"
+                            hidden
+                        >
+
+                        <button
+                            type="button"
+                            class="category-entry-list"
+                            id="showSupplyCategoryList"
+                            aria-label="Return to supply category list"
+                            title="Choose from category list"
+                            hidden
+                        >
+                            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+                    </div>
 
                 </div>
 
@@ -639,7 +664,7 @@
 <script src="notification-center.js"></script>
 <script src="card-navigation.js"></script>
 <script src="table-pagination.js"></script>
-<script src="medical-supplies.js?v=20261002-gap-free-display-id"></script>
+<script src="medical-supplies.js?v=20261107-custom-category"></script>
 
 </body>
 </html>
