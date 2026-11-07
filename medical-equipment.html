@@ -296,7 +296,6 @@
                             <th>Equipment Name</th>
                             <th>Category</th>
                             <th>Quantity</th>
-                            <th>Condition</th>
                             <th>Maintenance Type</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -418,24 +417,6 @@
 
                 <div class="input-group">
 
-                    <label for="equipmentCondition">
-                        Condition
-                    </label>
-
-                    <select id="equipmentCondition" required>
-                        <option value="" disabled selected hidden>
-                            Select condition
-                        </option>
-                        <option value="Excellent">Excellent</option>
-                        <option value="Good">Good</option>
-                        <option value="Fair">Fair</option>
-                        <option value="Damaged">Damaged</option>
-                    </select>
-
-                </div>
-
-                <div class="input-group">
-
                     <label for="equipmentStatus">
                         Status
                     </label>
@@ -476,7 +457,7 @@
 
                 </div>
 
-                <div class="input-group">
+                <div class="input-group full-width">
 
                     <label for="maintenanceDate">
                         Next Inspection / Service Date (Optional)
@@ -565,7 +546,7 @@
 <script src="notification-center.js"></script>
 <script src="card-navigation.js"></script>
 <script src="table-pagination.js"></script>
-<script src="medical-equipment.js?v=20261102-custom-category"></script>
+<script src="medical-equipment.js?v=20261107-remove-condition"></script>
 
 </body>
 </html>

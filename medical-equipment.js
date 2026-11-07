@@ -92,9 +92,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const equipmentQuantity =
         document.getElementById("equipmentQuantity");
 
-    const equipmentCondition =
-        document.getElementById("equipmentCondition");
-
     const equipmentStatus =
         document.getElementById("equipmentStatus");
 
@@ -304,22 +301,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return "status-unavailable";
     }
 
-    function getConditionClass(condition) {
-        if (condition === "Excellent") {
-            return "condition-excellent";
-        }
-
-        if (condition === "Good") {
-            return "condition-good";
-        }
-
-        if (condition === "Fair") {
-            return "condition-fair";
-        }
-
-        return "condition-damaged";
-    }
-
     function predefinedEquipmentCategory(category) {
         const normalizedCategory = normalizeText(category).toLowerCase();
         return predefinedEquipmentCategories.find(function (option) {
@@ -433,9 +414,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const itemCategory =
                 normalizeText(item.category);
 
-            const itemCondition =
-                normalizeText(item.condition);
-
             const itemMaintenanceType =
                 normalizeText(item.maintenanceType) ||
                 recommendedMaintenanceType(itemName);
@@ -445,9 +423,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const statusClass =
                 getStatusClass(itemStatus);
-
-            const conditionClass =
-                getConditionClass(itemCondition);
 
             const row =
                 document.createElement("tr");
@@ -471,12 +446,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 <td>
                     ${escapeHTML(item.quantity)}
-                </td>
-
-                <td>
-                    <span class="condition-badge ${conditionClass}">
-                        ${escapeHTML(itemCondition)}
-                    </span>
                 </td>
 
                 <td>
@@ -644,11 +613,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         equipmentQuantity.value =
             Number(selectedEquipment.quantity) || 1;
 
-        equipmentCondition.value =
-            normalizeText(
-                selectedEquipment.condition
-            );
-
         equipmentStatus.value =
             normalizeText(
                 selectedEquipment.status
@@ -715,9 +679,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const quantityValue =
                 Number(equipmentQuantity.value);
 
-            const conditionValue =
-                equipmentCondition.value;
-
             const statusValue =
                 equipmentStatus.value;
 
@@ -740,7 +701,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (
                 !nameValue ||
                 !categoryValue ||
-                !conditionValue ||
                 !statusValue ||
                 !maintenanceTypeValue
             ) {
@@ -808,7 +768,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                         name: nameValue,
                         category: categoryValue,
                         quantity: quantityValue,
-                        condition: conditionValue,
+                        condition: existingEquipment
+                            ? existingEquipment.condition || "Good"
+                            : "Good",
                         location: existingEquipment
                             ? existingEquipment.location
                             : "Not specified",

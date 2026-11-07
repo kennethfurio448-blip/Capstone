@@ -418,7 +418,6 @@ test("Equipment dropdown placeholders stay hidden and Other saves a custom categ
     await page.goto("/medical-equipment.html");
     for (const selector of [
         "#equipmentCategory option[value='']",
-        "#equipmentCondition option[value='']",
         "#equipmentStatus option[value='']"
     ]) {
         await expect(page.locator(selector)).toHaveAttribute("hidden", "");
@@ -432,7 +431,6 @@ test("Equipment dropdown placeholders stay hidden and Other saves a custom categ
 
     await page.locator("#equipmentName").fill("Fire Response Kit");
     await page.locator("#equipmentQuantity").fill("2");
-    await page.locator("#equipmentCondition").selectOption("Good");
     await page.locator("#equipmentStatus").selectOption("Available");
     await page.locator("#maintenanceType").selectOption("Inspection");
     await page.getByRole("button", { name: /Save Equipment/i }).click();

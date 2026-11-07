@@ -335,14 +335,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             return {
                 title: "Medical Equipment Report",
                 description:
-                    "Medical equipment condition, inspection and service information.",
+                    "Medical equipment inspection and service information.",
                 filename: "medical-equipment-report",
                 headers: [
                     "Equipment ID",
                     "Equipment Name",
                     "Category",
                     "Quantity",
-                    "Condition",
                     "Maintenance Type",
                     "Next Inspection / Service Date",
                     "Status"
@@ -353,13 +352,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                         equipment.name,
                         equipment.category,
                         equipment.quantity,
-                        equipment.condition,
                         equipment.maintenanceType || "Inspection",
                         formatDate(equipment.maintenanceDate),
                         equipment.status
                     ];
                 }),
-                statusColumn: 7
+                statusColumn: 6
             };
         }
 
