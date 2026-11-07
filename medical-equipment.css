@@ -829,10 +829,6 @@ a {
     display: none;
 }
 
-.custom-equipment-category label {
-    display: block;
-}
-
 .input-group small {
     margin-top: 6px;
     color: var(--muted);

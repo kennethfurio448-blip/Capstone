@@ -428,6 +428,8 @@ test("Equipment dropdown placeholders stay hidden and Other saves a custom categ
     await page.locator("#equipmentCategory").selectOption("Other");
     await expect(page.locator("#customEquipmentCategoryGroup")).toBeVisible();
     await expect(page.locator("#customEquipmentCategory")).toHaveAttribute("required", "");
+    await expect(page.getByText("Specify Equipment Category", { exact: true }))
+        .toHaveCount(0);
 
     await page.locator("#equipmentName").fill("Fire Response Kit");
     await page.locator("#equipmentQuantity").fill("2");
