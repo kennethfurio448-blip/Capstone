@@ -538,6 +538,7 @@ test("medical supplies clearly identify and notify near-expiry items", async ({ 
 
     expect(html).toContain('id="nearExpirySupplies"');
     expect(html).toContain('<option value="Near Expiry">Near Expiry</option>');
+    expect(html).toMatch(/id="openConsumeModal"\s+hidden/);
     expect(html).toContain('<option value="Other">Other</option>');
     expect(html).toContain('id="customSupplyCategory"');
     expect(html).toContain('id="showSupplyCategoryList"');

@@ -485,6 +485,10 @@ a {
     border: 1px solid rgba(183, 28, 28, 0.2);
 }
 
+.consume-button[hidden] {
+    display: none;
+}
+
 .add-button i,
 .consume-button i {
     margin-right: 7px;
