@@ -348,7 +348,7 @@
 
             <div class="form-grid">
 
-                <div class="input-group full-width">
+                <div class="input-group">
 
                     <label for="equipmentName">
                         Equipment Name
@@ -360,6 +360,26 @@
                         placeholder="Enter equipment name"
                         required
                     >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="equipmentStatus">
+                        Status
+                    </label>
+
+                    <select id="equipmentStatus" required>
+                        <option value="" disabled selected hidden>
+                            Select status
+                        </option>
+                        <option value="Available">Available</option>
+                        <option value="Borrowed">Borrowed</option>
+                        <option value="Returned">Returned</option>
+                        <option value="Missing">Missing</option>
+                        <option value="Damaged">Damaged</option>
+                        <option value="For Repair">For Repair</option>
+                    </select>
 
                 </div>
 
@@ -417,26 +437,6 @@
 
                 <div class="input-group">
 
-                    <label for="equipmentStatus">
-                        Status
-                    </label>
-
-                    <select id="equipmentStatus" required>
-                        <option value="" disabled selected hidden>
-                            Select status
-                        </option>
-                        <option value="Available">Available</option>
-                        <option value="Borrowed">Borrowed</option>
-                        <option value="Returned">Returned</option>
-                        <option value="Missing">Missing</option>
-                        <option value="Damaged">Damaged</option>
-                        <option value="For Repair">For Repair</option>
-                    </select>
-
-                </div>
-
-                <div class="input-group">
-
                     <label for="maintenanceType">
                         Maintenance Type
                     </label>
@@ -457,7 +457,7 @@
 
                 </div>
 
-                <div class="input-group full-width">
+                <div class="input-group">
 
                     <label for="maintenanceDate">
                         Next Inspection / Service Date (Optional)
