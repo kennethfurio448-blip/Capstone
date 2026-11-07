@@ -384,7 +384,7 @@
 
             <div class="form-grid">
 
-                <div class="input-group full-width">
+                <div class="input-group">
 
                     <label for="supplyName">Supply Name</label>
 
@@ -392,6 +392,22 @@
                         type="text"
                         id="supplyName"
                         placeholder="Enter supply name"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label for="lowStockLevel">
+                        Low-Stock Level
+                    </label>
+
+                    <input
+                        type="number"
+                        id="lowStockLevel"
+                        min="1"
+                        value="10"
                         required
                     >
 
@@ -457,22 +473,6 @@
                     <input
                         type="date"
                         id="expirationDate"
-                        required
-                    >
-
-                </div>
-
-                <div class="input-group full-width">
-
-                    <label for="lowStockLevel">
-                        Low-Stock Level
-                    </label>
-
-                    <input
-                        type="number"
-                        id="lowStockLevel"
-                        min="1"
-                        value="10"
                         required
                     >
 
